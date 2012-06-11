@@ -10,7 +10,7 @@ requires = [
     'zope.sqlalchemy',
     ]
 
-setup(name='tahrir',
+setup(name='tahrir_api',
       version='0.1.0',
       description='An API for interacting with the Tahrir database',
       long_description=README,
