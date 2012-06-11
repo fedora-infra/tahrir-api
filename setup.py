@@ -29,5 +29,9 @@ setup(name='tahrir-api',
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
+      entry_points="""
+      [console_scripts]
+      initialize_tahrir_db = tahrir_api.scripts.initializedb:main
+      """
       )
 
