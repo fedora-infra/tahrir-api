@@ -6,11 +6,7 @@ import sys
 import transaction
 
 from sqlalchemy import engine_from_config
-
-from pyramid.paster import (
-    get_appsettings,
-    setup_logging,
-)
+from paste.deploy import appconfig
 
 from ..query_model import (
     DBSession,
@@ -27,13 +23,24 @@ def usage(argv):
           '(example: "%s development.ini")' % (cmd, cmd))
     sys.exit(1)
 
+def _getpathsec(config_uri, name):
+    if '#' in config_uri:
+        path, section = config_uri.split('#', 1)
+    else:
+        path, section = config_uri, 'main'
+    if name:
+        section = name
+    return path, section
+
 def main(argv=sys.argv):
     if len(argv) != 2:
         usage(argv)
 
     config_uri = argv[1]
-    setup_logging(config_uri)
-    settings = get_appsettings(config_uri, name="pyramid")
+    path, section = _getpathsec(config_uri, "pyramid")
+    config_name = 'config:%s' % path
+    here_dir = os.getcwd()
+    settings = appconfig(config_name, name=section, relative_to=here_dir)
     import pprint
     pprint.pprint(settings)
     engine = engine_from_config(settings, 'sqlalchemy.')
