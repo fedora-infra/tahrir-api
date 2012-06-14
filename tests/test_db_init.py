@@ -1,21 +1,32 @@
-from tahrir_api import TahrirDatabase
+from tahrir_api.dbapi import TahrirDatabase
+from tahrir_api.query_model import DBSession, DeclarativeBase
+from sqlalchemy import create_engine
+
+
 try:
-    from subprocess import check_output
+    from subprocess import check_output as _check_output
+    def check_output(cmd):
+        try:
+            return _check_output(cmd)
+        except:
+            return None
 except:
     import subprocess
     def check_output(cmd):
-        return subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+        try:
+            return subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+        except:
+            return None
 
 class TestDBInit(object):
 
     def setUp(self):
-        check_output(['rm', '-rf', '/tmp/testdb.db'])
-        check_output(['touch', '/tmp/testdb.db'])
-        check_output(["rm", "/tmp/test.ini"])
-        sqlalchemy_uri = "sqlite:////temp/testdb.db"
-        with file("/tmp/test.ini",'w') as f:
-            f.write("[app:pyramid]\nsqlalchemy.url = {0}".format(sqlalchemy_uri))
-        check_output(["initialize_tahrir_db", "/tmp/test.ini"])
+        check_output(['touch', 'testdb.db'])
+        sqlalchemy_uri = "sqlite:///testdb.db"
+        engine = create_engine(sqlalchemy_uri)
+        DBSession.configure(bind=engine)
+        DeclarativeBase.metadata.create_all(engine)
+
         self.api = TahrirDatabase(sqlalchemy_uri)
 
     def test_AddBadges(self):
@@ -42,3 +53,5 @@ class TestDBInit(object):
         )
         assert self.api.issuer_exists(_id) == True
 
+    def tearDown(self):
+        check_output(['rm', 'testdb.db'])
