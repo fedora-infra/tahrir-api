@@ -22,7 +22,7 @@ requires = [
     ]
 
 setup(name='tahrir-api',
-      version='0.1.3.1',
+      version='0.1.3.4',
       description='An API for interacting with the Tahrir database',
       long_description=README,
       license="AGPLv3+",
@@ -36,7 +36,7 @@ setup(name='tahrir-api',
       author_email='rdelinge@redhat.com',
       url='http://github.com/rossdylan/tahrir-api',
       keywords='web sqlalchemy api',
-      packages=find_packages(),
+      packages=['tahrir_api',],
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
