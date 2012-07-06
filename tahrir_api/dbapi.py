@@ -114,6 +114,19 @@ class TahrirDatabase(object):
         session = scoped_session(self.session_maker)
         return session.query(Person).filter_by(email=person_email).one()
 
+    def delete_person(self, person_email):
+        """
+        Delete a person with the given email
+
+        :type person_email: str
+        :param person_email: Email of the person to delete
+        """
+
+        session = scoped_session(self.session_maker)
+        if self.person_exists(person_email):
+            session.delete(self.get_person(person_email))
+            session.commit()
+
     def add_person(self, person_id, email):
         """
         Add a new Person to the database
