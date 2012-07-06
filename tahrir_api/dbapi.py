@@ -112,7 +112,9 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        return session.query(Person).filter_by(email=person_email).one()
+        if self.person_exists(person_email):
+            return session.query(Person).filter_by(email=person_email).one()
+        return None
 
     def delete_person(self, person_email):
         """
@@ -159,6 +161,18 @@ class TahrirDatabase(object):
 
         session = scoped_session(self.session_maker)
         return session.query(Issuer).filter_by(id=issuer_id).count() != 0
+
+    def get_issuer(self, issuer_id):
+        """
+        Return the issuer with the given ID
+
+        :type issuer_id: int
+        :param issuer_id: ID of the issuer to return
+        """
+        session = scoped_session(self.session_maker)
+        if self.issuer_exists(issuer_id):
+            return session.query(Issuer).filter_by(id=issuer_id).one()
+        return None
 
     def delete_issuer(self, issuer_id):
         """
