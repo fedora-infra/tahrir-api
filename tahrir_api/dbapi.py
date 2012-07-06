@@ -30,6 +30,22 @@ class TahrirDatabase(object):
         session = scoped_session(self.session_maker)
         return session.query(Badge).filter_by(id=badge_id).count() != 0
 
+    def delete_badge(self, badge_id):
+        """
+        Delete a badge from the database
+
+        :type badge_id: str
+        :param badge_id: ID of the badge to delete
+        """
+
+        session = scoped_session(self.session_maker)
+        if self.badge_exists(badge_id):
+            to_delete = session.query(Badge).filter_by(id=badge_id).one()
+            session.delete(to_delete)
+            session.commit()
+            return badge_id
+        return False
+
     def add_badge(self, name, image, desc, criteria, issuer_id):
         """
         Add a new badge to the database
