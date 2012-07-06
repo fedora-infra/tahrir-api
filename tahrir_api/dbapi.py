@@ -60,6 +60,8 @@ class TahrirDatabase(object):
                               issuer_id=issuer_id)
             session.add(new_badge)
             session.commit()
+            return badge_id
+        return False
 
     def person_exists(self, person_email):
         """
@@ -100,6 +102,8 @@ class TahrirDatabase(object):
                                 email=email)
             session.add(new_person)
             session.commit()
+            return email
+        return False
 
     def issuer_exists(self, issuer_id):
         """
@@ -139,7 +143,8 @@ class TahrirDatabase(object):
                                 contact=contact)
             session.add(new_issuer)
             session.commit()
-        return issuer_id
+            return issuer_id
+        return False
 
     def add_assertion(self, badge_id, person_email, issued_on):
         """
@@ -166,3 +171,5 @@ class TahrirDatabase(object):
                                       issued_on=issued_on)
             session.add(new_assertion)
             session.commit()
+            return (person_email, badge_id)
+        return False
