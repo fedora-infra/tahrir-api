@@ -126,6 +126,8 @@ class TahrirDatabase(object):
         if self.person_exists(person_email):
             session.delete(self.get_person(person_email))
             session.commit()
+            return person_email
+        return False
 
     def add_person(self, person_id, email):
         """
@@ -157,6 +159,22 @@ class TahrirDatabase(object):
 
         session = scoped_session(self.session_maker)
         return session.query(Issuer).filter_by(id=issuer_id).count() != 0
+
+    def delete_issuer(self, issuer_id):
+        """
+        Delete an issuer with the given ID
+
+        :type issuer_id: int
+        :param issuer_id: ID of the issuer to be delete
+        """
+
+        session = scoped_session(self.session_maker)
+        if self.issuer_exists(issuer_id):
+            to_delete = session.query(Issuer).filter_by(id=issuer_id).one()
+            session.delete(to_delete)
+            session.commit()
+            return issuer_id
+        return False
 
     def add_issuer(self, origin, name, org, contact):
         """
