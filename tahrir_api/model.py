@@ -85,6 +85,11 @@ class Person(DeclarativeBase):
     def __unicode__(self):
         return self.email
 
+    def __json__(self):
+        return dict(
+                email=self.email,
+                id=self.id
+        )
 
 def recipient_default(context):
     Session = sessionmaker(context.engine)()
