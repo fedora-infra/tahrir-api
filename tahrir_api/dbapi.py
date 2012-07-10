@@ -217,8 +217,21 @@ class TahrirDatabase(object):
                                 contact=contact)
             session.add(new_issuer)
             session.commit()
-            return issuer_id
-        return False
+        return issuer_id
+
+    def get_assertions_by_email(self, person_email):
+        """
+        Get all assertions attached to the given email
+
+        :type person_email: str
+        :param person_email: Email of the person to get assertions for
+        """
+
+        session = scoped_session(self.session_maker)
+        if self.person_exists(person_email):
+            return session.query(Assertion).filter_by(email=person_email).all()
+        else:
+            return False
 
     def add_assertion(self, badge_id, person_email, issued_on):
         """
