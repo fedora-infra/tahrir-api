@@ -151,7 +151,7 @@ class TahrirDatabase(object):
             return email
         return False
 
-    def issuer_exists(self, issuer_id):
+    def issuer_exists(self, origin, name):
         """
         Check to see if an issuer with this ID is in the database
 
@@ -160,7 +160,8 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        return session.query(Issuer).filter_by(id=issuer_id).count() != 0
+        return session.query(Issuer)\
+                .filter_by(origin=origin, name=name).count() != 0
 
     def get_issuer(self, issuer_id):
         """
@@ -170,8 +171,9 @@ class TahrirDatabase(object):
         :param issuer_id: ID of the issuer to return
         """
         session = scoped_session(self.session_maker)
-        if self.issuer_exists(issuer_id):
-            return session.query(Issuer).filter_by(id=issuer_id).one()
+        query = session.query(Issuer).filter_by(id=issuer_id)
+        if query.count() > 0:
+            return query.one()
         return None
 
     def delete_issuer(self, issuer_id):
@@ -183,8 +185,9 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        if self.issuer_exists(issuer_id):
-            to_delete = session.query(Issuer).filter_by(id=issuer_id).one()
+        query = session.query(Issuer).filter_by(id=issuer_id)
+        if query.count() > 0:
+            to_delete = query.one()
             session.delete(to_delete)
             session.commit()
             return issuer_id
@@ -208,16 +211,20 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        issuer_id = hash(origin + name)
-        if not self.issuer_exists(issuer_id):
-            new_issuer = Issuer(id=issuer_id,
-                                origin=origin,
-                                name=name,
-                                org=org,
-                                contact=contact)
+        if not self.issuer_exists(origin, name):
+            new_issuer = Issuer(
+                    origin=origin,
+                    name=name,
+                    org=org,
+                    contact=contact
+                    )
             session.add(new_issuer)
             session.commit()
-        return issuer_id
+            return new_issuer.id
+
+        session = scoped_session(self.session_maker)
+        return session.query(Issuer)\
+                .filter_by(name=name, origin=origin).one()
 
     def get_assertions_by_email(self, person_email):
         """
