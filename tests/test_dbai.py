@@ -1,5 +1,5 @@
 from tahrir_api.dbapi import TahrirDatabase
-from tahrir_api.query_model import DBSession, DeclarativeBase
+from tahrir_api.model import DBSession, DeclarativeBase
 from sqlalchemy import create_engine
 
 
@@ -51,7 +51,7 @@ class TestDBInit(object):
                 "TestOrg",
                 "TestContact"
         )
-        assert self.api.issuer_exists(_id) == True
+        assert self.api.issuer_exists("TestOrigin", "TestName") == True
 
     def tearDown(self):
         check_output(['rm', 'testdb.db'])
