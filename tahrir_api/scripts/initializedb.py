@@ -8,7 +8,7 @@ import transaction
 from sqlalchemy import engine_from_config
 from paste.deploy import appconfig
 
-from ..query_model import (
+from ..model import (
     DBSession,
     Issuer,
     Badge,
