@@ -161,7 +161,7 @@ class Assertion(DeclarativeBase):
 
     def __pygments__(self):
         html_args = {'full': False}
-        pretty_encoder = simplejson.encoder.JSONEncoder(ident=2)
+        pretty_encoder = simplejson.encoder.JSONEncoder(indent=2)
         html = pygments.highlight(
                 pretty_encoder.encode(self.__json__()),
                 pygments.lexers.JavascriptLexer(),
