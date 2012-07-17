@@ -79,7 +79,7 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        badge_id = name.lower()
+        badge_id = name.lower().replace(" ", "-")
 
         if not self.badge_exists(badge_id):
             new_badge = Badge(name=name,
