@@ -1,3 +1,5 @@
+import pygments
+import simplejson
 import hashlib
 
 from sqlalchemy import (
@@ -131,3 +133,36 @@ class Assertion(DeclarativeBase):
     issued_on = Column(DateTime)
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
+
+    def __unicode__(self):
+        return unicode(self.badge) + "<->" + unicode(self.person)
+
+    @property
+    def _recipient(self):
+        return "sha256${0}".format(self.recipient)
+
+    def __json__(self):
+        result = dict(
+                recipient=self._recipient,
+                salt=self.salt,
+                badge=self.badge.__json__(),)
+        if self.issued_on:
+            result['issued_on'] = self.issued_on.strftime("%Y-%m-%d")
+        return result
+
+    def __getitem__(self, key):
+        if key not in ("pygments", "delete"):
+            raise KeyError
+        return getattr(self, "__{0}__".format(key))()
+
+    def __delete__(self):
+        return lambda: DBSession.delete(self)
+
+    def __pygments__(self):
+        html_args = {'full': False}
+        pretty_encoder = simplejson.encoder.JSONEncoder(ident=2)
+        html = pygments.highlight(
+                pretty_encoder.encode(self.__json__()),
+                pygments.lexers.JavascriptLexer(),
+                pygments.formatters.HtmlFormatter(**html_args)).strip()
+        return html
