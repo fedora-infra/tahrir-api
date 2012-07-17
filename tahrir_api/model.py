@@ -1,28 +1,37 @@
+import pygments
+import simplejson
 import hashlib
 
 from sqlalchemy import (
     Column,
-    BigInteger,
     DateTime,
     Unicode,
     ForeignKey,
+)
+from sqlalchemy.types import (
+    Integer,
 )
 
 from sqlalchemy.ext.declarative import declarative_base
 
 from sqlalchemy.orm import (
+    scoped_session,
     sessionmaker,
     relationship,
     backref,
 )
 
 
+from zope.sqlalchemy import ZopeTransactionExtension
+
+DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 DeclarativeBase = declarative_base()
+DeclarativeBase.query = DBSession.query_property()
 
 
 class Issuer(DeclarativeBase):
     __tablename__ = 'issuers'
-    id = Column(BigInteger, primary_key=True)
+    id = Column(Integer, unique=True, primary_key=True)
     origin = Column(Unicode(128), nullable=False)
     name = Column(Unicode(128), nullable=False, unique=True)
     org = Column(Unicode(128), nullable=False)
@@ -53,16 +62,20 @@ class Badge(DeclarativeBase):
     description = Column(Unicode(128), nullable=False)
     criteria = Column(Unicode(128), nullable=False)
     assertions = relationship("Assertion", backref="badge")
-    issuer_id = Column(BigInteger, ForeignKey('issuers.id'), nullable=False)
+    issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
 
     def __unicode__(self):
         return self.name
 
     def __json__(self):
+        if self.image.startswith("http"):
+            image = self.image
+        else:
+            image = "/pngs/" + self.image
         return dict(
             version="0.5.0",
             name=self.name,
-            image="/pngs/" + self.image,
+            image=image,
             description=self.description,
             criteria=self.criteria,
             issuer=self.issuer.__json__(),
@@ -71,7 +84,7 @@ class Badge(DeclarativeBase):
 
 class Person(DeclarativeBase):
     __tablename__ = 'persons'
-    id = Column(BigInteger, primary_key=True)
+    id = Column(Integer, unique=True, primary_key=True)
     email = Column(Unicode(128), nullable=False, unique=True)
     assertions = relationship("Assertion", backref="person")
 
@@ -116,8 +129,41 @@ class Assertion(DeclarativeBase):
     id = Column(Unicode(128), primary_key=True, unique=True,
                 default=assertion_id_default)
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
-    person_id = Column(BigInteger, ForeignKey('persons.id'), nullable=False)
+    person_id = Column(Integer, ForeignKey('persons.id'), nullable=False)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
     issued_on = Column(DateTime)
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
+
+    def __unicode__(self):
+        return unicode(self.badge) + "<->" + unicode(self.person)
+
+    @property
+    def _recipient(self):
+        return "sha256${0}".format(self.recipient)
+
+    def __json__(self):
+        result = dict(
+                recipient=self._recipient,
+                salt=self.salt,
+                badge=self.badge.__json__(),)
+        if self.issued_on:
+            result['issued_on'] = self.issued_on.strftime("%Y-%m-%d")
+        return result
+
+    def __getitem__(self, key):
+        if key not in ("pygments", "delete"):
+            raise KeyError
+        return getattr(self, "__{0}__".format(key))()
+
+    def __delete__(self):
+        return lambda: DBSession.delete(self)
+
+    def __pygments__(self):
+        html_args = {'full': False}
+        pretty_encoder = simplejson.encoder.JSONEncoder(indent=2)
+        html = pygments.highlight(
+                pretty_encoder.encode(self.__json__()),
+                pygments.lexers.JavascriptLexer(),
+                pygments.formatters.HtmlFormatter(**html_args)).strip()
+        return html

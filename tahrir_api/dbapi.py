@@ -77,7 +77,7 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        badge_id = name.lower()
+        badge_id = name.lower().replace(" ", "-")
 
         if not self.badge_exists(badge_id):
             new_badge = Badge(
@@ -131,7 +131,7 @@ class TahrirDatabase(object):
             return person_email
         return False
 
-    def add_person(self, person_id, email):
+    def add_person(self, email):
         """
         Add a new Person to the database
 
@@ -145,7 +145,6 @@ class TahrirDatabase(object):
         session = scoped_session(self.session_maker)
         if not self.person_exists(email):
             new_person = Person(
-                    id=person_id,
                     email=email
                     )
             session.add(new_person)
@@ -153,7 +152,7 @@ class TahrirDatabase(object):
             return email
         return False
 
-    def issuer_exists(self, issuer_id):
+    def issuer_exists(self, origin, name):
         """
         Check to see if an issuer with this ID is in the database
 
@@ -162,7 +161,8 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        return session.query(Issuer).filter_by(id=issuer_id).count() != 0
+        return session.query(Issuer)\
+                .filter_by(origin=origin, name=name).count() != 0
 
     def get_issuer(self, issuer_id):
         """
@@ -172,8 +172,9 @@ class TahrirDatabase(object):
         :param issuer_id: ID of the issuer to return
         """
         session = scoped_session(self.session_maker)
-        if self.issuer_exists(issuer_id):
-            return session.query(Issuer).filter_by(id=issuer_id).one()
+        query = session.query(Issuer).filter_by(id=issuer_id)
+        if query.count() > 0:
+            return query.one()
         return None
 
     def delete_issuer(self, issuer_id):
@@ -185,8 +186,9 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        if self.issuer_exists(issuer_id):
-            to_delete = session.query(Issuer).filter_by(id=issuer_id).one()
+        query = session.query(Issuer).filter_by(id=issuer_id)
+        if query.count() > 0:
+            to_delete = query.one()
             session.delete(to_delete)
             session.commit()
             return issuer_id
@@ -210,10 +212,8 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        issuer_id = hash(origin + name)
-        if not self.issuer_exists(issuer_id):
+        if not self.issuer_exists(origin, name):
             new_issuer = Issuer(
-                    id=issuer_id,
                     origin=origin,
                     name=name,
                     org=org,
@@ -221,7 +221,11 @@ class TahrirDatabase(object):
                     )
             session.add(new_issuer)
             session.commit()
-        return issuer_id
+            return new_issuer.id
+
+        session = scoped_session(self.session_maker)
+        return session.query(Issuer)\
+                .filter_by(name=name, origin=origin).one().id
 
     def get_assertions_by_email(self, person_email):
         """
@@ -236,6 +240,21 @@ class TahrirDatabase(object):
             return session.query(Assertion).filter_by(email=person_email).all()
         else:
             return False
+
+    def assertion_exists(self, badge_id, email):
+        """
+        Check if an assertion exists in the database
+
+        :type badge_id: str
+        :param badge_id: ID of the badge
+
+        :type email: str
+        :param email: users email
+        """
+
+        session = scoped_session(self.session_maker)
+        return session.query(Assertion).filter_by(
+                email=email, badge_id=badge_id).count() != 0
 
     def add_assertion(self, badge_id, person_email, issued_on):
         """
