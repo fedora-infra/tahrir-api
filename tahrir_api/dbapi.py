@@ -241,6 +241,21 @@ class TahrirDatabase(object):
         else:
             return False
 
+    def assertion_exists(self, badge_id, email):
+        """
+        Check if an assertion exists in the database
+
+        :type badge_id: str
+        :param badge_id: ID of the badge
+
+        :type email: str
+        :param email: users email
+        """
+
+        session = scoped_session(self.session_maker)
+        return session.query(Assertion).filter_by(
+                email=email, badge_id=badge_id).count() != 0
+
     def add_assertion(self, badge_id, person_email, issued_on):
         """
         Add an assertion (award a badge) to the database
