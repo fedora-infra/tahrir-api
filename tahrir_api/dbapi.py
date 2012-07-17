@@ -223,7 +223,7 @@ class TahrirDatabase(object):
 
         session = scoped_session(self.session_maker)
         return session.query(Issuer)\
-                .filter_by(name=name, origin=origin).one()
+                .filter_by(name=name, origin=origin).one().id
 
     def get_assertions_by_email(self, person_email):
         """
