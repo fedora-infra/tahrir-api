@@ -18,7 +18,6 @@ requires = [
     'simplejson',
     'SQLAlchemy',
     'zope.sqlalchemy',
-    'mysql-python'
     ]
 
 setup(name='tahrir-api',
