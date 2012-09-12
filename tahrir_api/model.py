@@ -98,6 +98,7 @@ class Person(DeclarativeBase):
                 id=self.id
         )
 
+
 def recipient_default(context):
     Session = sessionmaker(context.engine)()
     person_id = context.current_parameters['person_id']
@@ -128,3 +129,15 @@ class Assertion(DeclarativeBase):
     issued_on = Column(DateTime)
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
+
+    def __json__(self):
+        result = dict(
+            recipient=self._recipient,
+            salt=self.salt,
+            badge=self.badge.__json__(),
+        )
+
+        if self.issued_on:
+            result['issued_on'] = self.issued_on.strftime("%Y-%m-%d")
+
+        return result
