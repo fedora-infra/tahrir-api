@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# Author: Ross Delinger
+# Authors: Ross Delinger
+#          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
 from model import Badge, Issuer, Assertion, Person
