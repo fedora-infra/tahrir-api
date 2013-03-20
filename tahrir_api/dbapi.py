@@ -162,9 +162,10 @@ class TahrirDatabase(object):
         if issued_on is None:
             issued_on = datetime.now()
         if self.person_exists(person_email) and self.badge_exists(badge_id):
-            new_assertion = Assertion(badge_id=badge_id,
-                                      person_id=self.get_person(person_email).id,
-                                      issued_on=issued_on
-                                      )
+            new_assertion = Assertion(
+                    badge_id=badge_id,
+                    person_id=self.get_person(person_email).id,
+                    issued_on=issued_on
+                    )
             session.add(new_assertion)
             session.commit()
