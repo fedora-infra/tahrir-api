@@ -18,7 +18,7 @@ Creating a Badge
 
     from tahrir_api.dbapi import TahrirDatabase
 
-    db = TahrirDatabase('mysql://badges:badgesareawesome@localhost/badges')
+    db = TahrirDatabase('backend://badges:badgesareawesome@localhost/badges')
 
     origin = 'http://foss.rit.edu/badges'
     issuer_name = 'FOSS@RIT'
@@ -42,7 +42,7 @@ Awarding a Badge
 
     from tahrir_api.dbapi import TahrirDatabase
 
-    db = TahrirDatabase('mysql://badges:badgesareawesome@localhost/badges')
+    db = TahrirDatabase('backend://badges:badgesareawesome@localhost/badges')
 
     badge_id = 'fossbox'
     person_email = 'person@email.com'
