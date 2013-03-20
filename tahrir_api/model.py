@@ -91,8 +91,7 @@ def recipient_default(context):
     person_id = context.current_parameters['person_id']
     person = Session.query(Person).filter_by(id=person_id).one()
     return hashlib.sha256(
-        person.email + context.current_parameters['salt']
-    ).hexdigest()
+        person.email + context.current_parameters['salt']).hexdigest()
 
 
 def salt_default(context):
