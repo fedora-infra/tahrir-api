@@ -52,12 +52,12 @@ class TahrirDatabase(object):
 
         if not self.badge_exists(badge_id):
             new_badge = Badge(
-                    name=name,
-                    image=image,
-                    description=desc,
-                    criteria=criteria,
-                    issuer_id=issuer_id
-                    )
+                name=name,
+                image=image,
+                description=desc,
+                criteria=criteria,
+                issuer_id=issuer_id
+                )
             session.add(new_badge)
             session.commit()
 
@@ -156,7 +156,8 @@ class TahrirDatabase(object):
         :param person_email: Email of the Person to issue the badge to
 
         :type issued_on: DateTime
-        :param issued_on: DateTime object holding the date the badge was issued on
+        :param issued_on: DateTime object holding the date the badge was issued
+        on
         """
 
         session = scoped_session(self.session_maker)

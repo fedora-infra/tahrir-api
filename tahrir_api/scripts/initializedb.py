@@ -1,7 +1,6 @@
 
 import datetime
 import os
-import pprint
 import sys
 import transaction
 
@@ -17,11 +16,13 @@ from ..query_model import (
     DeclarativeBase,
 )
 
+
 def usage(argv):
     cmd = os.path.basename(argv[0])
     print('usage: %s <config_uri>\n'
           '(example: "%s development.ini")' % (cmd, cmd))
     sys.exit(1)
+
 
 def _getpathsec(config_uri, name):
     if '#' in config_uri:
@@ -31,6 +32,7 @@ def _getpathsec(config_uri, name):
     if name:
         section = name
     return path, section
+
 
 def main(argv=sys.argv):
     if len(argv) != 2:
