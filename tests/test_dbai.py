@@ -41,7 +41,7 @@ class TestDBInit(object):
         assert self.api.badge_exists("testbadge") == True
 
     def test_AddPerson(self):
-        self.api.add_person(7331, "test@tester.com")
+        self.api.add_person("test@tester.com")
         assert self.api.person_exists("test@tester.com") == True
 
     def test_AddIssuer(self):
