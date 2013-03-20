@@ -17,6 +17,7 @@ class TahrirDatabase(object):
     :type dburi: str
     :param dburi: the sqlalchemy database URI
     """
+
     def __init__(self, dburi):
         self.session_maker = sessionmaker(bind=create_engine(dburi))
 
@@ -56,8 +57,7 @@ class TahrirDatabase(object):
                               image=image,
                               description=desc,
                               criteria=criteria,
-                              issuer_id=issuer_id
-                              )
+                              issuer_id=issuer_id)
             session.add(new_badge)
             session.commit()
 
@@ -97,8 +97,7 @@ class TahrirDatabase(object):
         session = scoped_session(self.session_maker)
         if not self.person_exists(email):
             new_person = Person(id=person_id,
-                                email=email
-                                )
+                                email=email)
             session.add(new_person)
             session.commit()
 
@@ -137,8 +136,7 @@ class TahrirDatabase(object):
                                 origin=origin,
                                 name=name,
                                 org=org,
-                                contact=contact
-                                )
+                                contact=contact)
             session.add(new_issuer)
             session.commit()
         return issuer_id
@@ -163,8 +161,8 @@ class TahrirDatabase(object):
             issued_on = datetime.now()
         if self.person_exists(person_email) and self.badge_exists(badge_id):
             new_assertion = Assertion(badge_id=badge_id,
-                                      person_id=self.get_person(person_email).id,
-                                      issued_on=issued_on
-                                      )
+                                      person_id=self.get_person(
+                                          person_email).id,
+                                      issued_on=issued_on)
             session.add(new_assertion)
             session.commit()

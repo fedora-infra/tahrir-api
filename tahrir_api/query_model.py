@@ -101,8 +101,7 @@ def recipient_default(context):
     person_id = context.current_parameters['person_id']
     person = Person.query.filter_by(id=person_id).one()
     return hashlib.sha256(
-        person.email + context.current_parameters['salt']
-    ).hexdigest()
+        person.email + context.current_parameters['salt']).hexdigest()
 
 
 def salt_default(context):
@@ -162,6 +161,5 @@ class Assertion(DeclarativeBase):
         html = pygments.highlight(
             pretty_encoder.encode(self.__json__()),
             pygments.lexers.JavascriptLexer(),
-            pygments.formatters.HtmlFormatter(**html_args)
-        ).strip()
+            pygments.formatters.HtmlFormatter(**html_args)).strip()
         return html
