@@ -18,6 +18,7 @@ Creating a Badge
 
     from tahrir_api.dbapi import TahrirDatabase
 
+
     db = TahrirDatabase('backend://badges:badgesareawesome@localhost/badges')
 
     origin = 'http://foss.rit.edu/badges'
@@ -41,6 +42,7 @@ Awarding a Badge
 .. code-block:: python
 
     from tahrir_api.dbapi import TahrirDatabase
+
 
     db = TahrirDatabase('backend://badges:badgesareawesome@localhost/badges')
 
