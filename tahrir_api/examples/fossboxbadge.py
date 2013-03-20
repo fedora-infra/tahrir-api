@@ -1,10 +1,5 @@
 from tahrir_api.dbapi import TahrirDatabase
 
-#Add issuer
-#Add person
-#if badge doesn't exist
-    #Add badge
-#create assertion linking badge and user
 
 db = TahrirDatabase('backend://badges:badgesareawesome@localhost/badges')
 
