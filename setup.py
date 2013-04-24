@@ -18,18 +18,18 @@ requires = [
     'simplejson',
     'SQLAlchemy',
     'zope.sqlalchemy',
-    ]
+]
 
 setup(name='tahrir-api',
       version='0.1.7',
       description='An API for interacting with the Tahrir database',
       long_description=README,
-      license="AGPLv3+",
+      license="GPLv3+",
       classifiers=["Programming Language :: Python",
                    "Framework :: Pyramid",
                    "Topic :: Internet :: WWW/HTTP",
-                   "License :: OSI Approved :: GNU Affero General Public\
-                   License v3 or  later (AGPLv3+)",
+                   "License :: OSI Approved :: "
+                   "GNU General Public License v3 or later (GPLv3+)",
                    ],
       author='Ross Delinger',
       author_email='rdelinge@redhat.com',
