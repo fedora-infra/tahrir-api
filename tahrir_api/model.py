@@ -100,8 +100,8 @@ class Person(DeclarativeBase):
 
     def __json__(self):
         return dict(
-                email=self.email,
-                id=self.id
+            email=self.email,
+            id=self.id
         )
 
 def recipient_default(context):
@@ -143,9 +143,9 @@ class Assertion(DeclarativeBase):
 
     def __json__(self):
         result = dict(
-                recipient=self._recipient,
-                salt=self.salt,
-                badge=self.badge.__json__(),)
+            recipient=self._recipient,
+            salt=self.salt,
+            badge=self.badge.__json__(),)
         if self.issued_on:
             result['issued_on'] = self.issued_on.strftime("%Y-%m-%d")
         return result
@@ -162,7 +162,7 @@ class Assertion(DeclarativeBase):
         html_args = {'full': False}
         pretty_encoder = simplejson.encoder.JSONEncoder(indent=2)
         html = pygments.highlight(
-                pretty_encoder.encode(self.__json__()),
-                pygments.lexers.JavascriptLexer(),
-                pygments.formatters.HtmlFormatter(**html_args)).strip()
+            pretty_encoder.encode(self.__json__()),
+            pygments.lexers.JavascriptLexer(),
+            pygments.formatters.HtmlFormatter(**html_args)).strip()
         return html
