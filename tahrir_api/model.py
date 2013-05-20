@@ -63,6 +63,7 @@ class Badge(DeclarativeBase):
     criteria = Column(Unicode(128), nullable=False)
     assertions = relationship("Assertion", backref="badge")
     issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
+    invitations = relationship("Invitation", backref="badge")
 
     def __unicode__(self):
         return self.name
@@ -103,6 +104,30 @@ class Person(DeclarativeBase):
             email=self.email,
             id=self.id
         )
+
+
+def invitation_id_default(context):
+    return hashlib.md5(uuid.uuid4()).hexdigest()
+
+
+class Invitation(DeclarativeBase):
+    """ This is a temporary invitation to receive a badge.
+
+    The idea is that a user can create a "You made my day" badge, and
+    then award it to another user.  However, instead of just directly
+    associating the righthand user with the badge, we "invite" them
+    to accept it.
+
+    """
+    __tablename__ 'invitations'
+    id = Column(
+        Unicode(32), primary_key=True, unique=True,
+        default=lamdba c: hashlib.md5(str(uuid.uuid4())).hexdigest()
+    )
+    created_on = Column(DateTime, nullable=False)
+    expires_on = Column(DateTime, nullable=False)
+    badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
+
 
 def recipient_default(context):
     Session = sessionmaker(context.engine)()
