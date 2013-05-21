@@ -1,6 +1,7 @@
 import pygments
 import simplejson
 import hashlib
+import uuid
 
 from sqlalchemy import (
     Column,
@@ -119,10 +120,10 @@ class Invitation(DeclarativeBase):
     to accept it.
 
     """
-    __tablename__ 'invitations'
+    __tablename__ = 'invitations'
     id = Column(
         Unicode(32), primary_key=True, unique=True,
-        default=lamdba c: hashlib.md5(str(uuid.uuid4())).hexdigest()
+        default=lambda c: hashlib.md5(str(uuid.uuid4())).hexdigest()
     )
     created_on = Column(DateTime, nullable=False)
     expires_on = Column(DateTime, nullable=False)
