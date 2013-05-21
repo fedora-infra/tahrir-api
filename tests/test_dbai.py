@@ -53,5 +53,18 @@ class TestDBInit(object):
         )
         assert self.api.issuer_exists("TestOrigin", "TestName") == True
 
+    def test_addInvitation(self):
+        badge_id = self.api.add_badge(
+            "TestBadge",
+            "TestImage",
+            "A test badge for doing unit tests",
+            "TestCriteria",
+            1337
+        )
+        _id = self.api.add_invitation(
+            badge_id,
+        )
+        assert self.api.invitation_exists(_id)
+
     def tearDown(self):
         check_output(['rm', 'testdb.db'])
