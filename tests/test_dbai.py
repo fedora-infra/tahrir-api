@@ -31,11 +31,11 @@ class TestDBInit(object):
 
     def test_AddBadges(self):
         self.api.add_badge(
-                "TestBadge",
-                "TestImage",
-                "A test badge for doing unit tests",
-                "TestCriteria",
-                1337
+            "TestBadge",
+            "TestImage",
+            "A test badge for doing unit tests",
+            "TestCriteria",
+            1337
         )
 
         assert self.api.badge_exists("testbadge") == True
@@ -46,10 +46,10 @@ class TestDBInit(object):
 
     def test_AddIssuer(self):
         _id = self.api.add_issuer(
-                "TestOrigin",
-                "TestName",
-                "TestOrg",
-                "TestContact"
+            "TestOrigin",
+            "TestName",
+            "TestOrg",
+            "TestContact"
         )
         assert self.api.issuer_exists("TestOrigin", "TestName") == True
 
