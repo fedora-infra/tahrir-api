@@ -2,6 +2,7 @@ import pygments
 import simplejson
 import hashlib
 import uuid
+import datetime
 
 from sqlalchemy import (
     Column,
@@ -128,6 +129,10 @@ class Invitation(DeclarativeBase):
     created_on = Column(DateTime, nullable=False)
     expires_on = Column(DateTime, nullable=False)
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
+
+    @property
+    def expired(self):
+        return datetime.datetime.now() > self.expires_on
 
 
 def recipient_default(context):
