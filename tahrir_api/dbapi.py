@@ -3,10 +3,13 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
-from model import Badge, Issuer, Assertion, Person
+from model import Badge, Invitation, Issuer, Assertion, Person
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from datetime import datetime
+from datetime import (
+    datetime,
+    timedelta,
+)
 
 
 class TahrirDatabase(object):
@@ -161,6 +164,50 @@ class TahrirDatabase(object):
         session = scoped_session(self.session_maker)
         return session.query(Issuer)\
                 .filter_by(origin=origin, name=name).count() != 0
+
+    def add_invitation(self, badge_id, created_on=None, expires_on=None):
+        """
+        Add a new invitation to the database
+
+        :type badge_id: str
+        :param badge_id: A badge ID
+
+        :type created_on: datetime.datetime
+        :param created_on: When this invitation was created.
+
+        :type expires_on: datetime.datetime
+        :param expires_on: When this invitation expires.
+
+        """
+
+        session = scoped_session(self.session_maker)
+
+        if not self.badge_exists(badge_id):
+            raise ValueError("No such badge %r" % badge_id)
+
+        created_on = created_on or datetime.now()
+        expires_on = expires_on or (created_on + timedelta(hours=1))
+
+        invitation = Invitation(
+            created_on=created_on,
+            expires_on=expires_on,
+            badge_id=badge_id
+        )
+        session.add(invitation)
+        session.commit()
+        return invitation.id
+
+    def invitation_exists(self, invitation_id):
+        """
+        Check to see if an invitation exists with this ID.
+
+        :type invitation_id: str
+        :param invitation_id: The unique ID of this invitation
+        """
+
+        session = scoped_session(self.session_maker)
+        return session.query(Invitation)\
+                .filter_by(id=invitation_id).count() != 0
 
     def get_issuer(self, issuer_id):
         """
