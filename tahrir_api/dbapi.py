@@ -298,8 +298,11 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
+        person = self.get_person(email)
+        if not person:
+            return False
         return session.query(Assertion).filter_by(
-                email=email, badge_id=badge_id).count() != 0
+                person_id=person.id, badge_id=badge_id).count() != 0
 
     def add_assertion(self, badge_id, person_email, issued_on):
         """
