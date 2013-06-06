@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
-# Author: Ross Delinger
+# Authors: Ross Delinger
+#          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
-from model import Badge, Issuer, Assertion, Person
+from model import Badge, Invitation, Issuer, Assertion, Person
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from datetime import datetime
+from datetime import (
+    datetime,
+    timedelta,
+)
 
 
 class TahrirDatabase(object):
@@ -16,6 +20,7 @@ class TahrirDatabase(object):
     :type dburi: str
     :param dburi: the sqlalchemy database URI
     """
+
     def __init__(self, dburi):
         self.session_maker = sessionmaker(bind=create_engine(dburi))
 
@@ -80,13 +85,11 @@ class TahrirDatabase(object):
         badge_id = name.lower().replace(" ", "-")
 
         if not self.badge_exists(badge_id):
-            new_badge = Badge(
-                    name=name,
-                    image=image,
-                    description=desc,
-                    criteria=criteria,
-                    issuer_id=issuer_id
-                    )
+            new_badge = Badge(name=name,
+                              image=image,
+                              description=desc,
+                              criteria=criteria,
+                              issuer_id=issuer_id)
             session.add(new_badge)
             session.commit()
             return badge_id
@@ -144,9 +147,7 @@ class TahrirDatabase(object):
 
         session = scoped_session(self.session_maker)
         if not self.person_exists(email):
-            new_person = Person(
-                    email=email
-                    )
+            new_person = Person(email=email)
             session.add(new_person)
             session.commit()
             return email
@@ -163,6 +164,50 @@ class TahrirDatabase(object):
         session = scoped_session(self.session_maker)
         return session.query(Issuer)\
                 .filter_by(origin=origin, name=name).count() != 0
+
+    def add_invitation(self, badge_id, created_on=None, expires_on=None):
+        """
+        Add a new invitation to the database
+
+        :type badge_id: str
+        :param badge_id: A badge ID
+
+        :type created_on: datetime.datetime
+        :param created_on: When this invitation was created.
+
+        :type expires_on: datetime.datetime
+        :param expires_on: When this invitation expires.
+
+        """
+
+        session = scoped_session(self.session_maker)
+
+        if not self.badge_exists(badge_id):
+            raise ValueError("No such badge %r" % badge_id)
+
+        created_on = created_on or datetime.now()
+        expires_on = expires_on or (created_on + timedelta(hours=1))
+
+        invitation = Invitation(
+            created_on=created_on,
+            expires_on=expires_on,
+            badge_id=badge_id
+        )
+        session.add(invitation)
+        session.commit()
+        return invitation.id
+
+    def invitation_exists(self, invitation_id):
+        """
+        Check to see if an invitation exists with this ID.
+
+        :type invitation_id: str
+        :param invitation_id: The unique ID of this invitation
+        """
+
+        session = scoped_session(self.session_maker)
+        return session.query(Invitation)\
+                .filter_by(id=invitation_id).count() != 0
 
     def get_issuer(self, issuer_id):
         """
@@ -253,8 +298,11 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
+        person = self.get_person(email)
+        if not person:
+            return False
         return session.query(Assertion).filter_by(
-                email=email, badge_id=badge_id).count() != 0
+                person_id=person.id, badge_id=badge_id).count() != 0
 
     def add_assertion(self, badge_id, person_email, issued_on):
         """
@@ -267,18 +315,18 @@ class TahrirDatabase(object):
         :param person_email: Email of the Person to issue the badge to
 
         :type issued_on: DateTime
-        :param issued_on: DateTime object holding the date the badge was issued on
+        :param issued_on: DateTime object holding the date the badge was issued
+        on
         """
 
         session = scoped_session(self.session_maker)
-        if issued_on == None:
+        if issued_on is None:
             issued_on = datetime.now()
         if self.person_exists(person_email) and self.badge_exists(badge_id):
-            new_assertion = Assertion(
-                    badge_id=badge_id,
-                    person_id=self.get_person(person_email).id,
-                    issued_on=issued_on
-                    )
+            new_assertion = Assertion(badge_id=badge_id,
+                                      person_id=self.get_person(
+                                          person_email).id,
+                                      issued_on=issued_on)
             session.add(new_assertion)
             session.commit()
             return (person_email, badge_id)

@@ -1,6 +1,8 @@
 import pygments
 import simplejson
 import hashlib
+import uuid
+import datetime
 
 from sqlalchemy import (
     Column,
@@ -63,6 +65,7 @@ class Badge(DeclarativeBase):
     criteria = Column(Unicode(128), nullable=False)
     assertions = relationship("Assertion", backref="badge")
     issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
+    invitations = relationship("Invitation", backref="badge")
 
     def __unicode__(self):
         return self.name
@@ -100,17 +103,44 @@ class Person(DeclarativeBase):
 
     def __json__(self):
         return dict(
-                email=self.email,
-                id=self.id
+            email=self.email,
+            id=self.id
         )
+
+
+def invitation_id_default(context):
+    return hashlib.md5(uuid.uuid4()).hexdigest()
+
+
+class Invitation(DeclarativeBase):
+    """ This is a temporary invitation to receive a badge.
+
+    The idea is that a user can create a "You made my day" badge, and
+    then award it to another user.  However, instead of just directly
+    associating the righthand user with the badge, we "invite" them
+    to accept it.
+
+    """
+    __tablename__ = 'invitations'
+    id = Column(
+        Unicode(32), primary_key=True, unique=True,
+        default=lambda c: hashlib.md5(str(uuid.uuid4())).hexdigest()
+    )
+    created_on = Column(DateTime, nullable=False)
+    expires_on = Column(DateTime, nullable=False)
+    badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
+
+    @property
+    def expired(self):
+        return datetime.datetime.now() > self.expires_on
+
 
 def recipient_default(context):
     Session = sessionmaker(context.engine)()
     person_id = context.current_parameters['person_id']
     person = Session.query(Person).filter_by(id=person_id).one()
     return hashlib.sha256(
-        person.email + context.current_parameters['salt']
-    ).hexdigest()
+        person.email + context.current_parameters['salt']).hexdigest()
 
 
 def salt_default(context):
@@ -144,9 +174,9 @@ class Assertion(DeclarativeBase):
 
     def __json__(self):
         result = dict(
-                recipient=self._recipient,
-                salt=self.salt,
-                badge=self.badge.__json__(),)
+            recipient=self._recipient,
+            salt=self.salt,
+            badge=self.badge.__json__(),)
         if self.issued_on:
             result['issued_on'] = self.issued_on.strftime("%Y-%m-%d")
         return result
@@ -163,7 +193,7 @@ class Assertion(DeclarativeBase):
         html_args = {'full': False}
         pretty_encoder = simplejson.encoder.JSONEncoder(indent=2)
         html = pygments.highlight(
-                pretty_encoder.encode(self.__json__()),
-                pygments.lexers.JavascriptLexer(),
-                pygments.formatters.HtmlFormatter(**html_args)).strip()
+            pretty_encoder.encode(self.__json__()),
+            pygments.lexers.JavascriptLexer(),
+            pygments.formatters.HtmlFormatter(**html_args)).strip()
         return html
