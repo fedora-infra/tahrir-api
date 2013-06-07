@@ -43,8 +43,6 @@ def main(argv=sys.argv):
     config_name = 'config:%s' % path
     here_dir = os.getcwd()
     settings = appconfig(config_name, name=section, relative_to=here_dir)
-    import pprint
-    pprint.pprint(settings)
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     DeclarativeBase.metadata.create_all(engine)
