@@ -76,7 +76,6 @@ def main(argv=sys.argv):
         assertion = Assertion(
             badge=badge,
             person=person,
-            salt=settings['tahrir.salt'],
             issued_on=datetime.datetime.now(),
         )
 

@@ -144,8 +144,7 @@ def recipient_default(context):
 
 
 def salt_default(context):
-    # TODO -- some how we need to get this value from the config.  :)
-    return "beefy"
+    return str(uuid.uuid4())
 
 
 def assertion_id_default(context):
