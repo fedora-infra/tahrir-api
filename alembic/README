@@ -1,0 +1,3 @@
+The immediate purpose of these alembic scripts is to add some columns
+to the current Tahrir API model for additional functionality in the
+Tahrir web app.
