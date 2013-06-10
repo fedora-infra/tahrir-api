@@ -39,6 +39,7 @@ class Issuer(DeclarativeBase):
     org = Column(Unicode(128), nullable=False)
     contact = Column(Unicode(128), nullable=False)
     badges = relationship("Badge", backref="issuer")
+    created_on = Column(DateTime, nullable=False)
 
     def __unicode__(self):
         return self.name
@@ -49,6 +50,7 @@ class Issuer(DeclarativeBase):
             name=self.name,
             org=self.org,
             contact=self.contact,
+            created_on=self.created_on,
         )
 
 
@@ -66,6 +68,8 @@ class Badge(DeclarativeBase):
     assertions = relationship("Assertion", backref="badge")
     issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
     invitations = relationship("Invitation", backref="badge")
+    created_on = Column(DateTime, nullable=False)
+    tags = Column(Unicode(128))
 
     def __unicode__(self):
         return self.name
@@ -82,6 +86,8 @@ class Badge(DeclarativeBase):
             description=self.description,
             criteria=self.criteria,
             issuer=self.issuer.__json__(),
+            created_on=self.created_on,
+            tags=self.tags,
         )
 
 
@@ -90,6 +96,9 @@ class Person(DeclarativeBase):
     id = Column(Integer, unique=True, primary_key=True)
     email = Column(Unicode(128), nullable=False, unique=True)
     assertions = relationship("Assertion", backref="person")
+    nickname = Column(Unicode(128))
+    website = Column(Unicode(128))
+    bio = Column(Unicode(140))
 
     @property
     def gravatar_link(self):
@@ -105,6 +114,9 @@ class Person(DeclarativeBase):
         return dict(
             email=self.email,
             id=self.id
+            nickname=self.nickname,
+            website=self.website,
+            bio=self.bio,
         )
 
 
