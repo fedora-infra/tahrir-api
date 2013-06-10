@@ -65,8 +65,10 @@ def run_migrations_online():
         with context.begin_transaction():
             context.run_migrations()
             trans.commit()
-    except sa.exc.OperationalError:
+    except sa.exc.OperationalError as e:
         print "SQLite does not allow one of these operations. Rolling back."
+        print "The exception was:"
+        print repr(e)
         trans.rollback()
     finally:
         connection.close()
