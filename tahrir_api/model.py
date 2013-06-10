@@ -39,7 +39,8 @@ class Issuer(DeclarativeBase):
     org = Column(Unicode(128), nullable=False)
     contact = Column(Unicode(128), nullable=False)
     badges = relationship("Badge", backref="issuer")
-    created_on = Column(DateTime, nullable=False)
+    created_on = Column(DateTime, nullable=False,
+                        default=datetime.datetime.now)
 
     def __unicode__(self):
         return self.name
@@ -68,7 +69,8 @@ class Badge(DeclarativeBase):
     assertions = relationship("Assertion", backref="badge")
     issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
     invitations = relationship("Invitation", backref="badge")
-    created_on = Column(DateTime, nullable=False)
+    created_on = Column(DateTime, nullable=False,
+                        default=datetime.datetime.now)
     tags = Column(Unicode(128))
 
     def __unicode__(self):
@@ -113,7 +115,7 @@ class Person(DeclarativeBase):
     def __json__(self):
         return dict(
             email=self.email,
-            id=self.id
+            id=self.id,
             nickname=self.nickname,
             website=self.website,
             bio=self.bio,
