@@ -15,7 +15,9 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('issuers', sa.Column('created_on', sa.DateTime))
+    op.add_column('issuers', sa.Column('created_on', sa.DateTime,
+        nullable=False)
+    )
 
 
 def downgrade():
