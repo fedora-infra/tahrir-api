@@ -3,6 +3,8 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
 
+import sqlalchemy as sa
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -58,9 +60,14 @@ def run_migrations_online():
                 target_metadata=target_metadata
                 )
 
+    trans = connection.begin()
     try:
         with context.begin_transaction():
             context.run_migrations()
+            trans.commit()
+    except sa.exc.OperationalError:
+        print "SQLite does not allow one of these operations. Rolling back."
+        trans.rollback()
     finally:
         connection.close()
 
