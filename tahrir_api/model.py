@@ -176,7 +176,7 @@ class Assertion(DeclarativeBase):
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
     person_id = Column(Integer, ForeignKey('persons.id'), nullable=False)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
-    issued_on = Column(DateTime)
+    issued_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
 
@@ -192,6 +192,7 @@ class Assertion(DeclarativeBase):
             recipient=self._recipient,
             salt=self.salt,
             badge=self.badge.__json__(),)
+        # Eliminate this check since I made issued_on not nullable?
         if self.issued_on:
             result['issued_on'] = self.issued_on.strftime("%Y-%m-%d")
         return result
