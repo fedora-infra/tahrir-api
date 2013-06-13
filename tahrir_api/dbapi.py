@@ -3,6 +3,8 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
+from __future__ import unicode_literals
+
 from model import Badge, Invitation, Issuer, Assertion, Person
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -191,7 +193,7 @@ class TahrirDatabase(object):
 
         created_on = created_on or datetime.now()
         expires_on = expires_on or (created_on + timedelta(hours=1))
-        created_by = created_by or 1 # This should be fine
+        created_by = created_by or "1" # This should be fine
 
         invitation = Invitation(
             created_on=created_on,

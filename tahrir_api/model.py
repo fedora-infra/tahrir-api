@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import pygments
 import simplejson
 import hashlib
@@ -123,7 +125,7 @@ class Person(DeclarativeBase):
 
 
 def invitation_id_default(context):
-    return hashlib.md5(uuid.uuid4()).hexdigest()
+    return unicode(hashlib.md5(salt_default(context)).hexdigest())
 
 
 class Invitation(DeclarativeBase):
@@ -138,7 +140,7 @@ class Invitation(DeclarativeBase):
     __tablename__ = 'invitations'
     id = Column(
         Unicode(32), primary_key=True, unique=True,
-        default=lambda c: hashlib.md5(str(uuid.uuid4())).hexdigest()
+        default=invitation_id_default,
     )
     created_on = Column(DateTime, nullable=False)
     expires_on = Column(DateTime, nullable=False)
@@ -155,18 +157,18 @@ def recipient_default(context):
     Session = sessionmaker(context.engine)()
     person_id = context.current_parameters['person_id']
     person = Session.query(Person).filter_by(id=person_id).one()
-    return hashlib.sha256(
-        person.email + context.current_parameters['salt']).hexdigest()
+    return unicode(hashlib.sha256(
+        person.email + context.current_parameters['salt']).hexdigest())
 
 
 def salt_default(context):
-    return str(uuid.uuid4())
+    return unicode(uuid.uuid4())
 
 
 def assertion_id_default(context):
     person_id = context.current_parameters['person_id']
     badge_id = context.current_parameters['badge_id']
-    return "%r -> %r" % (badge_id, person_id)
+    return "%s -> %r" % (badge_id, person_id)
 
 
 class Assertion(DeclarativeBase):

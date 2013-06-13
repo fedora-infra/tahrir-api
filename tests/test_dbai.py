@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from tahrir_api.dbapi import TahrirDatabase
 from tahrir_api.model import DBSession, DeclarativeBase
 from sqlalchemy import create_engine
@@ -64,6 +66,7 @@ class TestDBInit(object):
         _id = self.api.add_invitation(
             badge_id,
         )
+
         assert self.api.invitation_exists(_id)
 
     def test_add_assertion(self):
