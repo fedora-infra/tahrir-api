@@ -165,7 +165,8 @@ class TahrirDatabase(object):
         return session.query(Issuer)\
                 .filter_by(origin=origin, name=name).count() != 0
 
-    def add_invitation(self, badge_id, created_on=None, expires_on=None):
+    def add_invitation(self, badge_id, created_on=None, expires_on=None,
+                       created_by=None):
         """
         Add a new invitation to the database
 
@@ -178,6 +179,9 @@ class TahrirDatabase(object):
         :type expires_on: datetime.datetime
         :param expires_on: When this invitation expires.
 
+        :type created_by: int
+        :param created_by: User ID of creator
+
         """
 
         session = scoped_session(self.session_maker)
@@ -187,11 +191,13 @@ class TahrirDatabase(object):
 
         created_on = created_on or datetime.now()
         expires_on = expires_on or (created_on + timedelta(hours=1))
+        created_by = created_by or 1 # This should be fine
 
         invitation = Invitation(
             created_on=created_on,
             expires_on=expires_on,
-            badge_id=badge_id
+            badge_id=badge_id,
+            created_by=created_by,
         )
         session.add(invitation)
         session.commit()
