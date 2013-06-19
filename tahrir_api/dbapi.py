@@ -306,7 +306,10 @@ class TahrirDatabase(object):
 
         session = scoped_session(self.session_maker)
         if self.person_exists(person_email):
-            return session.query(Assertion).filter_by(email=person_email).all()
+            person_id = session.query(Person).filter_by(
+                                email=person_email).one().id
+            return session.query(Assertion).filter_by(
+                                            person_id=person_id).all()
         else:
             return False
 
