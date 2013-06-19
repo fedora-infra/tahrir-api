@@ -108,6 +108,14 @@ class TahrirDatabase(object):
         session = scoped_session(self.session_maker)
         return session.query(Person).filter_by(email=person_email).count() != 0
 
+    def get_all_persons(self):
+        """
+        Gets all the persons in the db.
+        """
+
+        session = scoped_session(self.session_maker)
+        return session.query(Person)
+
     def get_person(self, person_email):
         """
         Convience function to retrieve a person object from an email
@@ -279,6 +287,14 @@ class TahrirDatabase(object):
         session = scoped_session(self.session_maker)
         return session.query(Issuer)\
                 .filter_by(name=name, origin=origin).one().id
+    
+    def get_all_assertions(self):
+        """
+        Get all assertions in the db.
+        """
+
+        session = scoped_session(self.session_maker)
+        return session.query(Assertion)
 
     def get_assertions_by_email(self, person_email):
         """
