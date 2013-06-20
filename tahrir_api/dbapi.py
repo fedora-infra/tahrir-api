@@ -97,19 +97,28 @@ class TahrirDatabase(object):
             return badge_id
         return False
 
-    def person_exists(self, email=None, id=None):
+    def person_exists(self, email=None, id=None, nickname=None):
         """
         Check if a Person with this email is stored in the database
 
-        :type person_email: str
-        :param person_email: An email address to search the database for
+        :type email: str
+        :param email: An email address to search the database for
+
+        :type id: str
+        :param id: A user id to search for.
+
+        :type nickname: str
+        :param nickname: A nickname to search for.
         """
 
         session = scoped_session(self.session_maker)
+        query = session.query(Person)
         if email:
-            return session.query(Person).filter_by(email=email).count() != 0
+            return query.filter_by(email=email).count() != 0
         elif id:
-            return session.query(Person).filter_by(id=id).count() != 0
+            return query.filter_by(id=id).count() != 0
+        elif nickname:
+            return query.filter_by(nickname=nickname).count() != 0
         else:
             return False
 
@@ -145,18 +154,32 @@ class TahrirDatabase(object):
                                          id=person_id).one().email
         return None
 
-    def get_person(self, person_email):
+    def get_person(self, person_email=None, id=None, nickname=None):
         """
-        Convience function to retrieve a person object from an email
+        Convenience function to retrieve a person object from an email,
+        id, or nickname.
 
         :type person_email: str
         :param person_email: The email address of a Person in the database
+
+        :type id: str
+        :param id: The id of a Person in the database
+
+        :type nickname: str
+        :param nickname: The nickname of a Person in the database
         """
 
         session = scoped_session(self.session_maker)
-        if self.person_exists(email=person_email):
-            return session.query(Person).filter_by(email=person_email).one()
-        return None
+        query = session.query(Person)
+
+        if person_email and self.person_exists(email=person_email):
+            return query.filter_by(email=person_email).one()
+        elif id and self.person_exists(id=id):
+            return query.filter_by(id=id).one()
+        elif nickname and self.person_exists(nickname=nickname):
+            return query.filter_by(nickname=nickname).one()
+        else:
+            return None
 
     def delete_person(self, person_email):
         """
