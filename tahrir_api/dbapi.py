@@ -3,6 +3,8 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
+from __future__ import unicode_literals
+
 from model import Badge, Invitation, Issuer, Assertion, Person
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -95,7 +97,7 @@ class TahrirDatabase(object):
             return badge_id
         return False
 
-    def person_exists(self, person_email):
+    def person_exists(self, email=None, id=None):
         """
         Check if a Person with this email is stored in the database
 
@@ -104,7 +106,44 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        return session.query(Person).filter_by(email=person_email).count() != 0
+        if email:
+            return session.query(Person).filter_by(email=email).count() != 0
+        elif id:
+            return session.query(Person).filter_by(id=id).count() != 0
+        else:
+            return False
+
+    def get_all_persons(self):
+        """
+        Gets all the persons in the db.
+        """
+
+        session = scoped_session(self.session_maker)
+        return session.query(Person)
+
+    def get_person_email(self, person_id):
+        """
+        Convience function to retrieve a person email from an id.
+
+        I am so sorry that I had to write this.
+        It is easier than rewriting all of the get_person and
+        person_exists methods to take ids for now.
+        Eventaully, I will get around to fully refactoring
+        this API.
+
+        This was written after get_person etc., and at some point we really
+        should make all these methods uniform (either get_x and
+        get_x_by_email or get_x and get_x_by_id).
+
+        :type person_id: str
+        :param person_id: The email of a Person in the database.
+        """
+
+        session = scoped_session(self.session_maker)
+        if self.person_exists(id=person_id):
+            return session.query(Person).filter_by(
+                                         id=person_id).one().email
+        return None
 
     def get_person(self, person_email):
         """
@@ -115,7 +154,7 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        if self.person_exists(person_email):
+        if self.person_exists(email=person_email):
             return session.query(Person).filter_by(email=person_email).one()
         return None
 
@@ -128,7 +167,7 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        if self.person_exists(person_email):
+        if self.person_exists(email=person_email):
             session.delete(self.get_person(person_email))
             session.commit()
             return person_email
@@ -146,7 +185,7 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        if not self.person_exists(email):
+        if not self.person_exists(email=email):
             new_person = Person(email=email)
             session.add(new_person)
             session.commit()
@@ -165,7 +204,8 @@ class TahrirDatabase(object):
         return session.query(Issuer)\
                 .filter_by(origin=origin, name=name).count() != 0
 
-    def add_invitation(self, badge_id, created_on=None, expires_on=None):
+    def add_invitation(self, badge_id, created_on=None, expires_on=None,
+                       created_by=None):
         """
         Add a new invitation to the database
 
@@ -178,6 +218,9 @@ class TahrirDatabase(object):
         :type expires_on: datetime.datetime
         :param expires_on: When this invitation expires.
 
+        :type created_by: int
+        :param created_by: User ID of creator
+
         """
 
         session = scoped_session(self.session_maker)
@@ -187,11 +230,13 @@ class TahrirDatabase(object):
 
         created_on = created_on or datetime.now()
         expires_on = expires_on or (created_on + timedelta(hours=1))
+        created_by = created_by or "1" # This should be fine
 
         invitation = Invitation(
             created_on=created_on,
             expires_on=expires_on,
-            badge_id=badge_id
+            badge_id=badge_id,
+            created_by=created_by,
         )
         session.add(invitation)
         session.commit()
@@ -271,6 +316,14 @@ class TahrirDatabase(object):
         session = scoped_session(self.session_maker)
         return session.query(Issuer)\
                 .filter_by(name=name, origin=origin).one().id
+    
+    def get_all_assertions(self):
+        """
+        Get all assertions in the db.
+        """
+
+        session = scoped_session(self.session_maker)
+        return session.query(Assertion)
 
     def get_assertions_by_email(self, person_email):
         """
@@ -281,8 +334,11 @@ class TahrirDatabase(object):
         """
 
         session = scoped_session(self.session_maker)
-        if self.person_exists(person_email):
-            return session.query(Assertion).filter_by(email=person_email).all()
+        if self.person_exists(email=person_email):
+            person_id = session.query(Person).filter_by(
+                                email=person_email).one().id
+            return session.query(Assertion).filter_by(
+                                            person_id=person_id).all()
         else:
             return False
 
@@ -322,7 +378,7 @@ class TahrirDatabase(object):
         session = scoped_session(self.session_maker)
         if issued_on is None:
             issued_on = datetime.now()
-        if self.person_exists(person_email) and self.badge_exists(badge_id):
+        if self.person_exists(email=person_email) and self.badge_exists(badge_id):
             new_assertion = Assertion(badge_id=badge_id,
                                       person_id=self.get_person(
                                           person_email).id,

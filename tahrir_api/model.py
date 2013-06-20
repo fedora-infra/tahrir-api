@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import pygments
 import simplejson
 import hashlib
@@ -39,6 +41,8 @@ class Issuer(DeclarativeBase):
     org = Column(Unicode(128), nullable=False)
     contact = Column(Unicode(128), nullable=False)
     badges = relationship("Badge", backref="issuer")
+    created_on = Column(DateTime, nullable=False,
+                        default=datetime.datetime.now)
 
     def __unicode__(self):
         return self.name
@@ -49,6 +53,7 @@ class Issuer(DeclarativeBase):
             name=self.name,
             org=self.org,
             contact=self.contact,
+            created_on=self.created_on,
         )
 
 
@@ -66,6 +71,9 @@ class Badge(DeclarativeBase):
     assertions = relationship("Assertion", backref="badge")
     issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
     invitations = relationship("Invitation", backref="badge")
+    created_on = Column(DateTime, nullable=False,
+                        default=datetime.datetime.now)
+    tags = Column(Unicode(128))
 
     def __unicode__(self):
         return self.name
@@ -82,6 +90,8 @@ class Badge(DeclarativeBase):
             description=self.description,
             criteria=self.criteria,
             issuer=self.issuer.__json__(),
+            created_on=self.created_on,
+            tags=self.tags,
         )
 
 
@@ -90,6 +100,9 @@ class Person(DeclarativeBase):
     id = Column(Integer, unique=True, primary_key=True)
     email = Column(Unicode(128), nullable=False, unique=True)
     assertions = relationship("Assertion", backref="person")
+    nickname = Column(Unicode(128))
+    website = Column(Unicode(128))
+    bio = Column(Unicode(140))
 
     @property
     def gravatar_link(self):
@@ -104,12 +117,15 @@ class Person(DeclarativeBase):
     def __json__(self):
         return dict(
             email=self.email,
-            id=self.id
+            id=self.id,
+            nickname=self.nickname,
+            website=self.website,
+            bio=self.bio,
         )
 
 
 def invitation_id_default(context):
-    return hashlib.md5(uuid.uuid4()).hexdigest()
+    return unicode(hashlib.md5(salt_default(context)).hexdigest())
 
 
 class Invitation(DeclarativeBase):
@@ -124,11 +140,13 @@ class Invitation(DeclarativeBase):
     __tablename__ = 'invitations'
     id = Column(
         Unicode(32), primary_key=True, unique=True,
-        default=lambda c: hashlib.md5(str(uuid.uuid4())).hexdigest()
+        default=invitation_id_default,
     )
     created_on = Column(DateTime, nullable=False)
     expires_on = Column(DateTime, nullable=False)
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
+    created_by = Column(Unicode(128), ForeignKey('persons.id'),
+            nullable=False)
 
     @property
     def expired(self):
@@ -139,19 +157,18 @@ def recipient_default(context):
     Session = sessionmaker(context.engine)()
     person_id = context.current_parameters['person_id']
     person = Session.query(Person).filter_by(id=person_id).one()
-    return hashlib.sha256(
-        person.email + context.current_parameters['salt']).hexdigest()
+    return unicode(hashlib.sha256(
+        person.email + context.current_parameters['salt']).hexdigest())
 
 
 def salt_default(context):
-    # TODO -- some how we need to get this value from the config.  :)
-    return "beefy"
+    return unicode(uuid.uuid4())
 
 
 def assertion_id_default(context):
     person_id = context.current_parameters['person_id']
     badge_id = context.current_parameters['badge_id']
-    return "%r -> %r" % (badge_id, person_id)
+    return "%s -> %r" % (badge_id, person_id)
 
 
 class Assertion(DeclarativeBase):
@@ -161,7 +178,7 @@ class Assertion(DeclarativeBase):
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
     person_id = Column(Integer, ForeignKey('persons.id'), nullable=False)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
-    issued_on = Column(DateTime)
+    issued_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
 
@@ -177,6 +194,7 @@ class Assertion(DeclarativeBase):
             recipient=self._recipient,
             salt=self.salt,
             badge=self.badge.__json__(),)
+        # Eliminate this check since I made issued_on not nullable?
         if self.issued_on:
             result['issued_on'] = self.issued_on.strftime("%Y-%m-%d")
         return result
