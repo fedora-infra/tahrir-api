@@ -173,7 +173,7 @@ class TahrirDatabase(object):
             return person_email
         return False
 
-    def add_person(self, email):
+    def add_person(self, email, nickname=None):
         """
         Add a new Person to the database
 
@@ -186,7 +186,13 @@ class TahrirDatabase(object):
 
         session = scoped_session(self.session_maker)
         if not self.person_exists(email=email):
-            new_person = Person(email=email)
+
+            # If no nickname is specified, just use the first bit of their
+            # email as a convenient default.
+            if not nickname:
+                nickname = email.split('@')[0]
+
+            new_person = Person(email=email, nickname=nickname)
             session.add(new_person)
             session.commit()
             return email
