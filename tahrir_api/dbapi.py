@@ -97,19 +97,28 @@ class TahrirDatabase(object):
             return badge_id
         return False
 
-    def person_exists(self, email=None, id=None):
+    def person_exists(self, email=None, id=None, nickname=None):
         """
         Check if a Person with this email is stored in the database
 
-        :type person_email: str
-        :param person_email: An email address to search the database for
+        :type email: str
+        :param email: An email address to search the database for
+
+        :type id: str
+        :param id: A user id to search for.
+
+        :type nickname: str
+        :param nickname: A nickname to search for.
         """
 
         session = scoped_session(self.session_maker)
+        query = session.query(Person)
         if email:
-            return session.query(Person).filter_by(email=email).count() != 0
+            return query.filter_by(email=email).count() != 0
         elif id:
-            return session.query(Person).filter_by(id=id).count() != 0
+            return query.filter_by(id=id).count() != 0
+        elif nickname:
+            return query.filter_by(nickname=nickname).count() != 0
         else:
             return False
 
