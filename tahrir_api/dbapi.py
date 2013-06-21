@@ -28,7 +28,7 @@ class TahrirDatabase(object):
 
     def badge_exists(self, badge_id):
         """
-        Check to see if tis badge already exists in the database
+        Check to see if this badge already exists in the database
 
         :type badge_id: str
         :param badge_id: The ID of a Badge
