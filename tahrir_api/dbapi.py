@@ -25,6 +25,7 @@ class TahrirDatabase(object):
 
     def __init__(self, dburi):
         self.session_maker = sessionmaker(bind=create_engine(dburi))
+        self.session = scoped_session(self.session_maker)
 
     def badge_exists(self, badge_id):
         """
@@ -34,8 +35,7 @@ class TahrirDatabase(object):
         :param badge_id: The ID of a Badge
         """
 
-        session = scoped_session(self.session_maker)
-        return session.query(Badge).filter_by(id=badge_id).count() != 0
+        return self.session.query(Badge).filter_by(id=badge_id).count() != 0
 
     def get_badge(self, badge_id):
         """
@@ -45,9 +45,8 @@ class TahrirDatabase(object):
         :param badge_id: The ID of the badge to return
         """
 
-        session = scoped_session(self.session_maker)
         if self.badge_exists(badge_id):
-            return session.query(Badge).filter_by(id=badge_id).one()
+            return self.session.query(Badge).filter_by(id=badge_id).one()
         return None
 
     def delete_badge(self, badge_id):
@@ -58,11 +57,10 @@ class TahrirDatabase(object):
         :param badge_id: ID of the badge to delete
         """
 
-        session = scoped_session(self.session_maker)
         if self.badge_exists(badge_id):
-            to_delete = session.query(Badge).filter_by(id=badge_id).one()
-            session.delete(to_delete)
-            session.commit()
+            to_delete = self.session.query(Badge).filter_by(id=badge_id).one()
+            self.session.delete(to_delete)
+            self.session.commit()
             return badge_id
         return False
 
@@ -83,7 +81,6 @@ class TahrirDatabase(object):
         :param issuer_id: The ID of the issuer who issues this Badge
         """
 
-        session = scoped_session(self.session_maker)
         badge_id = name.lower().replace(" ", "-")
 
         if not self.badge_exists(badge_id):
@@ -92,8 +89,8 @@ class TahrirDatabase(object):
                               description=desc,
                               criteria=criteria,
                               issuer_id=issuer_id)
-            session.add(new_badge)
-            session.commit()
+            self.session.add(new_badge)
+            self.session.commit()
             return badge_id
         return False
 
@@ -111,8 +108,7 @@ class TahrirDatabase(object):
         :param nickname: A nickname to search for.
         """
 
-        session = scoped_session(self.session_maker)
-        query = session.query(Person)
+        query = self.session.query(Person)
         if email:
             return query.filter_by(email=email).count() != 0
         elif id:
@@ -127,8 +123,7 @@ class TahrirDatabase(object):
         Gets all the persons in the db.
         """
 
-        session = scoped_session(self.session_maker)
-        return session.query(Person)
+        return self.session.query(Person)
 
     def get_person_email(self, person_id):
         """
@@ -148,9 +143,8 @@ class TahrirDatabase(object):
         :param person_id: The email of a Person in the database.
         """
 
-        session = scoped_session(self.session_maker)
         if self.person_exists(id=person_id):
-            return session.query(Person).filter_by(
+            return self.session.query(Person).filter_by(
                                          id=person_id).one().email
         return None
 
@@ -169,8 +163,7 @@ class TahrirDatabase(object):
         :param nickname: The nickname of a Person in the database
         """
 
-        session = scoped_session(self.session_maker)
-        query = session.query(Person)
+        query = self.session.query(Person)
 
         if person_email and self.person_exists(email=person_email):
             return query.filter_by(email=person_email).one()
@@ -189,10 +182,9 @@ class TahrirDatabase(object):
         :param person_email: Email of the person to delete
         """
 
-        session = scoped_session(self.session_maker)
         if self.person_exists(email=person_email):
-            session.delete(self.get_person(person_email))
-            session.commit()
+            self.session.delete(self.get_person(person_email))
+            self.session.commit()
             return person_email
         return False
 
@@ -207,7 +199,6 @@ class TahrirDatabase(object):
         :param person_email: This Person's email address
         """
 
-        session = scoped_session(self.session_maker)
         if not self.person_exists(email=email):
 
             # If no nickname is specified, just use the first bit of their
@@ -216,8 +207,8 @@ class TahrirDatabase(object):
                 nickname = email.split('@')[0]
 
             new_person = Person(email=email, nickname=nickname)
-            session.add(new_person)
-            session.commit()
+            self.session.add(new_person)
+            self.session.commit()
             return email
         return False
 
@@ -229,8 +220,7 @@ class TahrirDatabase(object):
         :param issuer_id: The unique ID of this issuer
         """
 
-        session = scoped_session(self.session_maker)
-        return session.query(Issuer)\
+        return self.session.query(Issuer)\
                 .filter_by(origin=origin, name=name).count() != 0
 
     def add_invitation(self, badge_id, created_on=None, expires_on=None,
@@ -252,7 +242,6 @@ class TahrirDatabase(object):
 
         """
 
-        session = scoped_session(self.session_maker)
 
         if not self.badge_exists(badge_id):
             raise ValueError("No such badge %r" % badge_id)
@@ -267,8 +256,8 @@ class TahrirDatabase(object):
             badge_id=badge_id,
             created_by=created_by,
         )
-        session.add(invitation)
-        session.commit()
+        self.session.add(invitation)
+        self.session.commit()
         return invitation.id
 
     def invitation_exists(self, invitation_id):
@@ -279,8 +268,7 @@ class TahrirDatabase(object):
         :param invitation_id: The unique ID of this invitation
         """
 
-        session = scoped_session(self.session_maker)
-        return session.query(Invitation)\
+        return self.session.query(Invitation)\
                 .filter_by(id=invitation_id).count() != 0
 
     def get_issuer(self, issuer_id):
@@ -290,8 +278,7 @@ class TahrirDatabase(object):
         :type issuer_id: int
         :param issuer_id: ID of the issuer to return
         """
-        session = scoped_session(self.session_maker)
-        query = session.query(Issuer).filter_by(id=issuer_id)
+        query = self.session.query(Issuer).filter_by(id=issuer_id)
         if query.count() > 0:
             return query.one()
         return None
@@ -304,12 +291,11 @@ class TahrirDatabase(object):
         :param issuer_id: ID of the issuer to be delete
         """
 
-        session = scoped_session(self.session_maker)
-        query = session.query(Issuer).filter_by(id=issuer_id)
+        query = self.session.query(Issuer).filter_by(id=issuer_id)
         if query.count() > 0:
             to_delete = query.one()
-            session.delete(to_delete)
-            session.commit()
+            self.session.delete(to_delete)
+            self.session.commit()
             return issuer_id
         return False
 
@@ -330,7 +316,6 @@ class TahrirDatabase(object):
         :param contact: The Contact email for this issuer
         """
 
-        session = scoped_session(self.session_maker)
         if not self.issuer_exists(origin, name):
             new_issuer = Issuer(
                     origin=origin,
@@ -338,21 +323,19 @@ class TahrirDatabase(object):
                     org=org,
                     contact=contact
                     )
-            session.add(new_issuer)
-            session.commit()
+            self.session.add(new_issuer)
+            self.session.commit()
             return new_issuer.id
 
-        session = scoped_session(self.session_maker)
-        return session.query(Issuer)\
+        return self.session.query(Issuer)\
                 .filter_by(name=name, origin=origin).one().id
-    
+
     def get_all_assertions(self):
         """
         Get all assertions in the db.
         """
 
-        session = scoped_session(self.session_maker)
-        return session.query(Assertion)
+        return self.session.query(Assertion)
 
     def get_assertions_by_email(self, person_email):
         """
@@ -362,11 +345,10 @@ class TahrirDatabase(object):
         :param person_email: Email of the person to get assertions for
         """
 
-        session = scoped_session(self.session_maker)
         if self.person_exists(email=person_email):
-            person_id = session.query(Person).filter_by(
+            person_id = self.session.query(Person).filter_by(
                                 email=person_email).one().id
-            return session.query(Assertion).filter_by(
+            return self.session.query(Assertion).filter_by(
                                             person_id=person_id).all()
         else:
             return False
@@ -382,11 +364,10 @@ class TahrirDatabase(object):
         :param email: users email
         """
 
-        session = scoped_session(self.session_maker)
         person = self.get_person(email)
         if not person:
             return False
-        return session.query(Assertion).filter_by(
+        return self.session.query(Assertion).filter_by(
                 person_id=person.id, badge_id=badge_id).count() != 0
 
     def add_assertion(self, badge_id, person_email, issued_on):
@@ -404,15 +385,17 @@ class TahrirDatabase(object):
         on
         """
 
-        session = scoped_session(self.session_maker)
         if issued_on is None:
             issued_on = datetime.now()
-        if self.person_exists(email=person_email) and self.badge_exists(badge_id):
+
+        if self.person_exists(email=person_email) and \
+           self.badge_exists(badge_id):
+
             new_assertion = Assertion(badge_id=badge_id,
                                       person_id=self.get_person(
                                           person_email).id,
                                       issued_on=issued_on)
-            session.add(new_assertion)
-            session.commit()
+            self.session.add(new_assertion)
+            self.session.commit()
             return (person_email, badge_id)
         return False
