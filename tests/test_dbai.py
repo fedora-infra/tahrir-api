@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 
 try:
     from subprocess import check_output as _check_output
+
     def check_output(cmd):
         try:
             return _check_output(cmd)
@@ -14,11 +15,14 @@ try:
             return None
 except:
     import subprocess
+
     def check_output(cmd):
         try:
-            return subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+            return subprocess.Popen(
+                cmd, stdout=subprocess.PIPE).communicate()[0]
         except:
             return None
+
 
 class TestDBInit(object):
 
@@ -40,11 +44,11 @@ class TestDBInit(object):
             1337
         )
 
-        assert self.api.badge_exists("testbadge") == True
+        assert self.api.badge_exists("testbadge") is True
 
     def test_AddPerson(self):
         self.api.add_person("test@tester.com")
-        assert self.api.person_exists("test@tester.com") == True
+        assert self.api.person_exists("test@tester.com") is True
 
     def test_AddIssuer(self):
         _id = self.api.add_issuer(
@@ -53,7 +57,7 @@ class TestDBInit(object):
             "TestOrg",
             "TestContact"
         )
-        assert self.api.issuer_exists("TestOrigin", "TestName") == True
+        assert self.api.issuer_exists("TestOrigin", "TestName") is True
 
     def test_addInvitation(self):
         badge_id = self.api.add_badge(
