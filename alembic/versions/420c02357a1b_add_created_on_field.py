@@ -15,7 +15,7 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('badges', sa.Column('created_on', sa.DateTime
+    op.add_column('badges', sa.Column('created_on', sa.DateTime,
         nullable=False)
     )
 
