@@ -14,6 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.types import (
     Integer,
+    Boolean,
 )
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -103,6 +104,9 @@ class Person(DeclarativeBase):
     nickname = Column(Unicode(128))
     website = Column(Unicode(128))
     bio = Column(Unicode(140))
+    created_on = Column(DateTime, nullable=False,
+                        default=datetime.datetime.now)
+    opt_out = Column(Boolean, nullable=False, default=False)
 
     @property
     def gravatar_link(self):
@@ -145,7 +149,7 @@ class Invitation(DeclarativeBase):
     created_on = Column(DateTime, nullable=False)
     expires_on = Column(DateTime, nullable=False)
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
-    created_by = Column(Unicode(128), ForeignKey('persons.id'),
+    created_by = Column(Integer, ForeignKey('persons.id'),
                         nullable=False)
 
     @property
