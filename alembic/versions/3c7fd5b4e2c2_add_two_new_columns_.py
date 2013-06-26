@@ -8,7 +8,7 @@ Create Date: 2013-06-26 14:46:28.361709
 
 # revision identifiers, used by Alembic.
 revision = '3c7fd5b4e2c2'
-down_revision = '24282792d72a'
+down_revision = '16943d9088cf'
 
 import tahrir_api
 from alembic import op
