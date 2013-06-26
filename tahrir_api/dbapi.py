@@ -188,15 +188,22 @@ class TahrirDatabase(object):
             return person_email
         return False
 
-    def add_person(self, email, nickname=None):
+    def add_person(self, email, nickname=None,
+                   website=None, bio=None):
         """
         Add a new Person to the database
 
-        :type person_id: int
-        :param person_id: This person's unique ID
+        :type email: str
+        :param email: This Person's email address
 
-        :type person_email: str
-        :param person_email: This Person's email address
+        :type nickname: str
+        :param nickname: This Person's nickname
+
+        :type website: str
+        :param website: This Person's website
+
+        :type website: str
+        :param bio: This Person's bio
         """
 
         if not self.person_exists(email=email):
@@ -206,9 +213,11 @@ class TahrirDatabase(object):
             if not nickname:
                 nickname = email.split('@')[0]
 
-            new_person = Person(email=email, nickname=nickname)
+            new_person = Person(email=email, nickname=nickname,
+                                website=website, bio=bio)
             self.session.add(new_person)
             self.session.commit()
+
             return email
         return False
 
