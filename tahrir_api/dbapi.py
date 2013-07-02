@@ -387,6 +387,21 @@ class TahrirDatabase(object):
         else:
             return False
 
+    def get_assertions_by_badge(self, badge_id):
+        """
+        Get all assertions of a particular badge.
+
+        :type badge_id: str
+        :param badge_id: Badge id to get assertions for.
+        """
+
+        if self.badge_exists(badge_id):
+            return self.session.query(Badge).filter_by(
+                    badge_id=badge_id).all()
+        else:
+            return False
+
+
     def assertion_exists(self, badge_id, email):
         """
         Check if an assertion exists in the database
