@@ -157,7 +157,7 @@ class TahrirDatabase(object):
 
         if self.person_exists(id=person_id):
             return self.session.query(Person).filter_by(
-                id=person_id).one().email
+                    id=person_id).one().email
         return None
 
     def get_person(self, person_email=None, id=None, nickname=None):
@@ -242,7 +242,7 @@ class TahrirDatabase(object):
         """
 
         return self.session.query(Issuer)\
-            .filter_by(origin=origin, name=name).count() != 0
+                .filter_by(origin=origin, name=name).count() != 0
 
     def add_invitation(self, badge_id, created_on=None, expires_on=None,
                        created_by=None):
@@ -289,7 +289,7 @@ class TahrirDatabase(object):
         """
 
         return self.session.query(Invitation)\
-            .filter_by(id=invitation_id).count() != 0
+                .filter_by(id=invitation_id).count() != 0
 
     def get_all_invitations(self):
         """
@@ -381,9 +381,9 @@ class TahrirDatabase(object):
 
         if self.person_exists(email=person_email):
             person_id = self.session.query(Person).filter_by(
-                email=person_email).one().id
+                    email=person_email).one().id
             return self.session.query(Assertion).filter_by(
-                person_id=person_id).all()
+                    person_id=person_id).all()
         else:
             return False
 
@@ -419,7 +419,7 @@ class TahrirDatabase(object):
             return False
 
         return self.session.query(Assertion).filter_by(
-            person_id=person.id, badge_id=badge_id).count() != 0
+                person_id=person.id, badge_id=badge_id).count() != 0
 
     def add_assertion(self, badge_id, person_email, issued_on):
         """
