@@ -35,7 +35,7 @@ class TestDBInit(object):
 
         self.api = TahrirDatabase(sqlalchemy_uri)
 
-    def test_AddBadges(self):
+    def test_add_badges(self):
         self.api.add_badge(
             "TestBadge",
             "TestImage",
@@ -46,11 +46,11 @@ class TestDBInit(object):
 
         assert self.api.badge_exists("testbadge") is True
 
-    def test_AddPerson(self):
+    def test_add_person(self):
         self.api.add_person("test@tester.com")
         assert self.api.person_exists("test@tester.com") is True
 
-    def test_AddIssuer(self):
+    def test_add_issuer(self):
         _id = self.api.add_issuer(
             "TestOrigin",
             "TestName",
@@ -59,7 +59,7 @@ class TestDBInit(object):
         )
         assert self.api.issuer_exists("TestOrigin", "TestName") is True
 
-    def test_addInvitation(self):
+    def test_add_invitation(self):
         badge_id = self.api.add_badge(
             "TestBadge",
             "TestImage",
