@@ -396,7 +396,7 @@ class TahrirDatabase(object):
         """
 
         if self.badge_exists(badge_id):
-            return self.session.query(Badge).filter_by(
+            return self.session.query(Assertion).filter_by(
                     badge_id=badge_id).all()
         else:
             return False
