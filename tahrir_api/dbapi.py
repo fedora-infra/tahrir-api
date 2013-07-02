@@ -49,6 +49,13 @@ class TahrirDatabase(object):
             return self.session.query(Badge).filter_by(id=badge_id).one()
         return None
 
+    def get_all_badges(self):
+        """
+        Get all badges in the db.
+        """
+
+        return self.session.query(Badge)
+
     def delete_badge(self, badge_id):
         """
         Delete a badge from the database
@@ -284,6 +291,13 @@ class TahrirDatabase(object):
         return self.session.query(Invitation)\
             .filter_by(id=invitation_id).count() != 0
 
+    def get_all_invitations(self):
+        """
+        Get all invitations in the db.
+        """
+
+        return self.session.query(Invitation)
+
     def get_issuer(self, issuer_id):
         """
         Return the issuer with the given ID
@@ -342,6 +356,13 @@ class TahrirDatabase(object):
 
         return self.session.query(Issuer)\
             .filter_by(name=name, origin=origin).one().id
+
+    def get_all_issuers(self):
+        """
+        Get all issuers in the db.
+        """
+
+        return self.session.query(Issuer)
 
     def get_all_assertions(self):
         """
