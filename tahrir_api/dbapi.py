@@ -348,7 +348,7 @@ class TahrirDatabase(object):
                 origin=origin,
                 name=name,
                 org=org,
-                contact=contact
+                contact=contact,
             )
             self.session.add(new_issuer)
             self.session.commit()
@@ -400,7 +400,6 @@ class TahrirDatabase(object):
                     badge_id=badge_id).all()
         else:
             return False
-
 
     def assertion_exists(self, badge_id, email):
         """
