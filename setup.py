@@ -21,7 +21,7 @@ requires = [
 ]
 
 setup(name='tahrir-api',
-      version='0.2.3',
+      version='0.2.4',
       description='An API for interacting with the Tahrir database',
       long_description=README,
       license="GPLv3+",
