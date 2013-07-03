@@ -49,6 +49,13 @@ class TahrirDatabase(object):
             return self.session.query(Badge).filter_by(id=badge_id).one()
         return None
 
+    def get_all_badges(self):
+        """
+        Get all badges in the db.
+        """
+
+        return self.session.query(Badge)
+
     def delete_badge(self, badge_id):
         """
         Delete a badge from the database
@@ -150,7 +157,7 @@ class TahrirDatabase(object):
 
         if self.person_exists(id=person_id):
             return self.session.query(Person).filter_by(
-                id=person_id).one().email
+                    id=person_id).one().email
         return None
 
     def get_person(self, person_email=None, id=None, nickname=None):
@@ -235,7 +242,7 @@ class TahrirDatabase(object):
         """
 
         return self.session.query(Issuer)\
-            .filter_by(origin=origin, name=name).count() != 0
+                .filter_by(origin=origin, name=name).count() != 0
 
     def add_invitation(self, badge_id, created_on=None, expires_on=None,
                        created_by=None):
@@ -282,7 +289,14 @@ class TahrirDatabase(object):
         """
 
         return self.session.query(Invitation)\
-            .filter_by(id=invitation_id).count() != 0
+                .filter_by(id=invitation_id).count() != 0
+
+    def get_all_invitations(self):
+        """
+        Get all invitations in the db.
+        """
+
+        return self.session.query(Invitation)
 
     def get_issuer(self, issuer_id):
         """
@@ -334,7 +348,7 @@ class TahrirDatabase(object):
                 origin=origin,
                 name=name,
                 org=org,
-                contact=contact
+                contact=contact,
             )
             self.session.add(new_issuer)
             self.session.commit()
@@ -342,6 +356,13 @@ class TahrirDatabase(object):
 
         return self.session.query(Issuer)\
             .filter_by(name=name, origin=origin).one().id
+
+    def get_all_issuers(self):
+        """
+        Get all issuers in the db.
+        """
+
+        return self.session.query(Issuer)
 
     def get_all_assertions(self):
         """
@@ -360,9 +381,23 @@ class TahrirDatabase(object):
 
         if self.person_exists(email=person_email):
             person_id = self.session.query(Person).filter_by(
-                email=person_email).one().id
+                    email=person_email).one().id
             return self.session.query(Assertion).filter_by(
-                person_id=person_id).all()
+                    person_id=person_id).all()
+        else:
+            return False
+
+    def get_assertions_by_badge(self, badge_id):
+        """
+        Get all assertions of a particular badge.
+
+        :type badge_id: str
+        :param badge_id: Badge id to get assertions for.
+        """
+
+        if self.badge_exists(badge_id):
+            return self.session.query(Assertion).filter_by(
+                    badge_id=badge_id).all()
         else:
             return False
 
@@ -383,7 +418,7 @@ class TahrirDatabase(object):
             return False
 
         return self.session.query(Assertion).filter_by(
-            person_id=person.id, badge_id=badge_id).count() != 0
+                person_id=person.id, badge_id=badge_id).count() != 0
 
     def add_assertion(self, badge_id, person_email, issued_on):
         """
