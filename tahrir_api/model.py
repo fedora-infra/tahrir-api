@@ -101,7 +101,7 @@ class Person(DeclarativeBase):
     id = Column(Integer, unique=True, primary_key=True)
     email = Column(Unicode(128), nullable=False, unique=True)
     assertions = relationship("Assertion", backref="person")
-    nickname = Column(Unicode(128))
+    nickname = Column(Unicode(128), unique=True)
     website = Column(Unicode(128))
     bio = Column(Unicode(140))
     created_on = Column(DateTime, nullable=False,
