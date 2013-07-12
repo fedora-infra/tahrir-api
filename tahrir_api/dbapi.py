@@ -35,14 +35,11 @@ class TahrirDatabase(object):
         if dburi and session:
             raise ValueError("Provide only one, either 'dburi' or 'session'")
 
+        self.session = session
+
         if dburi:
             self.session_maker = sessionmaker(bind=create_engine(dburi))
             self.session = scoped_session(self.session_maker)
-        elif session:
-            self.session = session
-        else:
-            # Impossible to get here
-            pass
 
     def badge_exists(self, badge_id):
         """
