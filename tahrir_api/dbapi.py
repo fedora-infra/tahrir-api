@@ -19,13 +19,30 @@ class TahrirDatabase(object):
     Class for talking to the Tahrir database
     It handles adding information nessicary to issue open badges
 
+    Pass one or the other of the two parameters, but not both.
+
     :type dburi: str
     :param dburi: the sqlalchemy database URI
+
+    :type session: SQLAlchemy session object
+    :param session: an already configured session object.
     """
 
-    def __init__(self, dburi):
-        self.session_maker = sessionmaker(bind=create_engine(dburi))
-        self.session = scoped_session(self.session_maker)
+    def __init__(self, dburi=None, session=None):
+        if not dburi and not session:
+            raise ValueError("You must provide either 'dburi' or 'session'")
+
+        if dburi and session:
+            raise ValueError("Provide only one, either 'dburi' or 'session'")
+
+        if dburi:
+            self.session_maker = sessionmaker(bind=create_engine(dburi))
+            self.session = scoped_session(self.session_maker)
+        elif session:
+            self.session = session
+        else:
+            # Impossible to get here
+            pass
 
     def badge_exists(self, badge_id):
         """
