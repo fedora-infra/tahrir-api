@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from utils import autocommit
 from model import Badge, Invitation, Issuer, Assertion, Person
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
     datetime,
@@ -51,7 +51,7 @@ class TahrirDatabase(object):
         :param badge_id: The ID of a Badge
         """
 
-        return self.session.query(Badge).filter_by(id=badge_id).count() != 0
+        return self.session.query(Badge).filter(func.lower(Badge.id) == func.lower(badge_id)).count() != 0
 
     def get_badge(self, badge_id):
         """
@@ -62,7 +62,7 @@ class TahrirDatabase(object):
         """
 
         if self.badge_exists(badge_id):
-            return self.session.query(Badge).filter_by(id=badge_id).one()
+            return self.session.query(Badge).filter(func.lower(Badge.id) == func.lower(badge_id)).one()
         return None
 
     def get_all_badges(self):
@@ -140,11 +140,11 @@ class TahrirDatabase(object):
 
         query = self.session.query(Person)
         if email:
-            return query.filter_by(email=email).count() != 0
+            return query.filter(func.lower(Person.email) == func.lower(email)).count() != 0
         elif id:
             return query.filter_by(id=id).count() != 0
         elif nickname:
-            return query.filter_by(nickname=nickname).count() != 0
+            return query.filter(func.lower(Person.nickname) == func.lower(nickname)).count() != 0
         else:
             return False
 
@@ -174,8 +174,8 @@ class TahrirDatabase(object):
         """
 
         if self.person_exists(id=person_id):
-            return self.session.query(Person).filter_by(
-                    id=person_id).one().email
+            return self.session.query(Person).filter(
+                    func.lower(Person.id) == func.lower(person_id)).one().email
         return None
 
     def get_person(self, person_email=None, id=None, nickname=None):
@@ -196,11 +196,11 @@ class TahrirDatabase(object):
         query = self.session.query(Person)
 
         if person_email and self.person_exists(email=person_email):
-            return query.filter_by(email=person_email).one()
+            return query.filter(func.lower(Person.email) == func.lower(person_email)).one()
         elif id and self.person_exists(id=id):
             return query.filter_by(id=id).one()
         elif nickname and self.person_exists(nickname=nickname):
-            return query.filter_by(nickname=nickname).one()
+            return query.filter(func.lower(Person.nickname) == func.lower(nickname)).one()
         else:
             return None
 
