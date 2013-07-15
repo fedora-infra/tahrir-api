@@ -328,6 +328,18 @@ class TahrirDatabase(object):
 
         return self.session.query(Invitation)
 
+    def get_invitations(self, issuer_id):
+        """
+        Get invitations created by a particular issuer.
+
+        :type issuer_id: str
+        :param issuer_id: The issuer ID for which inviations
+                          will be retrieved.
+        """
+
+        return self.session.query(Invitation)\
+                .filter_by(created_by=issuer_id).all()
+
     def get_issuer(self, issuer_id):
         """
         Return the issuer with the given ID
