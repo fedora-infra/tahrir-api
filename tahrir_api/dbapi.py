@@ -328,6 +328,20 @@ class TahrirDatabase(object):
 
         return self.session.query(Invitation)
 
+    def get_invitation(self, invitation_id):
+        """
+        Get invitation by an invitation id.
+
+        :type invitation_id: str
+        :param invitation_id: The unique ID of this invitation
+        """
+
+        if self.invitation_exists(invitation_id):
+            return self.session.query(Invitation)\
+                    .filter_by(id=invitation_id).one()
+        else:
+            return False
+
     def get_invitations(self, person_id):
         """
         Get invitations created by a particular person.
