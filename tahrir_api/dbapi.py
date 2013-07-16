@@ -92,7 +92,7 @@ class TahrirDatabase(object):
 
     @autocommit
     def add_badge(self, name, image, desc, criteria, issuer_id,
-                  tags=None):
+                  tags=None, badge_id=None):
         """
         Add a new badge to the database
 
@@ -112,7 +112,14 @@ class TahrirDatabase(object):
         :param tags: Comma-delimited list of badge tags.
         """
 
-        badge_id = name.lower().replace(" ", "-")
+        if not badge_id:
+            badge_id = name.lower().replace(" ", "-")
+
+            bad = ['"', "'", '(', ')', '*', '&']
+            replacements = dict(zip(bad, [''] * len(bad)))
+
+            for a, b in replacements.items():
+                badge_id = badge_id.replace(a, b)
 
         if not self.badge_exists(badge_id):
             new_badge = Badge(name=name,
@@ -123,8 +130,7 @@ class TahrirDatabase(object):
                               tags=tags)
             self.session.add(new_badge)
             self.session.flush()
-            return badge_id
-        return False
+        return badge_id
 
     def person_exists(self, email=None, id=None, nickname=None):
         """
