@@ -455,7 +455,8 @@ class TahrirDatabase(object):
 
         if self.badge_exists(badge_id):
             return self.session.query(Assertion).filter(
-                    func.lower(badge_id) == func.lower(badge_id)).all()
+                    func.lower(Assertion.badge_id) ==\
+                            func.lower(badge_id)).all()
         else:
             return False
 
