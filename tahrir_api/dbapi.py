@@ -5,8 +5,9 @@
 
 from __future__ import unicode_literals
 
+from utils import autocommit
 from model import Badge, Invitation, Issuer, Assertion, Person
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
     datetime,
@@ -19,13 +20,28 @@ class TahrirDatabase(object):
     Class for talking to the Tahrir database
     It handles adding information nessicary to issue open badges
 
+    Pass one or the other of the two parameters, but not both.
+
     :type dburi: str
     :param dburi: the sqlalchemy database URI
+
+    :type session: SQLAlchemy session object
+    :param session: an already configured session object.
     """
 
-    def __init__(self, dburi):
-        self.session_maker = sessionmaker(bind=create_engine(dburi))
-        self.session = scoped_session(self.session_maker)
+    def __init__(self, dburi=None, session=None, autocommit=True):
+        if not dburi and not session:
+            raise ValueError("You must provide either 'dburi' or 'session'")
+
+        if dburi and session:
+            raise ValueError("Provide only one, either 'dburi' or 'session'")
+
+        self.autocommit = autocommit
+        self.session = session
+
+        if dburi:
+            self.session_maker = sessionmaker(bind=create_engine(dburi))
+            self.session = scoped_session(self.session_maker)
 
     def badge_exists(self, badge_id):
         """
@@ -35,7 +51,8 @@ class TahrirDatabase(object):
         :param badge_id: The ID of a Badge
         """
 
-        return self.session.query(Badge).filter_by(id=badge_id).count() != 0
+        return self.session.query(Badge).filter(
+                func.lower(Badge.id) == func.lower(badge_id)).count() != 0
 
     def get_badge(self, badge_id):
         """
@@ -46,7 +63,8 @@ class TahrirDatabase(object):
         """
 
         if self.badge_exists(badge_id):
-            return self.session.query(Badge).filter_by(id=badge_id).one()
+            return self.session.query(Badge).filter(
+                    func.lower(Badge.id) == func.lower(badge_id)).one()
         return None
 
     def get_all_badges(self):
@@ -56,6 +74,7 @@ class TahrirDatabase(object):
 
         return self.session.query(Badge)
 
+    @autocommit
     def delete_badge(self, badge_id):
         """
         Delete a badge from the database
@@ -67,10 +86,11 @@ class TahrirDatabase(object):
         if self.badge_exists(badge_id):
             to_delete = self.session.query(Badge).filter_by(id=badge_id).one()
             self.session.delete(to_delete)
-            self.session.commit()
+            self.session.flush()
             return badge_id
         return False
 
+    @autocommit
     def add_badge(self, name, image, desc, criteria, issuer_id,
                   tags=None):
         """
@@ -102,7 +122,7 @@ class TahrirDatabase(object):
                               issuer_id=issuer_id,
                               tags=tags)
             self.session.add(new_badge)
-            self.session.commit()
+            self.session.flush()
             return badge_id
         return False
 
@@ -122,11 +142,14 @@ class TahrirDatabase(object):
 
         query = self.session.query(Person)
         if email:
-            return query.filter_by(email=email).count() != 0
+            return query.filter(
+                    func.lower(Person.email) == func.lower(email)).count() != 0
         elif id:
             return query.filter_by(id=id).count() != 0
         elif nickname:
-            return query.filter_by(nickname=nickname).count() != 0
+            return query.filter(
+                    func.lower(Person.nickname) == func.lower(
+                             nickname)).count() != 0
         else:
             return False
 
@@ -156,8 +179,8 @@ class TahrirDatabase(object):
         """
 
         if self.person_exists(id=person_id):
-            return self.session.query(Person).filter_by(
-                    id=person_id).one().email
+            return self.session.query(Person).filter(
+                    func.lower(Person.id) == func.lower(person_id)).one().email
         return None
 
     def get_person(self, person_email=None, id=None, nickname=None):
@@ -178,14 +201,19 @@ class TahrirDatabase(object):
         query = self.session.query(Person)
 
         if person_email and self.person_exists(email=person_email):
-            return query.filter_by(email=person_email).one()
+            return query.filter(
+                    func.lower(Person.email) == \
+                            func.lower(person_email)).one()
         elif id and self.person_exists(id=id):
             return query.filter_by(id=id).one()
         elif nickname and self.person_exists(nickname=nickname):
-            return query.filter_by(nickname=nickname).one()
+            return query.filter(
+                    func.lower(Person.nickname) == \
+                            func.lower(nickname)).one()
         else:
             return None
 
+    @autocommit
     def delete_person(self, person_email):
         """
         Delete a person with the given email
@@ -196,10 +224,11 @@ class TahrirDatabase(object):
 
         if self.person_exists(email=person_email):
             self.session.delete(self.get_person(person_email))
-            self.session.commit()
+            self.session.flush()
             return person_email
         return False
 
+    @autocommit
     def add_person(self, email, nickname=None,
                    website=None, bio=None):
         """
@@ -228,7 +257,7 @@ class TahrirDatabase(object):
             new_person = Person(email=email, nickname=nickname,
                                 website=website, bio=bio)
             self.session.add(new_person)
-            self.session.commit()
+            self.session.flush()
 
             return email
         return False
@@ -244,6 +273,7 @@ class TahrirDatabase(object):
         return self.session.query(Issuer)\
                 .filter_by(origin=origin, name=name).count() != 0
 
+    @autocommit
     def add_invitation(self, badge_id, created_on=None, expires_on=None,
                        created_by=None):
         """
@@ -277,7 +307,7 @@ class TahrirDatabase(object):
             created_by=created_by,
         )
         self.session.add(invitation)
-        self.session.commit()
+        self.session.flush()
         return invitation.id
 
     def invitation_exists(self, invitation_id):
@@ -298,6 +328,18 @@ class TahrirDatabase(object):
 
         return self.session.query(Invitation)
 
+    def get_invitations(self, person_id):
+        """
+        Get invitations created by a particular person.
+
+        :type issuer_id: str
+        :param issuer_id: The person ID for which inviations
+                          will be retrieved.
+        """
+
+        return self.session.query(Invitation)\
+                .filter_by(created_by=person_id).all()
+
     def get_issuer(self, issuer_id):
         """
         Return the issuer with the given ID
@@ -310,6 +352,7 @@ class TahrirDatabase(object):
             return query.one()
         return None
 
+    @autocommit
     def delete_issuer(self, issuer_id):
         """
         Delete an issuer with the given ID
@@ -322,10 +365,11 @@ class TahrirDatabase(object):
         if query.count() > 0:
             to_delete = query.one()
             self.session.delete(to_delete)
-            self.session.commit()
+            self.session.flush()
             return issuer_id
         return False
 
+    @autocommit
     def add_issuer(self, origin, name, org, contact):
         """
         Add a new issuer to the Database
@@ -351,7 +395,7 @@ class TahrirDatabase(object):
                 contact=contact,
             )
             self.session.add(new_issuer)
-            self.session.commit()
+            self.session.flush()
             return new_issuer.id
 
         return self.session.query(Issuer)\
@@ -396,8 +440,8 @@ class TahrirDatabase(object):
         """
 
         if self.badge_exists(badge_id):
-            return self.session.query(Assertion).filter_by(
-                    badge_id=badge_id).all()
+            return self.session.query(Assertion).filter(
+                    func.lower(badge_id) == func.lower(badge_id)).all()
         else:
             return False
 
@@ -420,6 +464,7 @@ class TahrirDatabase(object):
         return self.session.query(Assertion).filter_by(
                 person_id=person.id, badge_id=badge_id).count() != 0
 
+    @autocommit
     def add_assertion(self, badge_id, person_email, issued_on):
         """
         Add an assertion (award a badge) to the database
@@ -446,6 +491,6 @@ class TahrirDatabase(object):
                                           person_email).id,
                                       issued_on=issued_on)
             self.session.add(new_assertion)
-            self.session.commit()
+            self.session.flush()
             return (person_email, badge_id)
         return False
