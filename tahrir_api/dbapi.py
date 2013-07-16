@@ -67,6 +67,27 @@ class TahrirDatabase(object):
                     func.lower(Badge.id) == func.lower(badge_id)).one()
         return None
 
+    def get_badges_from_tags(self, tags, match_all=False):
+        """
+        Return badges matching tags.
+
+        :type tags: list
+        :param tags: A list of string badge tags
+        
+        :type match_all: boolean
+        :param match_all: Returned badges must have all tags in list
+        """
+
+        if match_all:
+            # Return badges matching all tags
+            #self.session.query(Badge).filter(
+            #        func.lower(Badge.tags)
+            pass
+        else:
+            # Return badges matching any of the tags
+            pass
+            
+
     def get_all_badges(self):
         """
         Get all badges in the db.
