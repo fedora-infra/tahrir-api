@@ -122,7 +122,8 @@ class TahrirDatabase(object):
                 badge_id = badge_id.replace(a, b)
 
         if not self.badge_exists(badge_id):
-            new_badge = Badge(name=name,
+            new_badge = Badge(id=badge_id,
+                              name=name,
                               image=image,
                               description=desc,
                               criteria=criteria,
