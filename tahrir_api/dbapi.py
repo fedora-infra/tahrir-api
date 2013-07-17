@@ -92,7 +92,7 @@ class TahrirDatabase(object):
 
     @autocommit
     def add_badge(self, name, image, desc, criteria, issuer_id,
-                  tags=None):
+                  tags=None, badge_id=None):
         """
         Add a new badge to the database
 
@@ -112,10 +112,18 @@ class TahrirDatabase(object):
         :param tags: Comma-delimited list of badge tags.
         """
 
-        badge_id = name.lower().replace(" ", "-")
+        if not badge_id:
+            badge_id = name.lower().replace(" ", "-")
+
+            bad = ['"', "'", '(', ')', '*', '&']
+            replacements = dict(zip(bad, [''] * len(bad)))
+
+            for a, b in replacements.items():
+                badge_id = badge_id.replace(a, b)
 
         if not self.badge_exists(badge_id):
-            new_badge = Badge(name=name,
+            new_badge = Badge(id=badge_id,
+                              name=name,
                               image=image,
                               description=desc,
                               criteria=criteria,
@@ -123,8 +131,7 @@ class TahrirDatabase(object):
                               tags=tags)
             self.session.add(new_badge)
             self.session.flush()
-            return badge_id
-        return False
+        return badge_id
 
     def person_exists(self, email=None, id=None, nickname=None):
         """
@@ -328,6 +335,20 @@ class TahrirDatabase(object):
 
         return self.session.query(Invitation)
 
+    def get_invitation(self, invitation_id):
+        """
+        Get invitation by an invitation id.
+
+        :type invitation_id: str
+        :param invitation_id: The unique ID of this invitation
+        """
+
+        if self.invitation_exists(invitation_id):
+            return self.session.query(Invitation)\
+                    .filter_by(id=invitation_id).one()
+        else:
+            return False
+
     def get_invitations(self, person_id):
         """
         Get invitations created by a particular person.
@@ -441,7 +462,8 @@ class TahrirDatabase(object):
 
         if self.badge_exists(badge_id):
             return self.session.query(Assertion).filter(
-                    func.lower(badge_id) == func.lower(badge_id)).all()
+                    func.lower(Assertion.badge_id) ==\
+                            func.lower(badge_id)).all()
         else:
             return False
 
