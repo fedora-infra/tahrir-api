@@ -82,17 +82,16 @@ class TahrirDatabase(object):
 
         if match_all:
             # Return badges matching all tags
-            #badges.extend(self.session.query(Badge).filter(
-            #              func.lower(Badge.tags).contains(
-            pass
-
+            f = func.lower(Badge.tags)
+            for tag in tags:
+                f = f.contains(str(tag).lower())
+            badges.extend(self.session.query(Badge)).filter(f).all()
         else:
             # Return badges matching any of the tags
             for tag in tags:
                 badges.extend(self.session.query(Badge).filter(
                               func.lower(Badge.tags).contains(
                               str(tag).lower())).all())
-
 
         return badges
 
