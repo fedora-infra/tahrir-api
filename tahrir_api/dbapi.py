@@ -73,20 +73,28 @@ class TahrirDatabase(object):
 
         :type tags: list
         :param tags: A list of string badge tags
-        
+
         :type match_all: boolean
         :param match_all: Returned badges must have all tags in list
         """
 
+        badges = list()
+
         if match_all:
             # Return badges matching all tags
-            #self.session.query(Badge).filter(
-            #        func.lower(Badge.tags)
+            #badges.extend(self.session.query(Badge).filter(
+            #              func.lower(Badge.tags).contains(
             pass
+
         else:
             # Return badges matching any of the tags
-            pass
-            
+            for tag in tags:
+                badges.extend(self.session.query(Badge).filter(
+                              func.lower(Badge.tags).contains(
+                              str(tag).lower())).all())
+
+
+        return badges
 
     def get_all_badges(self):
         """
