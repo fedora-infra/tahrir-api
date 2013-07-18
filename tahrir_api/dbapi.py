@@ -85,7 +85,7 @@ class TahrirDatabase(object):
             f = func.lower(Badge.tags)
             for tag in tags:
                 f = f.contains(str(tag).lower())
-            badges.extend(self.session.query(Badge)).filter(f).all()
+            badges.extend(self.session.query(Badge).filter(f).all())
         else:
             # Return badges matching any of the tags
             for tag in tags:
