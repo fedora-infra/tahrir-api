@@ -5,6 +5,7 @@ import simplejson
 import hashlib
 import uuid
 import datetime
+import time
 
 from sqlalchemy import (
     Column,
@@ -54,7 +55,7 @@ class Issuer(DeclarativeBase):
             name=self.name,
             org=self.org,
             contact=self.contact,
-            created_on=self.created_on,
+            created_on=time.mktime(self.created_on.timetuple()),
         )
 
 
@@ -91,7 +92,7 @@ class Badge(DeclarativeBase):
             description=self.description,
             criteria=self.criteria,
             issuer=self.issuer.__json__(),
-            created_on=self.created_on,
+            created_on=time.mktime(self.created_on.timetuple()),
             tags=self.tags,
         )
 
