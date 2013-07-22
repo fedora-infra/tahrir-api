@@ -93,7 +93,13 @@ class TahrirDatabase(object):
                               func.lower(Badge.tags).contains(
                               str(tag).lower())).all())
 
-        return badges
+        # Eliminate any duplicates.
+        unique_badges = list()
+        for badge in badges:
+            if badge not in unique_badges:
+                unique_badges.append(badge)
+
+        return unique_badges
 
     def get_all_badges(self):
         """

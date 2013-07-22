@@ -92,5 +92,53 @@ class TestDBInit(object):
         assertion_id = self.api.add_assertion(badge_id, email, None)
         assert self.api.assertion_exists(badge_id, email)
 
+    def test_get_badges_from_tags(self):
+        issuer_id = self.api.add_issuer(
+            "TestOrigin",
+            "TestName",
+            "TestOrg",
+            "TestContact"
+        )
+
+        # Badge tagged with "test"
+        self.api.add_badge(
+            "TestBadgeA",
+            "TestImage",
+            "A test badge for doing unit tests",
+            "TestCriteria",
+            issuer_id,
+            tags="test"
+        )
+
+        # Badge tagged with "tester"
+        self.api.add_badge(
+            "TestBadgeB",
+            "TestImage",
+            "A second test badge for doing unit tests",
+            "TestCriteria",
+            issuer_id,
+            tags="tester"
+        )
+
+        # Badge tagged with both "test" and "tester"
+        self.api.add_badge(
+            "TestBadgeC",
+            "TestImage",
+            "A third test badge for doing unit tests",
+            "TestCriteria",
+            issuer_id,
+            tags="test, tester"
+        )
+
+        tags = ['test', 'tester']
+        badges_any = self.api.get_badges_from_tags(tags, match_all=False)
+        import q
+        q.q(len(self.api.get_all_badges().all()))
+        q.q(len(badges_any))
+        assert len(badges_any) == 3
+        badges_all = self.api.get_badges_from_tags(tags, match_all=True)
+        q.q(len(badges_all))
+        #assert len(badges_all) == 1
+
     def tearDown(self):
         check_output(['rm', 'testdb.db'])
