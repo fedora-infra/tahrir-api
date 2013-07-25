@@ -18,7 +18,7 @@ from datetime import (
 class TahrirDatabase(object):
     """
     Class for talking to the Tahrir database
-    It handles adding information nessicary to issue open badges
+    It handles adding information necessary to issue open badges
 
     Pass one or the other of the two parameters, but not both.
 
