@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from utils import autocommit
 from model import Badge, Invitation, Issuer, Assertion, Person
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, and_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
     datetime,
@@ -82,10 +82,10 @@ class TahrirDatabase(object):
 
         if match_all:
             # Return badges matching all tags
-            f = func.lower(Badge.tags)
-            for tag in tags:
-                f = f.contains(str(tag).lower())
-            badges.extend(self.session.query(Badge).filter(f).all())
+            # ... by doing argument-expansion on a list comprehension
+            badges.extend(self.session.query(Badge).filter(and_(*[
+                func.lower(Badge.tags).contains(str(tag).lower())
+                for tag in tags])))
         else:
             # Return badges matching any of the tags
             for tag in tags:
