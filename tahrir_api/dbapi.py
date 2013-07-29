@@ -194,6 +194,18 @@ class TahrirDatabase(object):
         else:
             return False
 
+    def person_opted_out(self, email=None, id=None, nickname=None):
+        """ Returns true if a given person has opted out of tahrir. """
+
+        person = self.get_person(email, id, nickname)
+
+        # If they don't exist, then they haven't opted out.
+        if not person:
+            return False
+
+        # Otherwise, return whatever value they have in the DB.
+        return person.opt_out
+
     def get_all_persons(self):
         """
         Gets all the persons in the db.
