@@ -160,7 +160,7 @@ class TahrirDatabase(object):
             # comma at the end. The tags view in Tahrir
             # depends on that comma when matching all
             # tags.
-            if not tags.endswith(','):
+            if tags and not tags.endswith(','):
                 tags = tags + ','
 
             # Actually add the badge.
