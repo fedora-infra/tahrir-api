@@ -132,13 +132,9 @@ class TestDBInit(object):
 
         tags = ['test', 'tester']
         badges_any = self.api.get_badges_from_tags(tags, match_all=False)
-        import q
-        q.q(len(self.api.get_all_badges().all()))
-        q.q(len(badges_any))
         assert len(badges_any) == 3
         badges_all = self.api.get_badges_from_tags(tags, match_all=True)
-        q.q(len(badges_all))
-        #assert len(badges_all) == 1
+        assert len(badges_all) == 1
 
     def tearDown(self):
         check_output(['rm', 'testdb.db'])
