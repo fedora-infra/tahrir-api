@@ -156,6 +156,14 @@ class TahrirDatabase(object):
                 badge_id = badge_id.replace(a, b)
 
         if not self.badge_exists(badge_id):
+            # Make sure the tags string has a trailing
+            # comma at the end. The tags view in Tahrir
+            # depends on that comma when matching all
+            # tags.
+            if not tags.endswith(','):
+                tags = tags + ','
+
+            # Actually add the badge.
             new_badge = Badge(id=badge_id,
                               name=name,
                               image=image,
