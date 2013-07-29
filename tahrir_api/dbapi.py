@@ -84,14 +84,14 @@ class TahrirDatabase(object):
             # Return badges matching all tags
             # ... by doing argument-expansion on a list comprehension
             badges.extend(self.session.query(Badge).filter(and_(*[
-                func.lower(Badge.tags).contains(str(tag).lower())
+                func.lower(Badge.tags).contains(str(tag + ',').lower())
                 for tag in tags])))
         else:
             # Return badges matching any of the tags
             for tag in tags:
                 badges.extend(self.session.query(Badge).filter(
                               func.lower(Badge.tags).contains(
-                              str(tag).lower())).all())
+                              str(tag + ',').lower())).all())
 
         # Eliminate any duplicates.
         unique_badges = list()
