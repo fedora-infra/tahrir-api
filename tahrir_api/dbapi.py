@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from utils import autocommit
 from model import Badge, Invitation, Issuer, Assertion, Person
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, and_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
     datetime,
@@ -18,7 +18,7 @@ from datetime import (
 class TahrirDatabase(object):
     """
     Class for talking to the Tahrir database
-    It handles adding information nessicary to issue open badges
+    It handles adding information necessary to issue open badges
 
     Pass one or the other of the two parameters, but not both.
 
@@ -66,6 +66,40 @@ class TahrirDatabase(object):
             return self.session.query(Badge).filter(
                     func.lower(Badge.id) == func.lower(badge_id)).one()
         return None
+
+    def get_badges_from_tags(self, tags, match_all=False):
+        """
+        Return badges matching tags.
+
+        :type tags: list
+        :param tags: A list of string badge tags
+
+        :type match_all: boolean
+        :param match_all: Returned badges must have all tags in list
+        """
+
+        badges = list()
+
+        if match_all:
+            # Return badges matching all tags
+            # ... by doing argument-expansion on a list comprehension
+            badges.extend(self.session.query(Badge).filter(and_(*[
+                func.lower(Badge.tags).contains(str(tag + ',').lower())
+                for tag in tags])))
+        else:
+            # Return badges matching any of the tags
+            for tag in tags:
+                badges.extend(self.session.query(Badge).filter(
+                              func.lower(Badge.tags).contains(
+                              str(tag + ',').lower())).all())
+
+        # Eliminate any duplicates.
+        unique_badges = list()
+        for badge in badges:
+            if badge not in unique_badges:
+                unique_badges.append(badge)
+
+        return unique_badges
 
     def get_all_badges(self):
         """
@@ -122,6 +156,14 @@ class TahrirDatabase(object):
                 badge_id = badge_id.replace(a, b)
 
         if not self.badge_exists(badge_id):
+            # Make sure the tags string has a trailing
+            # comma at the end. The tags view in Tahrir
+            # depends on that comma when matching all
+            # tags.
+            if tags and not tags.endswith(','):
+                tags = tags + ','
+
+            # Actually add the badge.
             new_badge = Badge(id=badge_id,
                               name=name,
                               image=image,
@@ -159,6 +201,18 @@ class TahrirDatabase(object):
                              nickname)).count() != 0
         else:
             return False
+
+    def person_opted_out(self, email=None, id=None, nickname=None):
+        """ Returns true if a given person has opted out of tahrir. """
+
+        person = self.get_person(email, id, nickname)
+
+        # If they don't exist, then they haven't opted out.
+        if not person:
+            return False
+
+        # Otherwise, return whatever value they have in the DB.
+        return person.opt_out
 
     def get_all_persons(self):
         """
