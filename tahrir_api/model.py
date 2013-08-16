@@ -108,6 +108,10 @@ class Person(DeclarativeBase):
     created_on = Column(DateTime, nullable=False,
                         default=datetime.datetime.now)
     opt_out = Column(Boolean, nullable=False, default=False)
+    # An integer that organizes the users by the number of
+    # badges they have ever been awarded.  A value of None
+    # indicates that they have not been ranked yet at all.
+    rank = Column(Integer, default=None)
 
     @property
     def gravatar_link(self):
