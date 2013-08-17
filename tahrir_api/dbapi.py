@@ -29,7 +29,8 @@ class TahrirDatabase(object):
     :param session: an already configured session object.
     """
 
-    def __init__(self, dburi=None, session=None, autocommit=True):
+    def __init__(self, dburi=None, session=None, autocommit=True,
+                 notification_callback=None):
         if not dburi and not session:
             raise ValueError("You must provide either 'dburi' or 'session'")
 
@@ -42,6 +43,8 @@ class TahrirDatabase(object):
         if dburi:
             self.session_maker = sessionmaker(bind=create_engine(dburi))
             self.session = scoped_session(self.session_maker)
+
+        self.notification_callback = notification_callback
 
     def badge_exists(self, badge_id):
         """
@@ -609,7 +612,15 @@ class TahrirDatabase(object):
             person_who_needs_adjusting.rank = leaderboard[person_who_needs_adjusting]['rank']
 
         self.session.flush()
-        # TODO -- publish a notification that rank has changed.
+
+        if self.notification_callback:
+            self.notification_callback(
+                topic='person.rank.update',
+                msg=dict(
+                    person=person,
+                    old_rank=old_rank,
+                )
+            )
 
     def _make_leaderboard(self):
         """ Produce a dict mapping persons to information about
