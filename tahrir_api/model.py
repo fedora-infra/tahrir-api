@@ -113,6 +113,9 @@ class Person(DeclarativeBase):
     # indicates that they have not been ranked yet at all.
     rank = Column(Integer, default=None)
 
+    def __repr__(self):
+        return "<Person: '%s <%s>'" % (self.nickname, self.email)
+
     @property
     def gravatar_link(self):
         d, s = 'mm', 24
