@@ -133,6 +133,7 @@ class Person(DeclarativeBase):
             nickname=self.nickname,
             website=self.website,
             bio=self.bio,
+            rank=self.rank,
         )
 
 
