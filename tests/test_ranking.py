@@ -48,58 +48,64 @@ class TestRanking(object):
             "TestOrg",
             "TestContact"
         )
-        badge_id_1 = self.api.add_badge(
+        self.badge_id_1 = self.api.add_badge(
             "TestBadge1",
             "TestImage",
             "A test badge for doing unit tests",
             "TestCriteria",
             issuer_id,
         )
-        badge_id_2 = self.api.add_badge(
+        self.badge_id_2 = self.api.add_badge(
             "TestBadge2",
             "TestImage",
             "A test badge for doing unit tests",
             "TestCriteria",
             issuer_id,
         )
-        badge_id_3 = self.api.add_badge(
+        self.badge_id_3 = self.api.add_badge(
             "TestBadge3",
             "TestImage",
             "A test badge for doing unit tests",
             "TestCriteria",
             issuer_id,
         )
-
-        email_1 = "test_1@tester.com"
-        person_id_1 = self.api.add_person(email_1)
-        email_2 = "test_2@tester.com"
-        person_id_2 = self.api.add_person(email_2)
-        email_3 = "test_3@tester.com"
-        person_id_3 = self.api.add_person(email_3)
-        email_4 = "test_4@tester.com"
-        person_id_4 = self.api.add_person(email_4)
-
-        self.api.add_assertion(badge_id_1, email_1, None)
-
-        self.api.add_assertion(badge_id_1, email_2, None)
-        self.api.add_assertion(badge_id_2, email_2, None)
-
-        self.api.add_assertion(badge_id_1, email_3, None)
-        self.api.add_assertion(badge_id_2, email_3, None)
-
-        self.api.add_assertion(badge_id_1, email_4, None)
-        self.api.add_assertion(badge_id_2, email_4, None)
-        self.api.add_assertion(badge_id_3, email_4, None)
-
+        self.email_1 = "test_1@tester.com"
+        person_id_1 = self.api.add_person(self.email_1)
+        self.email_2 = "test_2@tester.com"
+        person_id_2 = self.api.add_person(self.email_2)
+        self.email_3 = "test_3@tester.com"
+        person_id_3 = self.api.add_person(self.email_3)
+        self.email_4 = "test_4@tester.com"
+        person_id_4 = self.api.add_person(self.email_4)
 
     def test_ranking_simple(self):
+        self.api.add_assertion(self.badge_id_1, self.email_1, None)
+
+        self.api.add_assertion(self.badge_id_1, self.email_4, None)
+        self.api.add_assertion(self.badge_id_2, self.email_4, None)
+        self.api.add_assertion(self.badge_id_3, self.email_4, None)
+
         person1 = self.api.get_person("test_1@tester.com")
         person4 = self.api.get_person("test_4@tester.com")
-        eq_(person1.rank, 4)
+
+        eq_(person1.rank, 2)
         eq_(person4.rank, 1)
 
     def test_ranking_tie(self):
+        self.api.add_assertion(self.badge_id_1, self.email_1, None)
+
+        self.api.add_assertion(self.badge_id_1, self.email_2, None)
+        self.api.add_assertion(self.badge_id_2, self.email_2, None)
+
+        self.api.add_assertion(self.badge_id_1, self.email_3, None)
+        self.api.add_assertion(self.badge_id_2, self.email_3, None)
+
+        self.api.add_assertion(self.badge_id_1, self.email_4, None)
+        self.api.add_assertion(self.badge_id_2, self.email_4, None)
+        self.api.add_assertion(self.badge_id_3, self.email_4, None)
+
         person2 = self.api.get_person("test_2@tester.com")
         person3 = self.api.get_person("test_3@tester.com")
+
         eq_(person2.rank, 2)
         eq_(person3.rank, 3)
