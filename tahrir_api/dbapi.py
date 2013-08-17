@@ -562,11 +562,88 @@ class TahrirDatabase(object):
         if self.person_exists(email=person_email) and \
            self.badge_exists(badge_id):
 
+            person = self.get_person(person_email)
+            old_rank = person.rank
+
             new_assertion = Assertion(badge_id=badge_id,
-                                      person_id=self.get_person(
-                                          person_email).id,
+                                      person_id=person.id,
                                       issued_on=issued_on)
             self.session.add(new_assertion)
             self.session.flush()
+
+            self._adjust_ranks(person, old_rank)
+
             return (person_email, badge_id)
+
         return False
+
+    def _adjust_ranks(self, person, old_rank):
+
+        # Build a dict of Persons to some freshly calculated rank info.
+        leaderboard = self._make_leaderboard()
+
+        new_rank = leaderboard[person]['rank']
+
+        # If the person who just received a badge didn't change rank,
+        # then no one else will either.
+        if new_rank == old_rank:
+            return
+
+        # Assign
+        person.rank = new_rank
+
+        # Otherwise, get the list of people between where this person
+        # used to be ranked, and where they are ranked now.  All those
+        # people need their rank adjusted downwards.
+        query = self.session.query(Person)
+
+        # Of course, this only makes sense if they were ranked at all.
+        if old_rank:
+            query = query.filter(Person.rank <= old_rank)
+
+        query = query.filter(Person.rank >= new_rank)\
+
+        persons_who_need_adjusting = query.all()
+
+        for person_who_needs_adjusting in persons_who_need_adjusting:
+            person_who_needs_adjusting.rank = leaderboard[person_who_needs_adjusting]['rank']
+
+        self.session.flush()
+        # TODO -- publish a notification that rank has changed.
+
+    def _make_leaderboard(self):
+        """ Produce a dict mapping persons to information about
+        the number of badges they have been awarded and their
+        rank, freshly calculated.  This is relatively expensive.
+
+        Ricky Elrod originally contributed this to tahrir.
+        Moved here by Ralph Bean.
+        """
+        leaderboard = self.session\
+            .query(Person, func.count(Person.assertions))\
+            .join(Assertion)\
+            .order_by('count_1 desc')\
+            .filter(Person.opt_out == False)\
+            .group_by(Person)\
+            .all()
+
+        # Hackishly, but relatively cheaply get the rank of all users.
+        # This is:
+        # { <person object>:
+        #   {
+        #     'badges': <number of badges they have>,
+        #     'rank': <their global rank>
+        #   }
+        # }
+        user_to_rank = dict(
+            [
+                (
+                    data[0],
+                    {
+                        'badges': data[1],
+                        'rank': idx + 1
+                    }
+                ) for idx, data in enumerate(leaderboard)
+            ]
+        )
+        return user_to_rank
