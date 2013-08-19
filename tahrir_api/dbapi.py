@@ -604,7 +604,7 @@ class TahrirDatabase(object):
         if old_rank:
             query = query.filter(Person.rank <= old_rank)
 
-        query = query.filter(Person.rank >= new_rank)\
+        query = query.filter(Person.rank >= new_rank)
 
         persons_who_need_adjusting = query.all()
 
