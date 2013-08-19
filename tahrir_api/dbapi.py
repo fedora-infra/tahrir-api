@@ -624,7 +624,7 @@ class TahrirDatabase(object):
                 )
             )
 
-    def _make_leaderboard(self):
+    def _make_leaderboard(self, start=None, stop=None):
         """ Produce a dict mapping persons to information about
         the number of badges they have been awarded and their
         rank, freshly calculated.  This is relatively expensive.
@@ -632,9 +632,17 @@ class TahrirDatabase(object):
         Ricky Elrod originally contributed this to tahrir.
         Moved here by Ralph Bean.
         """
+
         leaderboard = self.session\
             .query(Person, func.count(Person.assertions))\
-            .join(Assertion)\
+            .join(Assertion)
+
+        if start and stop:
+            leaderboard = leaderboard\
+                .filter(Assertion.issued_on >= start)\
+                .filter(Assertion.issued_on <= stop)
+
+        leaderboard = leaderboard\
             .order_by('count_1 desc')\
             .filter(Person.opt_out == False)\
             .group_by(Person)\

@@ -26,6 +26,12 @@ except:
             return None
 
 
+import datetime
+now = datetime.datetime.now()
+yesterday = now - datetime.timedelta(days=1)
+one_week_ago = now - datetime.timedelta(days=7)
+one_month_ago = now - datetime.timedelta(weeks=4)
+
 class TestRanking(object):
 
     def setUp(self):
@@ -139,3 +145,27 @@ class TestRanking(object):
         # but people with no badges should still be null ranked.
         person3 = self.api.get_person("test_3@tester.com")
         eq_(person3.rank, None)
+
+    def test_ranking_with_time_limits(self):
+        self.api.add_assertion(self.badge_id_1, self.email_1, yesterday)
+
+        self.api.add_assertion(self.badge_id_1, self.email_4, yesterday)
+        self.api.add_assertion(self.badge_id_2, self.email_4, one_week_ago)
+        self.api.add_assertion(self.badge_id_3, self.email_4, one_month_ago)
+
+        person1 = self.api.get_person("test_1@tester.com")
+        person4 = self.api.get_person("test_4@tester.com")
+
+        epsilon = datetime.timedelta(hours=1)
+
+        results = self.api._make_leaderboard(yesterday - epsilon, now)
+        eq_(results[person1]['badges'], 1)
+        eq_(results[person4]['badges'], 1)
+
+        results = self.api._make_leaderboard(one_week_ago - epsilon, now)
+        eq_(results[person1]['badges'], 1)
+        eq_(results[person4]['badges'], 2)
+
+        results = self.api._make_leaderboard(one_month_ago - epsilon, now)
+        eq_(results[person1]['badges'], 1)
+        eq_(results[person4]['badges'], 3)
