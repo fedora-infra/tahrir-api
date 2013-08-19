@@ -592,24 +592,9 @@ class TahrirDatabase(object):
         if new_rank == old_rank:
             return
 
-        # Assign
-        person.rank = new_rank
-
-        # Otherwise, get the list of people between where this person
-        # used to be ranked, and where they are ranked now.  All those
-        # people need their rank adjusted downwards.
-        query = self.session.query(Person)
-
-        # Of course, this only makes sense if they were ranked at all.
-        if old_rank:
-            query = query.filter(Person.rank <= old_rank)
-
-        query = query.filter(Person.rank >= new_rank)
-
-        persons_who_need_adjusting = query.all()
-
-        for person_who_needs_adjusting in persons_who_need_adjusting:
-            person_who_needs_adjusting.rank = leaderboard[person_who_needs_adjusting]['rank']
+        # Otherwise, take our calculations and commit them to the db.
+        for person, data in leaderboard.items():
+            person.rank = data['rank']
 
         self.session.flush()
 
