@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from nose.tools import eq_
 
 from tahrir_api.dbapi import TahrirDatabase
-from tahrir_api.model import DBSession, DeclarativeBase
+from tahrir_api.model import DBSession, DeclarativeBase, Assertion
 from sqlalchemy import create_engine
 
 
@@ -109,3 +109,33 @@ class TestRanking(object):
 
         eq_(person2.rank, 2)
         eq_(person3.rank, 3)
+
+    def test_ranking_preexisting(self):
+        """ Test that rank updating works for pre-existant users """
+        person1 = self.api.get_person("test_1@tester.com")
+        new_assertion1 = Assertion(
+            badge_id=self.badge_id_1,
+            person_id=person1.id,
+        )
+        self.api.session.add(new_assertion1)
+        new_assertion2 = Assertion(
+            badge_id=self.badge_id_2,
+            person_id=person1.id,
+        )
+        self.api.session.add(new_assertion2)
+        self.api.session.flush()
+
+        # For persons who existed *before* we added cached ranks, they should
+        # have a null-rank.
+        eq_(person1.rank, None)
+
+        # But once *anyone* else gets a badge, old ranks should be updated too.
+        self.api.add_assertion(self.badge_id_1, self.email_2, None)
+        eq_(person1.rank, 1)
+
+        person2 = self.api.get_person("test_2@tester.com")
+        eq_(person2.rank, 2)
+
+        # but people with no badges should still be null ranked.
+        person3 = self.api.get_person("test_3@tester.com")
+        eq_(person3.rank, None)
