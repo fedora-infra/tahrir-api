@@ -565,6 +565,7 @@ class TahrirDatabase(object):
         if self.person_exists(email=person_email) and \
            self.badge_exists(badge_id):
 
+            badge = self.get_badge(badge_id)
             person = self.get_person(person_email)
             old_rank = person.rank
 
@@ -573,6 +574,22 @@ class TahrirDatabase(object):
                                       issued_on=issued_on)
             self.session.add(new_assertion)
             self.session.flush()
+
+            if self.notification_callback:
+                self.notification_callback(
+                    topic='badge.award',
+                    msg=dict(
+                        badge=dict(
+                            name=badge.name,
+                            description=badge.description,
+                            image_url=badge.image,
+                        ),
+                        user=dict(
+                            username=person.nickname,
+                            badges_user_id=person.id,
+                        )
+                    )
+                )
 
             self._adjust_ranks(person, old_rank)
 
