@@ -149,7 +149,7 @@ class TahrirDatabase(object):
         if not badge_id:
             badge_id = name.lower().replace(" ", "-")
 
-            bad = ['"', "'", '(', ')', '*', '&', '?', '.']
+            bad = ['"', "'", '(', ')', '*', '&', '?']
             replacements = dict(zip(bad, [''] * len(bad)))
 
             for a, b in replacements.items():
