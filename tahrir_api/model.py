@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import pygments
 import simplejson
 import hashlib
@@ -108,6 +106,13 @@ class Person(DeclarativeBase):
     created_on = Column(DateTime, nullable=False,
                         default=datetime.datetime.now)
     opt_out = Column(Boolean, nullable=False, default=False)
+    # An integer that organizes the users by the number of
+    # badges they have ever been awarded.  A value of None
+    # indicates that they have not been ranked yet at all.
+    rank = Column(Integer, default=None)
+
+    def __repr__(self):
+        return "<Person: '%s <%s>'" % (self.nickname, self.email)
 
     @property
     def gravatar_link(self):
@@ -126,6 +131,7 @@ class Person(DeclarativeBase):
             nickname=self.nickname,
             website=self.website,
             bio=self.bio,
+            rank=self.rank,
         )
 
 

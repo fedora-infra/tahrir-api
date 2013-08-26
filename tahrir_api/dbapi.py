@@ -3,8 +3,6 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
-from __future__ import unicode_literals
-
 from utils import autocommit
 from model import Badge, Invitation, Issuer, Assertion, Person
 from sqlalchemy import create_engine, func, and_
@@ -29,7 +27,8 @@ class TahrirDatabase(object):
     :param session: an already configured session object.
     """
 
-    def __init__(self, dburi=None, session=None, autocommit=True):
+    def __init__(self, dburi=None, session=None, autocommit=True,
+                 notification_callback=None):
         if not dburi and not session:
             raise ValueError("You must provide either 'dburi' or 'session'")
 
@@ -42,6 +41,8 @@ class TahrirDatabase(object):
         if dburi:
             self.session_maker = sessionmaker(bind=create_engine(dburi))
             self.session = scoped_session(self.session_maker)
+
+        self.notification_callback = notification_callback
 
     def badge_exists(self, badge_id):
         """
@@ -149,7 +150,7 @@ class TahrirDatabase(object):
         if not badge_id:
             badge_id = name.lower().replace(" ", "-")
 
-            bad = ['"', "'", '(', ')', '*', '&']
+            bad = ['"', "'", '(', ')', '*', '&', '?']
             replacements = dict(zip(bad, [''] * len(bad)))
 
             for a, b in replacements.items():
@@ -562,11 +563,126 @@ class TahrirDatabase(object):
         if self.person_exists(email=person_email) and \
            self.badge_exists(badge_id):
 
+            badge = self.get_badge(badge_id)
+            person = self.get_person(person_email)
+            old_rank = person.rank
+
             new_assertion = Assertion(badge_id=badge_id,
-                                      person_id=self.get_person(
-                                          person_email).id,
+                                      person_id=person.id,
                                       issued_on=issued_on)
             self.session.add(new_assertion)
             self.session.flush()
+
+            if self.notification_callback:
+                self.notification_callback(
+                    topic='badge.award',
+                    msg=dict(
+                        badge=dict(
+                            name=badge.name,
+                            description=badge.description,
+                            image_url=badge.image,
+                        ),
+                        user=dict(
+                            username=person.nickname,
+                            badges_user_id=person.id,
+                        )
+                    )
+                )
+
+            self._adjust_ranks(person, old_rank)
+
             return (person_email, badge_id)
+
         return False
+
+    def _adjust_ranks(self, person, old_rank):
+        """ Given a person model object and the 'old' rank of that person,
+        adjust the ranks of all persons between the 'old' rank and the present
+        rank of the given person.
+
+        This is a utility function typically called when a person is awarded a
+        new badge, and their rank advances.  Since we cache rank in the
+        database, we want to also decrement the rank of all persons that the
+        given person is "passing" on the all-time leaderboard.
+        """
+
+        # Build a dict of Persons to some freshly calculated rank info.
+        leaderboard = self._make_leaderboard()
+
+        new_rank = leaderboard[person]['rank']
+
+        # If the person who just received a badge didn't change rank,
+        # then no one else will either.
+        if new_rank == old_rank:
+            return
+
+        # Otherwise, take our calculations and commit them to the db.
+        for person, data in leaderboard.items():
+            person.rank = data['rank']
+
+        self.session.flush()
+
+        if self.notification_callback:
+            self.notification_callback(
+                topic='person.rank.advance',
+                msg=dict(
+                    person=person,
+                    old_rank=old_rank,
+                )
+            )
+
+    def _make_leaderboard(self, start=None, stop=None):
+        """ Produce a dict mapping persons to information about
+        the number of badges they have been awarded and their
+        rank, freshly calculated.  This is relatively expensive.
+
+        The 'start' and 'stop' parameters are optional datetime objects.
+        If specified, the leaderboard will be calculated from badges that were
+        awarded only in the time period between 'start' and 'stop'.  Passing
+        only one of 'start' or 'stop' is meaningless -- the other value will be
+        discarded.  Passing neither value will return the "all time"
+        leaderboard.
+
+        People with no badges in the specified period are expected to have a
+        null/None rank.  They will be absent from the returned leaderboard
+        dict.
+
+        Ricky Elrod originally contributed this to tahrir.
+        Moved here by Ralph Bean.
+        """
+
+        leaderboard = self.session\
+            .query(Person, func.count(Person.assertions).label('count_1'))\
+            .join(Assertion)
+
+        if start and stop:
+            leaderboard = leaderboard\
+                .filter(Assertion.issued_on >= start)\
+                .filter(Assertion.issued_on <= stop)
+
+        leaderboard = leaderboard\
+            .order_by('count_1 desc')\
+            .filter(Person.opt_out == False)\
+            .group_by(Person)\
+            .all()
+
+        # Hackishly, but relatively cheaply get the rank of all users.
+        # This is:
+        # { <person object>:
+        #   {
+        #     'badges': <number of badges they have>,
+        #     'rank': <their global rank>
+        #   }
+        # }
+        user_to_rank = dict(
+            [
+                (
+                    data[0],
+                    {
+                        'badges': data[1],
+                        'rank': idx + 1
+                    }
+                ) for idx, data in enumerate(leaderboard)
+            ]
+        )
+        return user_to_rank
