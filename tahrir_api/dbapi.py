@@ -598,6 +598,15 @@ class TahrirDatabase(object):
         return False
 
     def _adjust_ranks(self, person, old_rank):
+        """ Given a person model object and the 'old' rank of that person,
+        adjust the ranks of all persons between the 'old' rank and the present
+        rank of the given person.
+
+        This is a utility function typically called when a person is awarded a
+        new badge, and their rank advances.  Since we cache rank in the
+        database, we want to also decrement the rank of all persons that the
+        given person is "passing" on the all-time leaderboard.
+        """
 
         # Build a dict of Persons to some freshly calculated rank info.
         leaderboard = self._make_leaderboard()
