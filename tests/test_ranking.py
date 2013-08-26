@@ -1,4 +1,4 @@
-from nose.tools import eq_, assert_in
+from nose.tools import eq_
 
 from tahrir_api.dbapi import TahrirDatabase
 from tahrir_api.model import DBSession, DeclarativeBase, Assertion
@@ -29,6 +29,13 @@ now = datetime.datetime.now()
 yesterday = now - datetime.timedelta(days=1)
 one_week_ago = now - datetime.timedelta(days=7)
 one_month_ago = now - datetime.timedelta(weeks=4)
+
+
+def assert_in(member, container):
+    """ Just like assertTrue(a in b), but with a nicer default message. """
+    if member not in container:
+        raise AssertionError('%r not found in %r' % (member, container))
+
 
 class TestRanking(object):
 
