@@ -643,6 +643,10 @@ class TahrirDatabase(object):
         discarded.  Passing neither value will return the "all time"
         leaderboard.
 
+        People with no badges in the specified period are expected to have a
+        null/None rank.  They will be absent from the returned leaderboard
+        dict.
+
         Ricky Elrod originally contributed this to tahrir.
         Moved here by Ralph Bean.
         """
