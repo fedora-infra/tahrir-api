@@ -650,7 +650,7 @@ class TahrirDatabase(object):
         """
 
         leaderboard = self.session\
-            .query(Person, func.count(Person.assertions))\
+            .query(Person, func.count(Person.assertions).label('count_1'))\
             .join(Assertion)
 
         if start and stop:
