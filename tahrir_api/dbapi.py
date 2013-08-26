@@ -3,8 +3,6 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
-from __future__ import unicode_literals
-
 from utils import autocommit
 from model import Badge, Invitation, Issuer, Assertion, Person
 from sqlalchemy import create_engine, func, and_

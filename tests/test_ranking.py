@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from nose.tools import eq_
 
 from tahrir_api.dbapi import TahrirDatabase
