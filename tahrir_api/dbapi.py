@@ -629,6 +629,13 @@ class TahrirDatabase(object):
         the number of badges they have been awarded and their
         rank, freshly calculated.  This is relatively expensive.
 
+        The 'start' and 'stop' parameters are optional datetime objects.
+        If specified, the leaderboard will be calculated from badges that were
+        awarded only in the time period between 'start' and 'stop'.  Passing
+        only one of 'start' or 'stop' is meaningless -- the other value will be
+        discarded.  Passing neither value will return the "all time"
+        leaderboard.
+
         Ricky Elrod originally contributed this to tahrir.
         Moved here by Ralph Bean.
         """
