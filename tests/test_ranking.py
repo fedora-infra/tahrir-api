@@ -1,4 +1,4 @@
-from nose.tools import eq_
+from nose.tools import eq_, assert_in
 
 from tahrir_api.dbapi import TahrirDatabase
 from tahrir_api.model import DBSession, DeclarativeBase, Assertion
@@ -111,8 +111,8 @@ class TestRanking(object):
         person2 = self.api.get_person("test_2@tester.com")
         person3 = self.api.get_person("test_3@tester.com")
 
-        eq_(person2.rank, 2)
-        eq_(person3.rank, 3)
+        assert_in(person2.rank, (2, 3))
+        assert_in(person3.rank, (2, 3))
 
     def test_ranking_preexisting(self):
         """ Test that rank updating works for pre-existant users """
