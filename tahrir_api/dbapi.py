@@ -617,8 +617,8 @@ class TahrirDatabase(object):
             return
 
         # Otherwise, take our calculations and commit them to the db.
-        for person, data in leaderboard.items():
-            person.rank = data['rank']
+        for _person, data in leaderboard.items():
+            _person.rank = data['rank']
 
         self.session.flush()
 
