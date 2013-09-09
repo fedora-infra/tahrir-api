@@ -12,6 +12,11 @@ from datetime import (
     timedelta,
 )
 
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
+
 
 class TahrirDatabase(object):
     """
@@ -674,7 +679,7 @@ class TahrirDatabase(object):
         #     'rank': <their global rank>
         #   }
         # }
-        user_to_rank = dict(
+        user_to_rank = OrderedDict(
             [
                 (
                     data[0],
