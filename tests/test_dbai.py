@@ -71,6 +71,14 @@ class TestDBInit(object):
 
         assert self.api.invitation_exists(_id)
 
+    def test_last_login(self):
+        email = "test@tester.com"
+        person_id = self.api.add_person(email)
+        person = self.api.get_person(person_id)
+        assert not person.last_login
+        self.api.note_login(nickname=person.nickname)
+        assert person.last_login
+
     def test_add_assertion(self):
         issuer_id = self.api.add_issuer(
             "TestOrigin",

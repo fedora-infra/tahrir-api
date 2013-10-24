@@ -329,6 +329,28 @@ class TahrirDatabase(object):
             return email
         return False
 
+    @autocommit
+    def note_login(self, nickname):
+        """ Make a note that a person has logged in. """
+
+        person = self.get_person(nickname=nickname)
+
+        # If this is the first time they have ever logged in, optionally
+        # publish a notification about the event.
+        if not person.last_login and self.notification_callback:
+            self.notification_callback(
+                topic='person.login.first',
+                msg=dict(
+                    user=dict(
+                        username=person.nickname,
+                        badges_user_id=person.id,
+                    )
+                )
+            )
+
+        # Finally, update the field.
+        person.last_login = datetime.utcnow()
+
     def issuer_exists(self, origin, name):
         """
         Check to see if an issuer with this ID is in the database
