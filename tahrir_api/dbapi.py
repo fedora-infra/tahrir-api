@@ -330,10 +330,10 @@ class TahrirDatabase(object):
         return False
 
     @autocommit
-    def note_login(self, nickname):
+    def note_login(self, person_email=None, id=None, nickname=None):
         """ Make a note that a person has logged in. """
 
-        person = self.get_person(nickname=nickname)
+        person = self.get_person(person_email, id, nickname)
 
         # If this is the first time they have ever logged in, optionally
         # publish a notification about the event.
