@@ -105,6 +105,7 @@ class Person(DeclarativeBase):
     bio = Column(Unicode(140))
     created_on = Column(DateTime, nullable=False,
                         default=datetime.datetime.now)
+    last_login = Column(DateTime, nullable=True, default=None)
     opt_out = Column(Boolean, nullable=False, default=False)
     # An integer that organizes the users by the number of
     # badges they have ever been awarded.  A value of None
