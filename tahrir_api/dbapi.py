@@ -267,13 +267,13 @@ class TahrirDatabase(object):
         query = self.session.query(Person)
 
         if person_email and self.person_exists(email=person_email):
-            return query.filter(func.lower(Person.email) ==
-                                func.lower(person_email)).one()
+            return query.filter(
+                func.lower(Person.email) == func.lower(person_email)).one()
         elif id and self.person_exists(id=id):
             return query.filter_by(id=id).one()
         elif nickname and self.person_exists(nickname=nickname):
-            return query.filter(func.lower(Person.nickname) ==
-                                func.lower(nickname)).one()
+            return query.filter(
+                func.lower(Person.nickname) == func.lower(nickname)).one()
         else:
             return None
 
@@ -685,7 +685,7 @@ class TahrirDatabase(object):
 
         leaderboard = leaderboard\
             .order_by('count_1 desc')\
-            .filter(not Person.opt_out)\
+            .filter(Person.opt_out == False)\
             .group_by(Person)\
             .all()
 
