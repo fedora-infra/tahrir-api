@@ -1,5 +1,6 @@
 """ Module to keep random utils. """
 
+
 def autocommit(func):
     """ A decorator that autocommits after API calls unless
     configured otherwise.
