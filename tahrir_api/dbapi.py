@@ -5,7 +5,7 @@
 
 from utils import autocommit
 from model import Badge, Invitation, Issuer, Assertion, Person
-from sqlalchemy import create_engine, func, and_
+from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
     datetime,
@@ -632,12 +632,9 @@ class TahrirDatabase(object):
         # Build a dict of Persons to some freshly calculated rank info.
         leaderboard = self._make_leaderboard()
 
-        new_rank = leaderboard[person]['rank']
-
-        # If the person who just received a badge didn't change rank,
-        # then no one else will either.
-        if new_rank == old_rank:
-            return
+        # Recalculate rank in all cases, otherwise "overtaking" won't work
+        # anymore (with rank being shared, a new badge won't change a person's
+        # own position, but needs to demote the rest).
 
         # Otherwise, take our calculations and commit them to the db.
         for _person, data in leaderboard.items():
@@ -685,7 +682,7 @@ class TahrirDatabase(object):
 
         leaderboard = leaderboard\
             .order_by('count_1 desc')\
-            .filter(Person.opt_out == False)\
+            .filter(not_(Person.opt_out))\
             .group_by(Person)\
             .all()
 
@@ -697,15 +694,23 @@ class TahrirDatabase(object):
         #     'rank': <their global rank>
         #   }
         # }
-        user_to_rank = OrderedDict(
-            [
-                (
-                    data[0],
-                    {
-                        'badges': data[1],
-                        'rank': idx + 1
-                    }
-                ) for idx, data in enumerate(leaderboard)
-            ]
-        )
+        #
+        # Tweaked so that users with the same amount of badges share rank.
+
+        user_to_rank = OrderedDict()
+
+        prev_rank, prev_badges = None, None
+
+        for idx, data in enumerate(leaderboard):
+            user, badges = data[0:2]
+            if badges == prev_badges:
+                # same amount of badges -> same rank
+                rank = prev_rank
+            else:
+                prev_rank = rank = idx + 1
+                prev_badges = badges
+            user_to_rank[user] = {
+                'badges': badges,
+                'rank': rank}
+
         return user_to_rank

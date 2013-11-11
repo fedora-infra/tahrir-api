@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from nose.tools import eq_
 
 from tahrir_api.dbapi import TahrirDatabase
@@ -115,11 +117,15 @@ class TestRanking(object):
         self.api.add_assertion(self.badge_id_2, self.email_4, None)
         self.api.add_assertion(self.badge_id_3, self.email_4, None)
 
+        person1 = self.api.get_person("test_1@tester.com")
         person2 = self.api.get_person("test_2@tester.com")
         person3 = self.api.get_person("test_3@tester.com")
+        person4 = self.api.get_person("test_4@tester.com")
 
-        assert_in(person2.rank, (2, 3))
-        assert_in(person3.rank, (2, 3))
+        eq_(person1.rank, 4)
+        eq_(person2.rank, 2)
+        eq_(person3.rank, 2)
+        eq_(person4.rank, 1)
 
     def test_ranking_preexisting(self):
         """ Test that rank updating works for pre-existant users """
