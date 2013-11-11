@@ -33,8 +33,6 @@ def upgrade():
     session.commit()
 
 
-
-
 def downgrade():
     op.drop_column(u'persons', 'opt_out')
     op.drop_column(u'persons', 'created_on')

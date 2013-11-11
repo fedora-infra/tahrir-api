@@ -15,10 +15,12 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('invitations',
-        sa.Column('created_by', sa.Unicode(128), sa.ForeignKey('persons.id'),
-            nullable=False)
-    )
+    op.add_column(
+        'invitations',
+        sa.Column(
+            'created_by', sa.Unicode(128),
+            sa.ForeignKey('persons.id'), nullable=False)
+        )
 
 
 def downgrade():
