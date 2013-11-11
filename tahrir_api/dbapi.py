@@ -5,7 +5,7 @@
 
 from utils import autocommit
 from model import Badge, Invitation, Issuer, Assertion, Person
-from sqlalchemy import create_engine, func, and_
+from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
     datetime,
@@ -682,7 +682,7 @@ class TahrirDatabase(object):
 
         leaderboard = leaderboard\
             .order_by('count_1 desc')\
-            .filter(Person.opt_out == False)\
+            .filter(not_(Person.opt_out))\
             .group_by(Person)\
             .all()
 
@@ -711,7 +711,6 @@ class TahrirDatabase(object):
                 prev_badges = badges
             user_to_rank[user] = {
                 'badges': badges,
-                'rank': rank
-                }
+                'rank': rank}
 
         return user_to_rank
