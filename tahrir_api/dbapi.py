@@ -632,12 +632,9 @@ class TahrirDatabase(object):
         # Build a dict of Persons to some freshly calculated rank info.
         leaderboard = self._make_leaderboard()
 
-        new_rank = leaderboard[person]['rank']
-
-        # If the person who just received a badge didn't change rank,
-        # then no one else will either.
-        if new_rank == old_rank:
-            return
+        # Recalculate rank in all cases, otherwise "overtaking" won't work
+        # anymore (with rank being shared, a new badge won't change a person's
+        # own position, but needs to demote the rest).
 
         # Otherwise, take our calculations and commit them to the db.
         for _person, data in leaderboard.items():
