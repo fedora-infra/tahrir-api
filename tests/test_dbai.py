@@ -33,7 +33,13 @@ class TestDBInit(object):
         DBSession.configure(bind=engine)
         DeclarativeBase.metadata.create_all(engine)
 
-        self.api = TahrirDatabase(sqlalchemy_uri)
+        self.callback_calls = []
+        self.api = TahrirDatabase(
+            sqlalchemy_uri,
+            notification_callback=self.callback)
+
+    def callback(self, *args, **kwargs):
+        self.callback_calls.append((args, kwargs))
 
     def test_add_badges(self):
         self.api.add_badge(
@@ -100,6 +106,13 @@ class TestDBInit(object):
         assertion_id = self.api.add_assertion(badge_id, email, None)
         assert self.api.assertion_exists(badge_id, email)
 
+        # Ensure that we would have published two fedmsg messages for that.
+        assert len(self.callback_calls) == 2
+
+        # Ensure that the first message had a 'badge_id' in the message.
+        assert 'badge_id' in self.callback_calls[0][1]['msg']['badge']
+
+
     def test_get_badges_from_tags(self):
         issuer_id = self.api.add_issuer(
             "TestOrigin",
@@ -146,3 +159,4 @@ class TestDBInit(object):
 
     def tearDown(self):
         check_output(['rm', 'testdb.db'])
+        self.callback_calls = []

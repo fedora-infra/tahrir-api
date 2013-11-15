@@ -604,6 +604,7 @@ class TahrirDatabase(object):
                             name=badge.name,
                             description=badge.description,
                             image_url=badge.image,
+                            badge_id=badge_id,
                         ),
                         user=dict(
                             username=person.nickname,
