@@ -31,7 +31,7 @@ if sys.version_info[0] == 2 and sys.version_info[1] <= 6:
 
 
 setup(name='tahrir-api',
-      version='0.4.1',
+      version='0.4.2',
       description='An API for interacting with the Tahrir database',
       long_description=README,
       license="GPLv3+",
