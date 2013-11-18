@@ -1,3 +1,5 @@
+__requires__ = 'SQLAlchemy>=0.7.0'
+
 import os
 import sys
 
@@ -17,7 +19,7 @@ requires = [
     'pastedeploy',
     'pygments',
     'simplejson',
-    'SQLAlchemy',
+    'SQLAlchemy>=0.7.0',
     'zope.sqlalchemy',
     'alembic'
 ]
