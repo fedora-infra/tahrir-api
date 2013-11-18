@@ -1,6 +1,25 @@
 Changelog
 =========
 
+0.4.1
+-----
+
+- PEP8 Guideline in: dbapi.py `d33ec07f4 <https://github.com/fedora-infra/tahrir-api/commit/d33ec07f43b60a5f3365ae6c50f199ccc7b644dc>`_
+- Import don't use in model.py `1a1d21149 <https://github.com/fedora-infra/tahrir-api/commit/1a1d21149f6d601145208f1356e21b5662989667>`_
+- PEP8 Guideline in: uitls.py `b9768c95a <https://github.com/fedora-infra/tahrir-api/commit/b9768c95a0dba257879cb985b5deb805a33594ae>`_
+- Add import pprint in script initializedb.py `78c40ee65 <https://github.com/fedora-infra/tahrir-api/commit/78c40ee655a192ebfa20613374721fd8c3575608>`_
+- Add again Person.opt_out == False `07376fce7 <https://github.com/fedora-infra/tahrir-api/commit/07376fce7abc622e6c4543c945b716b8a56452b2>`_
+- Merge pull request #23 from yograterol/develop `fd808bbac <https://github.com/fedora-infra/tahrir-api/commit/fd808bbac46c5eb8dfd9e38d3e67af1edfd8e1ce>`_
+- users with same amount of badges share rank `71fad32db <https://github.com/fedora-infra/tahrir-api/commit/71fad32db0a7a71c5610b150b084781b6cf05144>`_
+- fix "overtaking" when updating a person's rank `c042ce583 <https://github.com/fedora-infra/tahrir-api/commit/c042ce583dc6cbc76884346f640dd1fd4bbd8acc>`_
+- update tied rank unit tests `6d0066865 <https://github.com/fedora-infra/tahrir-api/commit/6d006686556dd1154f46fa9c36cd474887dad6f7>`_
+- fix SA unicode warning in unit tests `ffa90dff1 <https://github.com/fedora-infra/tahrir-api/commit/ffa90dff159836fb6e1b6f471bbd87a0da613df0>`_
+- appease pep8 `1a1fab0e8 <https://github.com/fedora-infra/tahrir-api/commit/1a1fab0e85e51fb48be0457002ee29dc4a3496ba>`_
+- Merge pull request #27 from nphilipp/develop `70d94bb82 <https://github.com/fedora-infra/tahrir-api/commit/70d94bb826e23ddfcad92032db772ee3ab01b396>`_
+- Send the badge id along with fedmsg. `0e5f15ae4 <https://github.com/fedora-infra/tahrir-api/commit/0e5f15ae4d359405c0a64dd350e3f3bd4c8818e7>`_
+- Tests for fedmsg badge_id. `d4ae91108 <https://github.com/fedora-infra/tahrir-api/commit/d4ae91108aba00c576919b10574d5b76ab0ca659>`_
+- Merge pull request #28 from fedora-infra/feature/badge-id-for-fedmsg `c018245c5 <https://github.com/fedora-infra/tahrir-api/commit/c018245c517a1aab1b4a4a8598a2cba3b7621e2d>`_
+
 0.4.0
 -----
 

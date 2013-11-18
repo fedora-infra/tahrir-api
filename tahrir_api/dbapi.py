@@ -5,7 +5,7 @@
 
 from utils import autocommit
 from model import Badge, Invitation, Issuer, Assertion, Person
-from sqlalchemy import create_engine, func, and_
+from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
     datetime,
@@ -58,7 +58,7 @@ class TahrirDatabase(object):
         """
 
         return self.session.query(Badge).filter(
-                func.lower(Badge.id) == func.lower(badge_id)).count() != 0
+            func.lower(Badge.id) == func.lower(badge_id)).count() != 0
 
     def get_badge(self, badge_id):
         """
@@ -70,7 +70,7 @@ class TahrirDatabase(object):
 
         if self.badge_exists(badge_id):
             return self.session.query(Badge).filter(
-                    func.lower(Badge.id) == func.lower(badge_id)).one()
+                func.lower(Badge.id) == func.lower(badge_id)).one()
         return None
 
     def get_badges_from_tags(self, tags, match_all=False):
@@ -96,8 +96,8 @@ class TahrirDatabase(object):
             # Return badges matching any of the tags
             for tag in tags:
                 badges.extend(self.session.query(Badge).filter(
-                              func.lower(Badge.tags).contains(
-                              str(tag + ',').lower())).all())
+                    func.lower(Badge.tags).contains(
+                        str(tag + ',').lower())).all())
 
         # Eliminate any duplicates.
         unique_badges = list()
@@ -198,13 +198,12 @@ class TahrirDatabase(object):
         query = self.session.query(Person)
         if email:
             return query.filter(
-                    func.lower(Person.email) == func.lower(email)).count() != 0
+                func.lower(Person.email) == func.lower(email)).count() != 0
         elif id:
             return query.filter_by(id=id).count() != 0
         elif nickname:
-            return query.filter(
-                    func.lower(Person.nickname) == func.lower(
-                             nickname)).count() != 0
+            return query.filter(func.lower(Person.nickname) == func.lower(
+                nickname)).count() != 0
         else:
             return False
 
@@ -247,7 +246,7 @@ class TahrirDatabase(object):
 
         if self.person_exists(id=person_id):
             return self.session.query(Person).filter(
-                    func.lower(Person.id) == func.lower(person_id)).one().email
+                func.lower(Person.id) == func.lower(person_id)).one().email
         return None
 
     def get_person(self, person_email=None, id=None, nickname=None):
@@ -269,14 +268,12 @@ class TahrirDatabase(object):
 
         if person_email and self.person_exists(email=person_email):
             return query.filter(
-                    func.lower(Person.email) == \
-                            func.lower(person_email)).one()
+                func.lower(Person.email) == func.lower(person_email)).one()
         elif id and self.person_exists(id=id):
             return query.filter_by(id=id).one()
         elif nickname and self.person_exists(nickname=nickname):
             return query.filter(
-                    func.lower(Person.nickname) == \
-                            func.lower(nickname)).one()
+                func.lower(Person.nickname) == func.lower(nickname)).one()
         else:
             return None
 
@@ -359,8 +356,8 @@ class TahrirDatabase(object):
         :param issuer_id: The unique ID of this issuer
         """
 
-        return self.session.query(Issuer)\
-                .filter_by(origin=origin, name=name).count() != 0
+        return self.session.query(Issuer).filter_by(
+            origin=origin, name=name).count() != 0
 
     @autocommit
     def add_invitation(self, badge_id, created_on=None, expires_on=None,
@@ -407,8 +404,8 @@ class TahrirDatabase(object):
         :param invitation_id: The unique ID of this invitation
         """
 
-        return self.session.query(Invitation)\
-                .filter_by(id=invitation_id).count() != 0
+        return self.session.query(Invitation).filter_by(
+            id=invitation_id).count() != 0
 
     def get_all_invitations(self):
         """
@@ -426,8 +423,8 @@ class TahrirDatabase(object):
         """
 
         if self.invitation_exists(invitation_id):
-            return self.session.query(Invitation)\
-                    .filter_by(id=invitation_id).one()
+            return self.session.query(Invitation).filter_by(
+                id=invitation_id).one()
         else:
             return False
 
@@ -440,8 +437,8 @@ class TahrirDatabase(object):
                           will be retrieved.
         """
 
-        return self.session.query(Invitation)\
-                .filter_by(created_by=person_id).all()
+        return self.session.query(Invitation).filter_by(
+            created_by=person_id).all()
 
     def get_issuer(self, issuer_id):
         """
@@ -528,9 +525,9 @@ class TahrirDatabase(object):
 
         if self.person_exists(email=person_email):
             person_id = self.session.query(Person).filter_by(
-                    email=person_email).one().id
+                email=person_email).one().id
             return self.session.query(Assertion).filter_by(
-                    person_id=person_id).all()
+                person_id=person_id).all()
         else:
             return False
 
@@ -544,8 +541,7 @@ class TahrirDatabase(object):
 
         if self.badge_exists(badge_id):
             return self.session.query(Assertion).filter(
-                    func.lower(Assertion.badge_id) ==\
-                            func.lower(badge_id)).all()
+                func.lower(Assertion.badge_id) == func.lower(badge_id)).all()
         else:
             return False
 
@@ -566,7 +562,7 @@ class TahrirDatabase(object):
             return False
 
         return self.session.query(Assertion).filter_by(
-                person_id=person.id, badge_id=badge_id).count() != 0
+            person_id=person.id, badge_id=badge_id).count() != 0
 
     @autocommit
     def add_assertion(self, badge_id, person_email, issued_on):
@@ -608,6 +604,7 @@ class TahrirDatabase(object):
                             name=badge.name,
                             description=badge.description,
                             image_url=badge.image,
+                            badge_id=badge_id,
                         ),
                         user=dict(
                             username=person.nickname,
@@ -636,12 +633,9 @@ class TahrirDatabase(object):
         # Build a dict of Persons to some freshly calculated rank info.
         leaderboard = self._make_leaderboard()
 
-        new_rank = leaderboard[person]['rank']
-
-        # If the person who just received a badge didn't change rank,
-        # then no one else will either.
-        if new_rank == old_rank:
-            return
+        # Recalculate rank in all cases, otherwise "overtaking" won't work
+        # anymore (with rank being shared, a new badge won't change a person's
+        # own position, but needs to demote the rest).
 
         # Otherwise, take our calculations and commit them to the db.
         for _person, data in leaderboard.items():
@@ -689,7 +683,7 @@ class TahrirDatabase(object):
 
         leaderboard = leaderboard\
             .order_by('count_1 desc')\
-            .filter(Person.opt_out == False)\
+            .filter(not_(Person.opt_out))\
             .group_by(Person)\
             .all()
 
@@ -701,15 +695,23 @@ class TahrirDatabase(object):
         #     'rank': <their global rank>
         #   }
         # }
-        user_to_rank = OrderedDict(
-            [
-                (
-                    data[0],
-                    {
-                        'badges': data[1],
-                        'rank': idx + 1
-                    }
-                ) for idx, data in enumerate(leaderboard)
-            ]
-        )
+        #
+        # Tweaked so that users with the same amount of badges share rank.
+
+        user_to_rank = OrderedDict()
+
+        prev_rank, prev_badges = None, None
+
+        for idx, data in enumerate(leaderboard):
+            user, badges = data[0:2]
+            if badges == prev_badges:
+                # same amount of badges -> same rank
+                rank = prev_rank
+            else:
+                prev_rank = rank = idx + 1
+                prev_badges = badges
+            user_to_rank[user] = {
+                'badges': badges,
+                'rank': rank}
+
         return user_to_rank

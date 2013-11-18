@@ -3,6 +3,7 @@ import datetime
 import os
 import sys
 import transaction
+import pprint
 
 from sqlalchemy import engine_from_config
 from paste.deploy import appconfig
