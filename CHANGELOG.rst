@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.4.2
+-----
+
+- Make sqlalchemy version explicit. `68e3f5822 <https://github.com/fedora-infra/tahrir-api/commit/68e3f5822b6759f12c02730277d6ca1b9683df1c>`_
+
 0.4.1
 -----
 
