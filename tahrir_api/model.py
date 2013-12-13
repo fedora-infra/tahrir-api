@@ -97,9 +97,8 @@ class Badge(DeclarativeBase):
     def authorized(self, person):
         """ Return true if a given person is authorized to admin a badge """
         for authz in self.authorizations:
-            for authorized in authz.persons:
-                if authorized == person:
-                    return True
+            if authz.person == person:
+                return True
 
         return False
 
