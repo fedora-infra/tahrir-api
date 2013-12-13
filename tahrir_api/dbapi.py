@@ -4,7 +4,7 @@
 # Description: API For interacting with the Tahrir database
 
 from utils import autocommit
-from model import Badge, Invitation, Issuer, Assertion, Person
+from model import Badge, Invitation, Issuer, Assertion, Person, Authorization
 from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
@@ -563,6 +563,33 @@ class TahrirDatabase(object):
 
         return self.session.query(Assertion).filter_by(
             person_id=person.id, badge_id=badge_id).count() != 0
+
+    @autocommit
+    def add_authorization(self, badge_id, person_email):
+        """
+        Add an authorization (allow someone to admin a certain badge)
+
+        :type badge_id: str
+        :param badge_id: ID of the badge
+
+        :type person_email: str
+        :param person_email: Email of the Person grant rights to
+        """
+
+        if self.person_exists(email=person_email) and \
+           self.badge_exists(badge_id):
+
+            badge = self.get_badge(badge_id)
+            person = self.get_person(person_email)
+
+            new_authz = Authorization(badge_id=badge_id,
+                                      person_id=person.id)
+            self.session.add(new_authz)
+            self.session.flush()
+
+            return (person_email, badge_id)
+
+        return False
 
     @autocommit
     def add_assertion(self, badge_id, person_email, issued_on):
