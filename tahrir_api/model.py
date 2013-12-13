@@ -94,6 +94,15 @@ class Badge(DeclarativeBase):
             tags=self.tags,
         )
 
+    def authorized(self, person):
+        """ Return true if a given person is authorized to admin a badge """
+        for authz in self.authorizations:
+            for authorized in authz.persons:
+                if authorized == person:
+                    return True
+
+        return False
+
 
 class Person(DeclarativeBase):
     __tablename__ = 'persons'
