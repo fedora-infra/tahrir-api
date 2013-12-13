@@ -67,6 +67,7 @@ class Badge(DeclarativeBase):
     image = Column(Unicode(128), nullable=False)
     description = Column(Unicode(128), nullable=False)
     criteria = Column(Unicode(128), nullable=False)
+    authorizations = relationship("Authorization", backref="badge")
     assertions = relationship("Assertion", backref="badge")
     issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
     invitations = relationship("Invitation", backref="badge")
@@ -98,6 +99,7 @@ class Person(DeclarativeBase):
     __tablename__ = 'persons'
     id = Column(Integer, unique=True, primary_key=True)
     email = Column(Unicode(128), nullable=False, unique=True)
+    authorizations = relationship("Authorization", backref="person")
     assertions = relationship("Assertion", backref="person")
     nickname = Column(Unicode(128), unique=True)
     website = Column(Unicode(128))
@@ -162,6 +164,13 @@ class Invitation(DeclarativeBase):
     @property
     def expired(self):
         return datetime.datetime.now() > self.expires_on
+
+
+class Authorization(DeclarativeBase):
+    __tablename__ = 'authorizations'
+    id = Column(Integer, primary_key=True)
+    badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
+    person_id = Column(Integer, ForeignKey('persons.id'), nullable=False)
 
 
 def recipient_default(context):
