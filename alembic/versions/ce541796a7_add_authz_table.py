@@ -15,7 +15,8 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.create_table('authorizations',
+    op.create_table(
+        'authorizations',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('badge_id', sa.Unicode(length=128), nullable=False),
         sa.Column('person_id', sa.Integer(), nullable=False),
