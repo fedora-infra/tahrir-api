@@ -41,7 +41,7 @@ class Issuer(DeclarativeBase):
     contact = Column(Unicode(128), nullable=False)
     badges = relationship("Badge", backref="issuer")
     created_on = Column(DateTime, nullable=False,
-                        default=datetime.datetime.now)
+                        default=datetime.datetime.utcnow)
 
     def __unicode__(self):
         return self.name
@@ -72,7 +72,7 @@ class Badge(DeclarativeBase):
     issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
     invitations = relationship("Invitation", backref="badge")
     created_on = Column(DateTime, nullable=False,
-                        default=datetime.datetime.now)
+                        default=datetime.datetime.utcnow)
     tags = Column(Unicode(128))
 
     def __unicode__(self):
@@ -113,7 +113,7 @@ class Person(DeclarativeBase):
     website = Column(Unicode(128))
     bio = Column(Unicode(140))
     created_on = Column(DateTime, nullable=False,
-                        default=datetime.datetime.now)
+                        default=datetime.datetime.utcnow)
     last_login = Column(DateTime, nullable=True, default=None)
     opt_out = Column(Boolean, nullable=False, default=False)
     # An integer that organizes the users by the number of
@@ -171,7 +171,7 @@ class Invitation(DeclarativeBase):
 
     @property
     def expired(self):
-        return datetime.datetime.now() > self.expires_on
+        return datetime.datetime.utcnow() > self.expires_on
 
 
 class Authorization(DeclarativeBase):
@@ -206,7 +206,7 @@ class Assertion(DeclarativeBase):
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
     person_id = Column(Integer, ForeignKey('persons.id'), nullable=False)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
-    issued_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
+    issued_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
 
