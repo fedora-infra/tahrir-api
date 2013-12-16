@@ -382,7 +382,7 @@ class TahrirDatabase(object):
         if not self.badge_exists(badge_id):
             raise ValueError("No such badge %r" % badge_id)
 
-        created_on = created_on or datetime.now()
+        created_on = created_on or datetime.utcnow()
         expires_on = expires_on or (created_on + timedelta(hours=1))
         created_by = created_by or "1"  # This should be fine
 
@@ -608,7 +608,7 @@ class TahrirDatabase(object):
         """
 
         if issued_on is None:
-            issued_on = datetime.now()
+            issued_on = datetime.utcnow()
 
         if self.person_exists(email=person_email) and \
            self.badge_exists(badge_id):
