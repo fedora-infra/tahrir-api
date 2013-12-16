@@ -5,6 +5,8 @@ import uuid
 import datetime
 import time
 
+import arrow
+
 from sqlalchemy import (
     Column,
     DateTime,
@@ -172,6 +174,10 @@ class Invitation(DeclarativeBase):
     @property
     def expired(self):
         return datetime.datetime.utcnow() > self.expires_on
+
+    @property
+    def expires_on_relative(self):
+        return arrow.get(self.expires_on).humanize()
 
 
 class Authorization(DeclarativeBase):
