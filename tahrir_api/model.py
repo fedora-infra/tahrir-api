@@ -5,6 +5,8 @@ import uuid
 import datetime
 import time
 
+import arrow
+
 from sqlalchemy import (
     Column,
     DateTime,
@@ -41,7 +43,7 @@ class Issuer(DeclarativeBase):
     contact = Column(Unicode(128), nullable=False)
     badges = relationship("Badge", backref="issuer")
     created_on = Column(DateTime, nullable=False,
-                        default=datetime.datetime.now)
+                        default=datetime.datetime.utcnow)
 
     def __unicode__(self):
         return self.name
@@ -67,11 +69,12 @@ class Badge(DeclarativeBase):
     image = Column(Unicode(128), nullable=False)
     description = Column(Unicode(128), nullable=False)
     criteria = Column(Unicode(128), nullable=False)
+    authorizations = relationship("Authorization", backref="badge")
     assertions = relationship("Assertion", backref="badge")
     issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
     invitations = relationship("Invitation", backref="badge")
     created_on = Column(DateTime, nullable=False,
-                        default=datetime.datetime.now)
+                        default=datetime.datetime.utcnow)
     tags = Column(Unicode(128))
 
     def __unicode__(self):
@@ -93,17 +96,26 @@ class Badge(DeclarativeBase):
             tags=self.tags,
         )
 
+    def authorized(self, person):
+        """ Return true if a given person is authorized to admin a badge """
+        for authz in self.authorizations:
+            if authz.person == person:
+                return True
+
+        return False
+
 
 class Person(DeclarativeBase):
     __tablename__ = 'persons'
     id = Column(Integer, unique=True, primary_key=True)
     email = Column(Unicode(128), nullable=False, unique=True)
+    authorizations = relationship("Authorization", backref="person")
     assertions = relationship("Assertion", backref="person")
     nickname = Column(Unicode(128), unique=True)
     website = Column(Unicode(128))
     bio = Column(Unicode(140))
     created_on = Column(DateTime, nullable=False,
-                        default=datetime.datetime.now)
+                        default=datetime.datetime.utcnow)
     last_login = Column(DateTime, nullable=True, default=None)
     opt_out = Column(Boolean, nullable=False, default=False)
     # An integer that organizes the users by the number of
@@ -161,7 +173,18 @@ class Invitation(DeclarativeBase):
 
     @property
     def expired(self):
-        return datetime.datetime.now() > self.expires_on
+        return datetime.datetime.utcnow() > self.expires_on
+
+    @property
+    def expires_on_relative(self):
+        return arrow.get(self.expires_on).humanize()
+
+
+class Authorization(DeclarativeBase):
+    __tablename__ = 'authorizations'
+    id = Column(Integer, primary_key=True)
+    badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
+    person_id = Column(Integer, ForeignKey('persons.id'), nullable=False)
 
 
 def recipient_default(context):
@@ -189,7 +212,7 @@ class Assertion(DeclarativeBase):
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
     person_id = Column(Integer, ForeignKey('persons.id'), nullable=False)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
-    issued_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
+    issued_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
 
