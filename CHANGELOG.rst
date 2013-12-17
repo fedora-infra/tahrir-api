@@ -1,6 +1,19 @@
 Changelog
 =========
 
+0.5.0
+-----
+
+- Add an authz table. `72e60c0b0 <https://github.com/fedora-infra/tahrir-api/commit/72e60c0b0d36c7b868c83d9d847068fd88bb6981>`_
+- pep8. `95b9c69f2 <https://github.com/fedora-infra/tahrir-api/commit/95b9c69f2a42e71759620655ce1b64e0e8a68cff>`_
+- Add a method for checking evaluating authorization. `c52b4589b <https://github.com/fedora-infra/tahrir-api/commit/c52b4589b278e4a88f47671fb796b68e5b18e0ac>`_
+- Add an add_authorization api func. `dd40ba9f5 <https://github.com/fedora-infra/tahrir-api/commit/dd40ba9f533eabdb05bd1fb516904a54a5a22db7>`_
+- Fix the authorized check. `d42cb2bb5 <https://github.com/fedora-infra/tahrir-api/commit/d42cb2bb5b619da07d8b17b271dc9c5162e6f4de>`_
+- Use utcnow, not tz now. `a26c2c374 <https://github.com/fedora-infra/tahrir-api/commit/a26c2c374bc0c4f21512b1f051c56def3994dec9>`_
+- Use python-arrow to return a relative date for expiration. `a6afe7bb1 <https://github.com/fedora-infra/tahrir-api/commit/a6afe7bb1412edfe1c9adb22982851d2ea607053>`_
+- Replace a few more instances of .now with .utcnow. `d9c952b10 <https://github.com/fedora-infra/tahrir-api/commit/d9c952b1006c6a7e4739772be9709685bc905b3a>`_
+- Merge pull request #29 from fedora-infra/feature/authz `12694a509 <https://github.com/fedora-infra/tahrir-api/commit/12694a509180dd76a4cf3823c46f5177ac8b7c32>`_
+
 0.4.2
 -----
 
