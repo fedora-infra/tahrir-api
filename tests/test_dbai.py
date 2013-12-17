@@ -112,7 +112,6 @@ class TestDBInit(object):
         # Ensure that the first message had a 'badge_id' in the message.
         assert 'badge_id' in self.callback_calls[0][1]['msg']['badge']
 
-
     def test_get_badges_from_tags(self):
         issuer_id = self.api.add_issuer(
             "TestOrigin",
