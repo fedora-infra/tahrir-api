@@ -361,7 +361,7 @@ class TahrirDatabase(object):
 
     @autocommit
     def add_invitation(self, badge_id, created_on=None, expires_on=None,
-                       created_by=None):
+                       created_by_email=None):
         """
         Add a new invitation to the database
 
@@ -374,8 +374,8 @@ class TahrirDatabase(object):
         :type expires_on: datetime.datetime
         :param expires_on: When this invitation expires.
 
-        :type created_by: int
-        :param created_by: User ID of creator
+        :type created_by: str
+        :param created_by_email: User email of creator
 
         """
 
@@ -384,7 +384,10 @@ class TahrirDatabase(object):
 
         created_on = created_on or datetime.utcnow()
         expires_on = expires_on or (created_on + timedelta(hours=1))
-        created_by = created_by or "1"  # This should be fine
+        if self.person_exists(email=created_by_email):
+            created_by = self.get_person(created_by_email).id
+        else:
+            created_by = "1"
 
         invitation = Invitation(
             created_on=created_on,
