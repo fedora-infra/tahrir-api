@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.5.1
+-----
+
+- Change API to be consistent in allowing email for add_invitation `26b68e1c3 <https://github.com/fedora-infra/tahrir-api/commit/26b68e1c3013ce4407fd6fc75b0a8f67d81c991e>`_
+- Merge pull request #30 from fedora-infra/feature/admin-revamp `394f605de <https://github.com/fedora-infra/tahrir-api/commit/394f605de6a1c9d7a8eeab9e4296caaf3dac0c4f>`_
+
 0.5.0
 -----
 
