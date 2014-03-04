@@ -103,8 +103,11 @@ class TestDBInit(object):
         )
         email = "test@tester.com"
         person_id = self.api.add_person(email)
-        assertion_id = self.api.add_assertion(badge_id, email, None)
+        assertion_id = self.api.add_assertion(badge_id, email, None, 'link')
         assert self.api.assertion_exists(badge_id, email)
+
+        badge = self.api.get_badge(badge_id)
+        assert badge.assertions[0].issued_for == 'link'
 
         # Ensure that we would have published two fedmsg messages for that.
         assert len(self.callback_calls) == 2

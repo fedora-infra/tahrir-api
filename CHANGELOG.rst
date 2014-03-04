@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.6.0
+-----
+
+- Add a new field to optionally track the originating event for a badge. `992b3d702 <https://github.com/fedora-infra/tahrir-api/commit/992b3d7027f8cac82ba0a4c5cdfb07bd186fa25f>`_
+- Actually check that the link got stuck in the db. `13694c6af <https://github.com/fedora-infra/tahrir-api/commit/13694c6af0ea1feb38717cb095bb99192bb4dff9>`_
+- Merge pull request #31 from fedora-infra/feature/tracking `e77a7ae74 <https://github.com/fedora-infra/tahrir-api/commit/e77a7ae74d283d9f815d0e0cbdffd82ace340fbf>`_
+
 0.5.1
 -----
 
