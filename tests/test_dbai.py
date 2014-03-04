@@ -103,7 +103,7 @@ class TestDBInit(object):
         )
         email = "test@tester.com"
         person_id = self.api.add_person(email)
-        assertion_id = self.api.add_assertion(badge_id, email, None)
+        assertion_id = self.api.add_assertion(badge_id, email, None, 'link')
         assert self.api.assertion_exists(badge_id, email)
 
         # Ensure that we would have published two fedmsg messages for that.

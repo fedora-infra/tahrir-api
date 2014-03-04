@@ -214,6 +214,9 @@ class Assertion(DeclarativeBase):
     salt = Column(Unicode(128), nullable=False, default=salt_default)
     issued_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
 
+    # An optional link back to the event that warranted the award
+    issued_for = Column(Unicode(256))
+
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
 
     def __unicode__(self):

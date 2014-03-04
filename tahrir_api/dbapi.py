@@ -595,7 +595,11 @@ class TahrirDatabase(object):
         return False
 
     @autocommit
-    def add_assertion(self, badge_id, person_email, issued_on):
+    def add_assertion(self,
+                      badge_id,
+                      person_email,
+                      issued_on,
+                      issued_for=None):
         """
         Add an assertion (award a badge) to the database
 
@@ -608,6 +612,9 @@ class TahrirDatabase(object):
         :type issued_on: DateTime
         :param issued_on: DateTime object holding the date the badge was issued
         on
+
+        :type issued_for: str
+        :param issued_for: An optional link back to the warranting event
         """
 
         if issued_on is None:
@@ -622,7 +629,8 @@ class TahrirDatabase(object):
 
             new_assertion = Assertion(badge_id=badge_id,
                                       person_id=person.id,
-                                      issued_on=issued_on)
+                                      issued_on=issued_on,
+                                      issued_for=issued_for)
             self.session.add(new_assertion)
             self.session.flush()
 
