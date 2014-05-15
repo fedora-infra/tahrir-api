@@ -46,7 +46,11 @@ def main(argv=sys.argv):
 
     global_conf = None
     if 'OPENSHIFT_APP_NAME' in os.environ:
-        template = '{OPENSHIFT_MYSQL_DB_URL}{OPENSHIFT_APP_NAME}'
+        if 'OPENSHIFT_MYSQL_DB_URL' in os.environ:
+            template = '{OPENSHIFT_MYSQL_DB_URL}{OPENSHIFT_APP_NAME}'
+        elif 'OPENSHIFT_POSTGRESQL_DB_URL' in os.environ:
+            template = '{OPENSHIFT_POSTGRESQL_DB_URL}{OPENSHIFT_APP_NAME}'
+
         global_conf = {
             'sqlalchemy.url': template.format(**os.environ)
         }
