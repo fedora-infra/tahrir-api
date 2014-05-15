@@ -43,7 +43,21 @@ def main(argv=sys.argv):
     path, section = _getpathsec(config_uri, "pyramid")
     config_name = 'config:%s' % path
     here_dir = os.getcwd()
-    settings = appconfig(config_name, name=section, relative_to=here_dir)
+
+    global_conf = None
+    if 'OPENSHIFT_APP_NAME' in os.environ:
+        if 'OPENSHIFT_MYSQL_DB_URL' in os.environ:
+            template = '{OPENSHIFT_MYSQL_DB_URL}{OPENSHIFT_APP_NAME}'
+        elif 'OPENSHIFT_POSTGRESQL_DB_URL' in os.environ:
+            template = '{OPENSHIFT_POSTGRESQL_DB_URL}{OPENSHIFT_APP_NAME}'
+
+        global_conf = {
+            'sqlalchemy.url': template.format(**os.environ)
+        }
+
+    settings = appconfig(config_name, name=section, relative_to=here_dir,
+                         global_conf=global_conf)
+
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
     DeclarativeBase.metadata.create_all(engine)

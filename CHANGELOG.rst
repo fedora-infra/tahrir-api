@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.6.1
+-----
+
+- Allow initialize_tahrir_db to be run on openshift. `2816dd57d <https://github.com/fedora-infra/tahrir-api/commit/2816dd57de8dc788958c096274decc290ece3149>`_
+- Look for OPENSHIFT_APP_NAME instead. `fbc8f8bd5 <https://github.com/fedora-infra/tahrir-api/commit/fbc8f8bd591b52201295139a99ac3a59f788774a>`_
+- Support postgres as well as mysql. `81699e3e0 <https://github.com/fedora-infra/tahrir-api/commit/81699e3e0c29bedf25cb8cdb88a990117e1f5f4e>`_
+- Merge pull request #32 from fedora-infra/feature/openshiftery `63047fba3 <https://github.com/fedora-infra/tahrir-api/commit/63047fba35da889a71b4736afe2f6c8cdcd92178>`_
+
 0.6.0
 -----
 
