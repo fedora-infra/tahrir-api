@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.7.0
+-----
+
+- Add a column to optionally associate stls with a badge. `91a8353c4 <https://github.com/fedora-infra/tahrir-api/commit/91a8353c41e7851f415062e2b52a42efafae8535>`_
+- Merge pull request #33 from fedora-infra/feature/stls `2082a782c <https://github.com/fedora-infra/tahrir-api/commit/2082a782c1b93152f04ae6eb27cdd0f5fb85a005>`_
+
 0.6.1
 -----
 
