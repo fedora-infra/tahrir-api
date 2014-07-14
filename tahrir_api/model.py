@@ -67,6 +67,7 @@ class Badge(DeclarativeBase):
     id = Column(Unicode(128), primary_key=True, default=badge_id_default)
     name = Column(Unicode(128), nullable=False, unique=True)
     image = Column(Unicode(128), nullable=False)
+    stl = Column(Unicode(128))
     description = Column(Unicode(128), nullable=False)
     criteria = Column(Unicode(128), nullable=False)
     authorizations = relationship("Authorization", backref="badge")
