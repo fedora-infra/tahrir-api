@@ -566,6 +566,25 @@ class TahrirDatabase(object):
 
         return self.session.query(Assertion).filter_by(
             person_id=person.id, badge_id=badge_id).count() != 0
+    
+    def authorization_exists(self, badge_id, email):
+        """
+        Check if an authorization exists in the database
+
+        :type badge_id: str
+        :param badge_id: ID of the badge
+
+        :type email: str
+        :param email: user's email
+        """
+
+        person = self.get_person(email)
+
+        if not person:
+            return False
+
+        return self.session.query(Authorization).filter_by(
+            person_id=person.id, badge_id=badge_id).count() != 0
 
     @autocommit
     def add_authorization(self, badge_id, person_email):
