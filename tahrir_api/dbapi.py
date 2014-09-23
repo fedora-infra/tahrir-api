@@ -3,7 +3,7 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
-from utils import autocommit
+from utils import autocommit, badge_name_to_id
 from model import Badge, Invitation, Issuer, Assertion, Person, Authorization
 from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -114,22 +114,6 @@ class TahrirDatabase(object):
 
         return self.session.query(Badge)
 
-    def badge_name_to_id(self, name):
-        """
-        Convert a badge name into a valid badge ID.
-
-        :type name: string
-        :param name: The badge name to convert to an ID
-        """
-
-        badge_id = name.lower().replace(" ", "-")
-        bad = ['"', "'", '(', ')', '*', '&', '?']
-        replacements = dict(zip(bad, [''] * len(bad)))
-        for a, b in replacements.items():
-            badge_id = badge_id.replace(a, b)
-
-        return badge_id
-
     @autocommit
     def delete_badge(self, badge_id):
         """
@@ -169,7 +153,7 @@ class TahrirDatabase(object):
         """
 
         if not badge_id:
-            badge_id = self.badge_name_to_id(name)
+            badge_id = badge_name_to_id(name)
 
         if not self.badge_exists(badge_id):
             # Make sure the tags string has a trailing
