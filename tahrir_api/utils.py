@@ -16,3 +16,20 @@ def autocommit(func):
     _wrapper.__doc__ = func.__doc__
 
     return _wrapper
+
+
+def badge_name_to_id(name):
+    """
+    Convert a badge name into a valid badge ID.
+
+    :type name: string
+    :param name: The badge name to convert to an ID
+    """
+
+    badge_id = name.lower().replace(" ", "-")
+    bad = ['"', "'", '(', ')', '*', '&', '?']
+    replacements = dict(zip(bad, [''] * len(bad)))
+    for a, b in replacements.items():
+        badge_id = badge_id.replace(a, b)
+
+    return badge_id
