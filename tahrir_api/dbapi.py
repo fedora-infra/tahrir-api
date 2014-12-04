@@ -3,7 +3,7 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
-from utils import autocommit
+from utils import autocommit, badge_name_to_id
 from model import Badge, Invitation, Issuer, Assertion, Person, Authorization
 from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -153,13 +153,7 @@ class TahrirDatabase(object):
         """
 
         if not badge_id:
-            badge_id = name.lower().replace(" ", "-")
-
-            bad = ['"', "'", '(', ')', '*', '&', '?']
-            replacements = dict(zip(bad, [''] * len(bad)))
-
-            for a, b in replacements.items():
-                badge_id = badge_id.replace(a, b)
+            badge_id = badge_name_to_id(name)
 
         if not self.badge_exists(badge_id):
             # Make sure the tags string has a trailing
@@ -565,6 +559,25 @@ class TahrirDatabase(object):
             return False
 
         return self.session.query(Assertion).filter_by(
+            person_id=person.id, badge_id=badge_id).count() != 0
+    
+    def authorization_exists(self, badge_id, email):
+        """
+        Check if an authorization exists in the database
+
+        :type badge_id: str
+        :param badge_id: ID of the badge
+
+        :type email: str
+        :param email: user's email
+        """
+
+        person = self.get_person(email)
+
+        if not person:
+            return False
+
+        return self.session.query(Authorization).filter_by(
             person_id=person.id, badge_id=badge_id).count() != 0
 
     @autocommit
