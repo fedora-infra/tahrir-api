@@ -1,5 +1,3 @@
-__requires__ = 'SQLAlchemy>=0.7.1'
-
 import os
 import sys
 

@@ -9,6 +9,7 @@ Changelog
 - add badge_name_to_id function in dbapi `f4c2e7ba9 <https://github.com/fedora-infra/tahrir-api/commit/f4c2e7ba9d6254ac13f9d9ccf18c99b2abe6137b>`_
 - let's put the badge_name_to_id function in util.py `a231489d6 <https://github.com/fedora-infra/tahrir-api/commit/a231489d6edaa8c2796462224cff0e8253db3653>`_
 - Merge pull request #35 from fedora-infra/feature/badge-name-to-id `c2ac5a07b <https://github.com/fedora-infra/tahrir-api/commit/c2ac5a07b505eb2424da84914d095474c30d79a6>`_
+- 0.7.1 `1d47ca897 <https://github.com/fedora-infra/tahrir-api/commit/1d47ca8976300614f90c2334e4c1c3d2e81a5441>`_
 
 0.7.0
 -----
