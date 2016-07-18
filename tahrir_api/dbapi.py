@@ -3,8 +3,9 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
-from utils import autocommit, badge_name_to_id
+from utils import autocommit, convert_name_to_id
 from model import Badge, Invitation, Issuer, Assertion, Person, Authorization
+from model import Team
 from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
@@ -48,6 +49,50 @@ class TahrirDatabase(object):
             self.session = scoped_session(self.session_maker)
 
         self.notification_callback = notification_callback
+
+    def team_exists(self, team_id):
+        """
+        Check to see if this badge already exists in the database
+
+        :type team_id: str
+        :param team_id: The ID of a Team
+        """
+
+        return self.session.query(Team).filter(
+            func.lower(Team.id) == func.lower(team_id)).count() != 0
+
+    def get_team(self, team_id):
+        """
+        Return the team with the given ID
+
+        :type team_id: str
+        :param team_id: The ID of the badge to return
+        """
+
+        if self.team_exists(team_id):
+            return self.session.query(Team).filter(
+                func.lower(Team.id) == func.lower(team_id)).one()
+        return None
+
+    @autocommit
+    def create_team(self, name, team_id=None):
+        """
+        Adds a new team to the database
+
+        :type name: str
+        :param name: Name of the team
+        """
+
+        if not team_id:
+            team_id = convert_name_to_id(name)
+
+        if not self.team_exists(team_id):
+            new_team = Team(id=team_id,
+                            name=name)
+
+            self.session.add(new_team)
+            self.session.flush()
+        return team_id
 
     def badge_exists(self, badge_id):
         """
@@ -153,7 +198,7 @@ class TahrirDatabase(object):
         """
 
         if not badge_id:
-            badge_id = badge_name_to_id(name)
+            badge_id = convert_name_to_id(name)
 
         if not self.badge_exists(badge_id):
             # Make sure the tags string has a trailing

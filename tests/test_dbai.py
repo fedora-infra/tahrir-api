@@ -52,6 +52,11 @@ class TestDBInit(object):
 
         assert self.api.badge_exists("testbadge") is True
 
+    def test_add_team(self):
+        self.api.create_team("TestTeam")
+
+        assert self.api.team_exists("testteam") is True
+
     def test_add_person(self):
         self.api.add_person("test@tester.com")
         assert self.api.person_exists("test@tester.com") is True
