@@ -230,7 +230,7 @@ class TahrirDatabase(object):
         :param series_id: ID of the Series
         """
         if self.perk_exists_for_badge_series(badge_id, series_id):
-            perk = self.get_perk_from_badge_series(badge_id, series_id).one()
+            perk = self.get_perk_from_badge_series(badge_id, series_id).first()
         else:
             perk = Perk(position=position,
                         badge_id=badge_id,
