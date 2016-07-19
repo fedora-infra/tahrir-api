@@ -5,7 +5,7 @@
 
 from utils import autocommit, convert_name_to_id
 from model import Badge, Invitation, Issuer, Assertion, Person, Authorization
-from model import Team, Series
+from model import Team, Series, Perk
 from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
@@ -159,6 +159,88 @@ class TahrirDatabase(object):
         """
 
         return self.session.query(Series)
+
+    def perk_exists(self, perk_id):
+        """
+        Check to see if this perk already exists in the database
+
+        :type perk_id: str
+        :param perk_id: The ID of a Perk
+        """
+        return self.session.query(Perk).filter(Perk.id == perk_id).count() != 0
+
+    def perk_exists_for_badge_series(self, badge_id, series_id):
+        """
+        Check if the perk with the given series and badge id exists
+
+        :type badge_id: str
+        :param badge_id: The ID of the badge
+
+        :type series_id: str
+        :param series_id: The ID of the series
+        """
+        return self.get_perk_from_badge_series(badge_id,
+                                               series_id).count() != 0
+
+    def get_perk_from_badge_series(self, badge_id, series_id):
+        """
+        Return the perk with the given series and badge id
+
+        :type badge_id: str
+        :param badge_id: The ID of the badge
+
+        :type series_id: str
+        :param series_id: The ID of the series
+        """
+        return self.session.query(Perk).filter(
+                and_(Perk.series_id == func.lower(series_id),
+                     Perk.badge_id == func.lower(badge_id)))
+
+    def get_perk(self, perk_id):
+        """
+        Return the matching perk from the database
+
+        :type perk_id: str
+        :param perk_id: The ID of a Perk
+        """
+        return self.session.query(Perk).filter(Perk.id == perk_id)
+
+    def get_all_perks(self, series_id):
+        """
+        Returns all the perks for the series
+
+        :type series_id: str
+        :param series_id: The id of the Series
+        """
+        return self.session.query(Perk).filter(
+                Perk.series_id == series_id).all()
+
+    @autocommit
+    def create_perk(self, position, badge_id, series_id):
+        """
+        Adds a new perk to the database
+
+        :type name: int
+        :param name: position of the perk in the series
+
+        :type badge_id: str
+        :param badge_id: Badge ID for the Perk
+
+        :type series_id: str
+        :param series_id: ID of the Series
+        """
+        if self.perk_exists_for_badge_series(badge_id, series_id):
+            perk = self.get_perk_from_badge_series(badge_id, series_id).one()
+        else:
+            perk = Perk(position=position,
+                        badge_id=badge_id,
+                        series_id=series_id)
+
+            self.session.add(perk)
+            self.session.flush()
+        perk_id = perk.id
+
+        return perk_id
 
     def badge_exists(self, badge_id):
         """

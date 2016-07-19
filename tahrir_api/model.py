@@ -12,6 +12,7 @@ from sqlalchemy import (
     DateTime,
     Unicode,
     ForeignKey,
+    UniqueConstraint,
 )
 from sqlalchemy.types import (
     Integer,
@@ -131,7 +132,10 @@ class Series(DeclarativeBase):
 
 
 class Perk(DeclarativeBase):
-    __tablename__ = 'badgeseries'
+    __tablename__ = 'perk'
+    __table_args__ = (
+        UniqueConstraint('position', 'badge_id', 'series_id'),
+    )
     id = Column(Integer, unique=True, primary_key=True)
     position = Column(Integer, default=None)
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
