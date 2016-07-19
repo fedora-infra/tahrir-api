@@ -57,6 +57,16 @@ class TestDBInit(object):
 
         assert self.api.team_exists("testteam") is True
 
+    def test_add_series(self):
+        team_id = self.api.create_team("TestTeam")
+
+        self.api.create_series("TestSeries",
+                               "A test series",
+                               team_id,
+                               "test, series")
+
+        assert self.api.series_exists("testseries") is True
+
     def test_add_person(self):
         self.api.add_person("test@tester.com")
         assert self.api.person_exists("test@tester.com") is True
