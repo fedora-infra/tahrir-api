@@ -116,6 +116,13 @@ class Team(DeclarativeBase):
     created_on = Column(DateTime, nullable=False,
                         default=datetime.datetime.utcnow)
 
+    def __json__(self):
+        return dict(
+            id=self.id,
+            name=self.name,
+            created_on=str(self.created_on),
+        )
+
 
 class Series(DeclarativeBase):
     __tablename__ = 'series'
@@ -130,6 +137,15 @@ class Series(DeclarativeBase):
     perk = relationship("Perk", backref="series")
     team_id = Column(Unicode(128), ForeignKey('team.id'), nullable=False)
 
+    def __json__(self):
+        return dict(
+            id=self.id,
+            name=self.name,
+            created_on=str(self.created_on),
+            last_updated=str(self.last_updated),
+            team=self.team.__json__(),
+        )
+
 
 class Perk(DeclarativeBase):
     __tablename__ = 'perk'
@@ -140,6 +156,13 @@ class Perk(DeclarativeBase):
     position = Column(Integer, default=None)
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
     series_id = Column(Unicode(128), ForeignKey('series.id'), nullable=False)
+
+    def __json__(self):
+        return dict(
+            position=self.position,
+            badge=self.badge.__json__(),
+            series_id=self.series.id,
+        )
 
 
 class Person(DeclarativeBase):

@@ -113,10 +113,21 @@ class TahrirDatabase(object):
         :param series_id: The ID of the series to return
         """
 
-        if self.team_exists(series_id):
+        if self.series_exists(series_id):
             return self.session.query(Series).filter(
                 func.lower(Series.id) == func.lower(series_id)).one()
         return None
+
+    def get_series_from_team(self, team_id):
+        """
+        Return the series related to a given team ID
+
+        :type series_id: str
+        :param series_id: The ID of the team
+        """
+        if self.team_exists(team_id):
+            return self.session.query(Series).filter(
+                Series.team_id == team_id).all()
 
     @autocommit
     def create_series(self, name, desc, team_id, tags=None, series_id=None):
@@ -242,6 +253,45 @@ class TahrirDatabase(object):
 
         return perk_id
 
+    def get_perk_from_series_ids(self, series_ids):
+        """
+        Return list of perks for the list of series ids
+
+        :type series: list
+        :param series: list of series ids
+        """
+        perks = self.session.query(Perk).filter(
+                    Perk.series_id.in_(series_ids)).all()
+
+        seen = set()
+        unique_perks = []
+
+        for perk in perks:
+            perk_meta = (perk.series_id, perk.id)
+            if perk_meta not in seen:
+                seen.add(perk_meta)
+                unique_perks.append(perk)
+
+        return unique_perks
+
+    def get_badges_from_team(self, team_id):
+        """
+        Returns all the badges related to a team
+
+        :type team_id: str
+        :param team_id: id of the team
+        """
+        if self.team_exists(team_id):
+            series = self.get_series_from_team(team_id)
+            series_ids = [elem.id for elem in series]
+
+            perks = self.get_perk_from_series_ids(series_ids)
+            badge_ids = list(set([perk.badge_id for perk in perks]))
+
+            badges = self.get_badges(badge_ids)
+            return badges
+        return None
+
     def badge_exists(self, badge_id):
         """
         Check to see if this badge already exists in the database
@@ -265,6 +315,19 @@ class TahrirDatabase(object):
             return self.session.query(Badge).filter(
                 func.lower(Badge.id) == func.lower(badge_id)).one()
         return None
+
+    def get_badges(self, badge_ids):
+        """
+        Return the badges with the given IDs
+
+        :type badge_ids: list
+        :param badge_ids: The list of badge IDs
+        """
+        badges = self.session.query(Badge).filter(
+            Badge.id.in_(badge_ids)).all()
+
+        return badges
+
 
     def get_badges_from_tags(self, tags, match_all=False):
         """
