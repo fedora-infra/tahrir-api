@@ -5,7 +5,7 @@
 
 from utils import autocommit, convert_name_to_id
 from model import Badge, Invitation, Issuer, Assertion, Person, Authorization
-from model import Team, Series, Perk
+from model import Team, Series, Milestone
 from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
@@ -171,18 +171,18 @@ class TahrirDatabase(object):
 
         return self.session.query(Series)
 
-    def perk_exists(self, perk_id):
+    def milestone_exists(self, milestone_id):
         """
-        Check to see if this perk already exists in the database
+        Check to see if this milestone already exists in the database
 
-        :type perk_id: str
-        :param perk_id: The ID of a Perk
+        :type milestone_id: str
+        :param milestone_id: The ID of a Milestone
         """
-        return self.session.query(Perk).filter(Perk.id == perk_id).count() != 0
+        return self.session.query(Milestone).filter(Milestone.id == milestone_id).count() != 0
 
-    def perk_exists_for_badge_series(self, badge_id, series_id):
+    def milestone_exists_for_badge_series(self, badge_id, series_id):
         """
-        Check if the perk with the given series and badge id exists
+        Check if the milestone with the given series and badge id exists
 
         :type badge_id: str
         :param badge_id: The ID of the badge
@@ -190,12 +190,12 @@ class TahrirDatabase(object):
         :type series_id: str
         :param series_id: The ID of the series
         """
-        return self.get_perk_from_badge_series(badge_id,
+        return self.get_milestone_from_badge_series(badge_id,
                                                series_id).count() != 0
 
-    def get_perk_from_badge_series(self, badge_id, series_id):
+    def get_milestone_from_badge_series(self, badge_id, series_id):
         """
-        Return the perk with the given series and badge id
+        Return the milestone with the given series and badge id
 
         :type badge_id: str
         :param badge_id: The ID of the badge
@@ -203,75 +203,75 @@ class TahrirDatabase(object):
         :type series_id: str
         :param series_id: The ID of the series
         """
-        return self.session.query(Perk).filter(
-                and_(Perk.series_id == func.lower(series_id),
-                     Perk.badge_id == func.lower(badge_id)))
+        return self.session.query(Milestone).filter(
+                and_(Milestone.series_id == func.lower(series_id),
+                     Milestone.badge_id == func.lower(badge_id)))
 
-    def get_perk(self, perk_id):
+    def get_milestone(self, milestone_id):
         """
-        Return the matching perk from the database
+        Return the matching milestone from the database
 
-        :type perk_id: str
-        :param perk_id: The ID of a Perk
+        :type milestone_id: str
+        :param milestone_id: The ID of a Milestone
         """
-        return self.session.query(Perk).filter(Perk.id == perk_id)
+        return self.session.query(Milestone).filter(Milestone.id == milestone_id)
 
-    def get_all_perks(self, series_id):
+    def get_all_milestones(self, series_id):
         """
-        Returns all the perks for the series
+        Returns all the milestones for the series
 
         :type series_id: str
         :param series_id: The id of the Series
         """
-        return self.session.query(Perk).filter(
-                Perk.series_id == series_id).all()
+        return self.session.query(Milestone).filter(
+                Milestone.series_id == series_id).all()
 
     @autocommit
-    def create_perk(self, position, badge_id, series_id):
+    def create_milestone(self, position, badge_id, series_id):
         """
-        Adds a new perk to the database
+        Adds a new milestone to the database
 
         :type name: int
-        :param name: position of the perk in the series
+        :param name: position of the milestone in the series
 
         :type badge_id: str
-        :param badge_id: Badge ID for the Perk
+        :param badge_id: Badge ID for the Milestone
 
         :type series_id: str
         :param series_id: ID of the Series
         """
-        perk = self.get_perk_from_badge_series(badge_id, series_id).first()
-        if not perk:
-            perk = Perk(position=position,
+        milestone = self.get_milestone_from_badge_series(badge_id, series_id).first()
+        if not milestone:
+            milestone = Milestone(position=position,
                         badge_id=badge_id,
                         series_id=series_id)
 
-            self.session.add(perk)
+            self.session.add(milestone)
             self.session.flush()
-        perk_id = perk.id
+        milestone_id = milestone.id
 
-        return perk_id
+        return milestone_id
 
-    def get_perk_from_series_ids(self, series_ids):
+    def get_milestone_from_series_ids(self, series_ids):
         """
-        Return list of perks for the list of series ids
+        Return list of milestones for the list of series ids
 
         :type series: list
         :param series: list of series ids
         """
-        perks = self.session.query(Perk).filter(
-                    Perk.series_id.in_(series_ids)).all()
+        milestones = self.session.query(Milestone).filter(
+                    Milestone.series_id.in_(series_ids)).all()
 
         seen = set()
-        unique_perks = []
+        unique_milestones = []
 
-        for perk in perks:
-            perk_meta = (perk.series_id, perk.id)
-            if perk_meta not in seen:
-                seen.add(perk_meta)
-                unique_perks.append(perk)
+        for milestone in milestones:
+            milestone_meta = (milestone.series_id, milestone.id)
+            if milestone_meta not in seen:
+                seen.add(milestone_meta)
+                unique_milestones.append(milestone)
 
-        return unique_perks
+        return unique_milestones
 
     def get_badges_from_team(self, team_id):
         """
@@ -284,8 +284,8 @@ class TahrirDatabase(object):
             series = self.get_series_from_team(team_id)
             series_ids = [elem.id for elem in series]
 
-            perks = self.get_perk_from_series_ids(series_ids)
-            badge_ids = list(set([perk.badge_id for perk in perks]))
+            milestones = self.get_milestone_from_series_ids(series_ids)
+            badge_ids = list(set([milestone.badge_id for milestone in milestones]))
 
             badges = self.get_badges(badge_ids)
             return badges

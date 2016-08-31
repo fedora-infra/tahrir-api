@@ -72,7 +72,7 @@ class Badge(DeclarativeBase):
     description = Column(Unicode(128), nullable=False)
     criteria = Column(Unicode(128), nullable=False)
     issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
-    perk = relationship("Perk", backref="badge")
+    milestone = relationship("Milestone", backref="badge")
     authorizations = relationship("Authorization", backref="badge")
     assertions = relationship("Assertion", backref="badge")
     invitations = relationship("Invitation", backref="badge")
@@ -134,7 +134,7 @@ class Series(DeclarativeBase):
     last_updated = Column(DateTime, nullable=False,
                           default=datetime.datetime.utcnow)
     tags = Column(Unicode(128))
-    perk = relationship("Perk", backref="series")
+    milestone = relationship("Milestone", backref="series")
     team_id = Column(Unicode(128), ForeignKey('team.id'), nullable=False)
 
     def __json__(self):
@@ -147,8 +147,8 @@ class Series(DeclarativeBase):
         )
 
 
-class Perk(DeclarativeBase):
-    __tablename__ = 'perk'
+class Milestone(DeclarativeBase):
+    __tablename__ = 'milestone'
     __table_args__ = (
         UniqueConstraint('position', 'badge_id', 'series_id'),
     )

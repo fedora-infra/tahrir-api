@@ -67,7 +67,7 @@ class TestDBInit(object):
 
         assert self.api.series_exists("testseries") is True
 
-    def test_add_perk(self):
+    def test_add_milestone(self):
         team_id = self.api.create_team("TestTeam")
 
         series_id = self.api.create_series("TestSeries",
@@ -91,16 +91,16 @@ class TestDBInit(object):
             1337
         )
 
-        perk_id_1 = self.api.create_perk(1,
+        milestone_id_1 = self.api.create_milestone(1,
                                          badge_id_1,
                                          series_id)
 
-        perk_id_2 = self.api.create_perk(2,
+        milestone_id_2 = self.api.create_milestone(2,
                                          badge_id_2,
                                          series_id)
 
-        assert self.api.perk_exists(perk_id_1) is True
-        assert self.api.perk_exists(perk_id_2) is True
+        assert self.api.milestone_exists(milestone_id_1) is True
+        assert self.api.milestone_exists(milestone_id_2) is True
 
     def test_add_person(self):
         self.api.add_person("test@tester.com")
