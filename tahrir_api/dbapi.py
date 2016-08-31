@@ -178,7 +178,8 @@ class TahrirDatabase(object):
         :type milestone_id: str
         :param milestone_id: The ID of a Milestone
         """
-        return self.session.query(Milestone).filter(Milestone.id == milestone_id).count() != 0
+        return self.session.query(Milestone).filter(
+            Milestone.id == milestone_id).count() != 0
 
     def milestone_exists_for_badge_series(self, badge_id, series_id):
         """
@@ -191,7 +192,7 @@ class TahrirDatabase(object):
         :param series_id: The ID of the series
         """
         return self.get_milestone_from_badge_series(badge_id,
-                                               series_id).count() != 0
+                                                    series_id).count() != 0
 
     def get_milestone_from_badge_series(self, badge_id, series_id):
         """
@@ -204,8 +205,8 @@ class TahrirDatabase(object):
         :param series_id: The ID of the series
         """
         return self.session.query(Milestone).filter(
-                and_(Milestone.series_id == func.lower(series_id),
-                     Milestone.badge_id == func.lower(badge_id)))
+            and_(Milestone.series_id == func.lower(series_id),
+                 Milestone.badge_id == func.lower(badge_id)))
 
     def get_milestone(self, milestone_id):
         """
@@ -214,7 +215,8 @@ class TahrirDatabase(object):
         :type milestone_id: str
         :param milestone_id: The ID of a Milestone
         """
-        return self.session.query(Milestone).filter(Milestone.id == milestone_id)
+        return self.session.query(Milestone).filter(
+            Milestone.id == milestone_id)
 
     def get_all_milestones(self, series_id):
         """
@@ -224,7 +226,7 @@ class TahrirDatabase(object):
         :param series_id: The id of the Series
         """
         return self.session.query(Milestone).filter(
-                Milestone.series_id == series_id).all()
+            Milestone.series_id == series_id).all()
 
     @autocommit
     def create_milestone(self, position, badge_id, series_id):
@@ -240,11 +242,12 @@ class TahrirDatabase(object):
         :type series_id: str
         :param series_id: ID of the Series
         """
-        milestone = self.get_milestone_from_badge_series(badge_id, series_id).first()
+        milestone = self.get_milestone_from_badge_series(badge_id,
+                                                         series_id).first()
         if not milestone:
             milestone = Milestone(position=position,
-                        badge_id=badge_id,
-                        series_id=series_id)
+                                  badge_id=badge_id,
+                                  series_id=series_id)
 
             self.session.add(milestone)
             self.session.flush()
@@ -260,7 +263,7 @@ class TahrirDatabase(object):
         :param series: list of series ids
         """
         milestones = self.session.query(Milestone).filter(
-                    Milestone.series_id.in_(series_ids)).all()
+            Milestone.series_id.in_(series_ids)).all()
 
         seen = set()
         unique_milestones = []
@@ -285,7 +288,8 @@ class TahrirDatabase(object):
             series_ids = [elem.id for elem in series]
 
             milestones = self.get_milestone_from_series_ids(series_ids)
-            badge_ids = list(set([milestone.badge_id for milestone in milestones]))
+            badge_ids = list(set([milestone.badge_id
+                                  for milestone in milestones]))
 
             badges = self.get_badges(badge_ids)
             return badges
@@ -326,7 +330,6 @@ class TahrirDatabase(object):
             Badge.id.in_(badge_ids)).all()
 
         return badges
-
 
     def get_badges_from_tags(self, tags, match_all=False):
         """
@@ -815,7 +818,7 @@ class TahrirDatabase(object):
 
         return self.session.query(Assertion).filter_by(
             person_id=person.id, badge_id=badge_id).count() != 0
-    
+
     def authorization_exists(self, badge_id, email):
         """
         Check if an authorization exists in the database
@@ -850,7 +853,6 @@ class TahrirDatabase(object):
         if self.person_exists(email=person_email) and \
            self.badge_exists(badge_id):
 
-            badge = self.get_badge(badge_id)
             person = self.get_person(person_email)
 
             new_authz = Authorization(badge_id=badge_id,
