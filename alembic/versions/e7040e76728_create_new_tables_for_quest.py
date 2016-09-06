@@ -10,27 +10,37 @@ Create Date: 2016-09-02 20:51:14.951460
 revision = 'e7040e76728'
 down_revision = '508367dcbbb5'
 
+import datetime
+
 from alembic import op
 import sqlalchemy as sa
 
+def generate_default_id(context):
+    return context.current_parameters['name'].lower().replace(' ', '-')
 
 def upgrade():
 
     op.create_table(
         'team',
-        sa.Column('id', sa.Unicode(length=128), nullable=False),
+        sa.Column('id', sa.Unicode(length=128), nullable=False,
+                  default=generate_default_id),
         sa.Column('name', sa.Unicode(length=128), nullable=False),
-        sa.Column('created_on', sa.DateTime(), nullable=False),
+        sa.Column('created_on', sa.DateTime(), nullable=False,
+                  default=datetime.datetime.utcnow),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('name')
     )
     op.create_table(
         'series',
-        sa.Column('id', sa.Unicode(length=128), nullable=False),
+        sa.Column('id', sa.Unicode(length=128), nullable=False,
+                  default=generate_default_id),
         sa.Column('name', sa.Unicode(length=128), nullable=False),
         sa.Column('description', sa.Unicode(length=128), nullable=False),
-        sa.Column('created_on', sa.DateTime(), nullable=False),
-        sa.Column('last_updated', sa.DateTime(), nullable=False),
+        sa.Column('created_on', sa.DateTime(), nullable=False,
+                  default=datetime.datetime.utcnow),
+        sa.Column('last_updated', sa.DateTime(), nullable=False,
+                  default=datetime.datetime.utcnow,
+                  onupdate=datetime.datetime.utcnow),
         sa.Column('tags', sa.Unicode(length=128), nullable=True),
         sa.Column('team_id', sa.Unicode(length=128), nullable=False),
         sa.ForeignKeyConstraint(['team_id'], ['team.id'], ),
