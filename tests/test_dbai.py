@@ -52,6 +52,56 @@ class TestDBInit(object):
 
         assert self.api.badge_exists("testbadge") is True
 
+    def test_add_team(self):
+        self.api.create_team("TestTeam")
+
+        assert self.api.team_exists("testteam") is True
+
+    def test_add_series(self):
+        team_id = self.api.create_team("TestTeam")
+
+        self.api.create_series("TestSeries",
+                               "A test series",
+                               team_id,
+                               "test, series")
+
+        assert self.api.series_exists("testseries") is True
+
+    def test_add_milestone(self):
+        team_id = self.api.create_team("TestTeam")
+
+        series_id = self.api.create_series("TestSeries",
+                                           "A test series",
+                                           team_id,
+                                           "test, series")
+
+        badge_id_1 = self.api.add_badge(
+            "TestBadge-1",
+            "TestImage-2",
+            "A test badge for doing 10 unit tests",
+            "TestCriteria",
+            1337
+        )
+
+        badge_id_2 = self.api.add_badge(
+            "TestBadge-2",
+            "TestImage-2",
+            "A test badge for doing 100 unit tests",
+            "TestCriteria",
+            1337
+        )
+
+        milestone_id_1 = self.api.create_milestone(1,
+                                         badge_id_1,
+                                         series_id)
+
+        milestone_id_2 = self.api.create_milestone(2,
+                                         badge_id_2,
+                                         series_id)
+
+        assert self.api.milestone_exists(milestone_id_1) is True
+        assert self.api.milestone_exists(milestone_id_2) is True
+
     def test_add_person(self):
         self.api.add_person("test@tester.com")
         assert self.api.person_exists("test@tester.com") is True

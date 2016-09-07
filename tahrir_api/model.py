@@ -12,6 +12,7 @@ from sqlalchemy import (
     DateTime,
     Unicode,
     ForeignKey,
+    UniqueConstraint,
 )
 from sqlalchemy.types import (
     Integer,
@@ -58,21 +59,22 @@ class Issuer(DeclarativeBase):
         )
 
 
-def badge_id_default(context):
+def generate_default_id(context):
     return context.current_parameters['name'].lower().replace(' ', '-')
 
 
 class Badge(DeclarativeBase):
     __tablename__ = 'badges'
-    id = Column(Unicode(128), primary_key=True, default=badge_id_default)
+    id = Column(Unicode(128), primary_key=True, default=generate_default_id)
     name = Column(Unicode(128), nullable=False, unique=True)
     image = Column(Unicode(128), nullable=False)
     stl = Column(Unicode(128))
     description = Column(Unicode(128), nullable=False)
     criteria = Column(Unicode(128), nullable=False)
+    issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
+    milestone = relationship("Milestone", backref="badge")
     authorizations = relationship("Authorization", backref="badge")
     assertions = relationship("Assertion", backref="badge")
-    issuer_id = Column(Integer, ForeignKey('issuers.id'), nullable=False)
     invitations = relationship("Invitation", backref="badge")
     created_on = Column(DateTime, nullable=False,
                         default=datetime.datetime.utcnow)
@@ -104,6 +106,64 @@ class Badge(DeclarativeBase):
                 return True
 
         return False
+
+
+class Team(DeclarativeBase):
+    __tablename__ = "team"
+    id = Column(Unicode(128), primary_key=True, default=generate_default_id)
+    name = Column(Unicode(128), nullable=False, unique=True)
+    series = relationship("Series", backref="team")
+    created_on = Column(DateTime, nullable=False,
+                        default=datetime.datetime.utcnow)
+
+    def __json__(self):
+        return dict(
+            id=self.id,
+            name=self.name,
+            created_on=str(self.created_on),
+        )
+
+
+class Series(DeclarativeBase):
+    __tablename__ = 'series'
+    id = Column(Unicode(128), primary_key=True, default=generate_default_id)
+    name = Column(Unicode(128), nullable=False, unique=True)
+    description = Column(Unicode(128), nullable=False)
+    created_on = Column(DateTime, nullable=False,
+                        default=datetime.datetime.utcnow)
+    last_updated = Column(DateTime, nullable=False,
+                          default=datetime.datetime.utcnow,
+                          onupdate=datetime.datetime.utcnow)
+    tags = Column(Unicode(128))
+    milestone = relationship("Milestone", backref="series")
+    team_id = Column(Unicode(128), ForeignKey('team.id'), nullable=False)
+
+    def __json__(self):
+        return dict(
+            id=self.id,
+            name=self.name,
+            created_on=str(self.created_on),
+            last_updated=str(self.last_updated),
+            team=self.team.__json__(),
+        )
+
+
+class Milestone(DeclarativeBase):
+    __tablename__ = 'milestone'
+    __table_args__ = (
+        UniqueConstraint('position', 'badge_id', 'series_id'),
+    )
+    id = Column(Integer, unique=True, primary_key=True)
+    position = Column(Integer, default=None)
+    badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
+    series_id = Column(Unicode(128), ForeignKey('series.id'), nullable=False)
+
+    def __json__(self):
+        return dict(
+            position=self.position,
+            badge=self.badge.__json__(),
+            series_id=self.series.id,
+        )
 
 
 class Person(DeclarativeBase):

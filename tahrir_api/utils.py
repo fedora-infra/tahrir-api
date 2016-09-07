@@ -18,7 +18,7 @@ def autocommit(func):
     return _wrapper
 
 
-def badge_name_to_id(name):
+def convert_name_to_id(name):
     """
     Convert a badge name into a valid badge ID.
 
