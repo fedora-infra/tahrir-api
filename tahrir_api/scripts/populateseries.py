@@ -117,6 +117,9 @@ def main(argv=sys.argv):
 
     with transaction.manager:
         for badge in DBSession.query(Badge).all():
+            if badge.milestone:
+                # Skip badges that already are in some series.
+                continue
             series_name, ordering = get_series_name(badge.name)
             if series_name and ordering:
                 series = DBSession.query(Series).filter(Series.name == series_name).first()
