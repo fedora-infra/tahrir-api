@@ -1,3 +1,44 @@
+
+0.8.0
+-----
+
+Pull Requests
+
+- (@sayanchowdhury) #38, Changes to the dbapi and the models for the Paths
+  https://github.com/fedora-infra/tahrir-api/pull/38
+- (@lubomir)        #37, Add series information to each badge
+  https://github.com/fedora-infra/tahrir-api/pull/37
+- (@lubomir)        #39, Skip badges with series in populate script
+  https://github.com/fedora-infra/tahrir-api/pull/39
+
+Commits
+
+- 00295a062 Add new models and api for the path support along with tests
+  https://github.com/fedora-infra/tahrir-api/commit/00295a062
+- 5d2c8aeb1 Add series dbapi along with the tests
+  https://github.com/fedora-infra/tahrir-api/commit/5d2c8aeb1
+- 418ba645e Add Perk dbapi along with the required tests
+  https://github.com/fedora-infra/tahrir-api/commit/418ba645e
+- 158797111 Use first() instead of one()
+  https://github.com/fedora-infra/tahrir-api/commit/158797111
+- b1fbee897 Add more api methods to the dbapi and override __json__ for newer methods
+  https://github.com/fedora-infra/tahrir-api/commit/b1fbee897
+- 00418af47 Optimize code for less queries
+  https://github.com/fedora-infra/tahrir-api/commit/00418af47
+- b9ddf3d8a Change Perk to Milestone
+  https://github.com/fedora-infra/tahrir-api/commit/b9ddf3d8a
+- 00bb414bb PEP8 fixes
+  https://github.com/fedora-infra/tahrir-api/commit/00bb414bb
+- b9c806e66 Add the migration scripts.
+  https://github.com/fedora-infra/tahrir-api/commit/b9c806e66
+- 4ec1a66b8 Update the last update when the record is updated
+  https://github.com/fedora-infra/tahrir-api/commit/4ec1a66b8
+- 56b2e7616 Add default values to the migration files
+  https://github.com/fedora-infra/tahrir-api/commit/56b2e7616
+- 1b5151371 Add script to populate series information
+  https://github.com/fedora-infra/tahrir-api/commit/1b5151371
+- 6ae013ea0 Skip badges with series in populate script
+  https://github.com/fedora-infra/tahrir-api/commit/6ae013ea0
 Changelog
 =========
 
