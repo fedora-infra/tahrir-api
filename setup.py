@@ -17,7 +17,7 @@ requires = [
     'pastedeploy',
     'pygments',
     'simplejson',
-    'SQLAlchemy>=0.7.2',
+    'SQLAlchemy>=0.8.0',
     'zope.sqlalchemy',
     'alembic',
     'arrow',
@@ -30,7 +30,7 @@ if sys.version_info[0] == 2 and sys.version_info[1] <= 6:
 
 
 setup(name='tahrir-api',
-      version='0.7.2',
+      version='0.8.0',
       description='An API for interacting with the Tahrir database',
       long_description=README,
       license="GPLv3+",
@@ -55,5 +55,6 @@ setup(name='tahrir-api',
       entry_points="""
       [console_scripts]
       initialize_tahrir_db = tahrir_api.scripts.initializedb:main
+      populate_series_in_tahrir_db = tahrir_api.scripts.populateseries:main
       """
       )

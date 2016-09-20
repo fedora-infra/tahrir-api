@@ -3,8 +3,9 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
-from utils import autocommit, badge_name_to_id
+from utils import autocommit, convert_name_to_id
 from model import Badge, Invitation, Issuer, Assertion, Person, Authorization
+from model import Team, Series, Milestone
 from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
@@ -49,6 +50,251 @@ class TahrirDatabase(object):
 
         self.notification_callback = notification_callback
 
+    def team_exists(self, team_id):
+        """
+        Check to see if this team already exists in the database
+
+        :type team_id: str
+        :param team_id: The ID of a Team
+        """
+
+        return self.session.query(Team).filter(
+            func.lower(Team.id) == func.lower(team_id)).count() != 0
+
+    def get_team(self, team_id):
+        """
+        Return the team with the given ID
+
+        :type team_id: str
+        :param team_id: The ID of the team to return
+        """
+
+        if self.team_exists(team_id):
+            return self.session.query(Team).filter(
+                func.lower(Team.id) == func.lower(team_id)).first()
+        return None
+
+    @autocommit
+    def create_team(self, name, team_id=None):
+        """
+        Adds a new team to the database
+
+        :type name: str
+        :param name: Name of the team
+        """
+
+        if not team_id:
+            team_id = convert_name_to_id(name)
+
+        if not self.team_exists(team_id):
+            new_team = Team(id=team_id,
+                            name=name)
+
+            self.session.add(new_team)
+            self.session.flush()
+        return team_id
+
+    def series_exists(self, series_id):
+        """
+        Check to see if this series already exists in the database
+
+        :type series_id: str
+        :param series_id: The ID of a Series
+        """
+
+        return self.session.query(Series).filter(
+            func.lower(Series.id) == func.lower(series_id)).count() != 0
+
+    def get_series(self, series_id):
+        """
+        Return the series with the given ID
+
+        :type series_id: str
+        :param series_id: The ID of the series to return
+        """
+
+        if self.series_exists(series_id):
+            return self.session.query(Series).filter(
+                func.lower(Series.id) == func.lower(series_id)).one()
+        return None
+
+    def get_series_from_team(self, team_id):
+        """
+        Return the series related to a given team ID
+
+        :type series_id: str
+        :param series_id: The ID of the team
+        """
+        if self.team_exists(team_id):
+            return self.session.query(Series).filter(
+                Series.team_id == team_id).all()
+
+    @autocommit
+    def create_series(self, name, desc, team_id, tags=None, series_id=None):
+        """
+        Adds a new series to the database
+
+        :type name: str
+        :param name: Name of the Series
+
+        :type desc: str
+        :param desc: Description of the Series
+
+        :type team_id: str
+        :param team_id: Team Id to which this Series belongs to
+
+        :type tags: str
+        :param tags: Tags for a Series
+
+        :type series_id: str
+        :param series_id: ID of the Series
+        """
+
+        if not series_id:
+            series_id = convert_name_to_id(name)
+
+        if not self.series_exists(series_id):
+            new_series = Series(id=series_id,
+                                name=name,
+                                description=desc,
+                                tags=tags,
+                                team_id=team_id)
+
+            self.session.add(new_series)
+            self.session.flush()
+        return series_id
+
+    def get_all_series(self):
+        """
+        Get all series in the db.
+        """
+
+        return self.session.query(Series)
+
+    def milestone_exists(self, milestone_id):
+        """
+        Check to see if this milestone already exists in the database
+
+        :type milestone_id: str
+        :param milestone_id: The ID of a Milestone
+        """
+        return self.session.query(Milestone).filter(
+            Milestone.id == milestone_id).count() != 0
+
+    def milestone_exists_for_badge_series(self, badge_id, series_id):
+        """
+        Check if the milestone with the given series and badge id exists
+
+        :type badge_id: str
+        :param badge_id: The ID of the badge
+
+        :type series_id: str
+        :param series_id: The ID of the series
+        """
+        return self.get_milestone_from_badge_series(badge_id,
+                                                    series_id).count() != 0
+
+    def get_milestone_from_badge_series(self, badge_id, series_id):
+        """
+        Return the milestone with the given series and badge id
+
+        :type badge_id: str
+        :param badge_id: The ID of the badge
+
+        :type series_id: str
+        :param series_id: The ID of the series
+        """
+        return self.session.query(Milestone).filter(
+            and_(Milestone.series_id == func.lower(series_id),
+                 Milestone.badge_id == func.lower(badge_id)))
+
+    def get_milestone(self, milestone_id):
+        """
+        Return the matching milestone from the database
+
+        :type milestone_id: str
+        :param milestone_id: The ID of a Milestone
+        """
+        return self.session.query(Milestone).filter(
+            Milestone.id == milestone_id)
+
+    def get_all_milestones(self, series_id):
+        """
+        Returns all the milestones for the series
+
+        :type series_id: str
+        :param series_id: The id of the Series
+        """
+        return self.session.query(Milestone).filter(
+            Milestone.series_id == series_id).all()
+
+    @autocommit
+    def create_milestone(self, position, badge_id, series_id):
+        """
+        Adds a new milestone to the database
+
+        :type name: int
+        :param name: position of the milestone in the series
+
+        :type badge_id: str
+        :param badge_id: Badge ID for the Milestone
+
+        :type series_id: str
+        :param series_id: ID of the Series
+        """
+        milestone = self.get_milestone_from_badge_series(badge_id,
+                                                         series_id).first()
+        if not milestone:
+            milestone = Milestone(position=position,
+                                  badge_id=badge_id,
+                                  series_id=series_id)
+
+            self.session.add(milestone)
+            self.session.flush()
+        milestone_id = milestone.id
+
+        return milestone_id
+
+    def get_milestone_from_series_ids(self, series_ids):
+        """
+        Return list of milestones for the list of series ids
+
+        :type series: list
+        :param series: list of series ids
+        """
+        milestones = self.session.query(Milestone).filter(
+            Milestone.series_id.in_(series_ids)).all()
+
+        seen = set()
+        unique_milestones = []
+
+        for milestone in milestones:
+            milestone_meta = (milestone.series_id, milestone.id)
+            if milestone_meta not in seen:
+                seen.add(milestone_meta)
+                unique_milestones.append(milestone)
+
+        return unique_milestones
+
+    def get_badges_from_team(self, team_id):
+        """
+        Returns all the badges related to a team
+
+        :type team_id: str
+        :param team_id: id of the team
+        """
+        if self.team_exists(team_id):
+            series = self.get_series_from_team(team_id)
+            series_ids = [elem.id for elem in series]
+
+            milestones = self.get_milestone_from_series_ids(series_ids)
+            badge_ids = list(set([milestone.badge_id
+                                  for milestone in milestones]))
+
+            badges = self.get_badges(badge_ids)
+            return badges
+        return None
+
     def badge_exists(self, badge_id):
         """
         Check to see if this badge already exists in the database
@@ -72,6 +318,18 @@ class TahrirDatabase(object):
             return self.session.query(Badge).filter(
                 func.lower(Badge.id) == func.lower(badge_id)).one()
         return None
+
+    def get_badges(self, badge_ids):
+        """
+        Return the badges with the given IDs
+
+        :type badge_ids: list
+        :param badge_ids: The list of badge IDs
+        """
+        badges = self.session.query(Badge).filter(
+            Badge.id.in_(badge_ids)).all()
+
+        return badges
 
     def get_badges_from_tags(self, tags, match_all=False):
         """
@@ -153,7 +411,7 @@ class TahrirDatabase(object):
         """
 
         if not badge_id:
-            badge_id = badge_name_to_id(name)
+            badge_id = convert_name_to_id(name)
 
         if not self.badge_exists(badge_id):
             # Make sure the tags string has a trailing
@@ -560,7 +818,7 @@ class TahrirDatabase(object):
 
         return self.session.query(Assertion).filter_by(
             person_id=person.id, badge_id=badge_id).count() != 0
-    
+
     def authorization_exists(self, badge_id, email):
         """
         Check if an authorization exists in the database
@@ -595,7 +853,6 @@ class TahrirDatabase(object):
         if self.person_exists(email=person_email) and \
            self.badge_exists(badge_id):
 
-            badge = self.get_badge(badge_id)
             person = self.get_person(person_email)
 
             new_authz = Authorization(badge_id=badge_id,
