@@ -17,7 +17,7 @@ requires = [
     'pastedeploy',
     'pygments',
     'simplejson',
-    'SQLAlchemy>=0.8.0',
+    'SQLAlchemy>=0.7.2',
     'zope.sqlalchemy',
     'alembic',
     'arrow',
