@@ -1,4 +1,17 @@
 
+0.8.1
+-----
+
+Pull Requests
+
+- (@sayanchowdhury) #40, Fix the version of SQLAlchemy which broke while doing the release
+  https://github.com/fedora-infra/tahrir-api/pull/40
+
+Commits
+
+- 210aa79ae Fix the version of SQLAlchemy which broke while doing the release
+  https://github.com/fedora-infra/tahrir-api/commit/210aa79ae
+
 0.8.0
 -----
 
