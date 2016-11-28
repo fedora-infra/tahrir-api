@@ -56,5 +56,6 @@ setup(name='tahrir-api',
       [console_scripts]
       initialize_tahrir_db = tahrir_api.scripts.initializedb:main
       populate_series_in_tahrir_db = tahrir_api.scripts.populateseries:main
+      populate_tahrir_db = tahrir_api.scripts.populatedb:main
       """
       )
