@@ -6,10 +6,11 @@ import sys
 import transaction
 
 from sqlalchemy import engine_from_config
+from sqlalchemy.orm import scoped_session, sessionmaker
 from paste.deploy import appconfig
+from zope.sqlalchemy import ZopeTransactionExtension
 
 from ..model import (
-    DBSession,
     Issuer,
     Badge,
     Person,
@@ -20,6 +21,10 @@ from ..model import (
     DeclarativeBase,
 )
 from ..utils import convert_name_to_id
+
+
+DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension(),
+                                        expire_on_commit=False))
 
 
 def usage(argv):
@@ -141,19 +146,21 @@ def main(argv=sys.argv):
 
         for name, series in TEAMS_SERIES_MAP.iteritems():
             team = Team(
+                id=convert_name_to_id(name),
                 name=name,
             )
             DBSession.add(team)
 
-        for name, series in TEAMS_SERIES_MAP.iteritems():
+        for team_id, series in TEAMS_SERIES_MAP.iteritems():
             for elem in series:
-                name = desc = ' '.join(elem.split('-')).title()
+                series_name = desc = ' '.join(elem.split('-')).title()
                 series = Series(
-                    name=name,
+                    name=series_name,
                     description=desc,
-                    team_id=name,
+                    team_id=team_id,
                     tags=SERIES_TAG_MAP.get(elem, '')
                 )
+                DBSession.add(series)
 
         badge_series = {}
         for slug, serie in SERIES.iteritems():
@@ -174,7 +181,7 @@ def main(argv=sys.argv):
                 )
                 DBSession.add(badge)
                 badge_series[slug].append(badge)
-                
+
                 milestone = Milestone(
                     position=position,
                     badge_id=badge.id,
@@ -185,12 +192,15 @@ def main(argv=sys.argv):
         persons = []
         for user in USERS:
             person = Person(
+                nickname=user,
                 email='{username}@fedoraproject.org'.format(username=user),
             )
             DBSession.add(person)
             persons.append(person)
 
-        def award_badges(person):
+        transaction.commit()
+
+        for person in persons:
             """ Award badge to user in any series """
             for slug, series in badge_series.iteritems():
                 num_series = len(series)
@@ -203,5 +213,5 @@ def main(argv=sys.argv):
                     )
                     DBSession.add(assertion)
 
-        for person in persons:
-            award_badges(person)
+        transaction.commit()
+        DBSession.close()
