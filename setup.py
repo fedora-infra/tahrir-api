@@ -54,6 +54,7 @@ setup(
         'pastedeploy',
         'pygments',
         'simplejson',
+        'six',
         'SQLAlchemy>=0.7.2',
         'zope.sqlalchemy',
     ],
