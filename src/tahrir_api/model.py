@@ -1,42 +1,56 @@
-import pygments
-import simplejson
-import hashlib
-import uuid
-import datetime
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Module to keep random utils. 
+
+.. $Id$
+"""
+
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+
 import time
+import uuid
+import hashlib
+import datetime
+
+import pygments
+from pygments import lexers
+from pygments import formatters
+
+import simplejson
 
 import arrow
 
-from sqlalchemy import (
-    Column,
-    DateTime,
-    Unicode,
-    ForeignKey,
-    UniqueConstraint,
-)
-from sqlalchemy.types import (
-    Integer,
-    Boolean,
-)
+from sqlalchemy import Column
+from sqlalchemy import Unicode
+from sqlalchemy import DateTime
+from sqlalchemy import ForeignKey
+from sqlalchemy import UniqueConstraint
 
 from sqlalchemy.ext.declarative import declarative_base
 
-from sqlalchemy.orm import (
-    scoped_session,
-    sessionmaker,
-    relationship,
-)
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
 
+from sqlalchemy.types import Boolean
+from sqlalchemy.types import Integer
 
 from zope.sqlalchemy import ZopeTransactionExtension
 
-DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
+from tahrir_api._compat import bytes_
+from tahrir_api._compat import to_unicode
+
 DeclarativeBase = declarative_base()
+DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 DeclarativeBase.query = DBSession.query_property()
 
 
 class Issuer(DeclarativeBase):
     __tablename__ = 'issuers'
+
     id = Column(Integer, unique=True, primary_key=True)
     origin = Column(Unicode(128), nullable=False)
     name = Column(Unicode(128), nullable=False, unique=True)
@@ -46,14 +60,18 @@ class Issuer(DeclarativeBase):
     created_on = Column(DateTime, nullable=False,
                         default=datetime.datetime.utcnow)
 
-    def __unicode__(self):
-        return self.name
+    def __repr__(self):
+        return "<Issuer: '%s'" % self.name
+
+    def __str__(self):
+        return to_unicode(self.name)
+    __unicode__ = __str__
 
     def __json__(self):
         return dict(
-            origin=self.origin,
-            name=self.name,
             org=self.org,
+            name=self.name,
+            origin=self.origin,
             contact=self.contact,
             created_on=time.mktime(self.created_on.timetuple()),
         )
@@ -65,6 +83,7 @@ def generate_default_id(context):
 
 class Badge(DeclarativeBase):
     __tablename__ = 'badges'
+
     id = Column(Unicode(128), primary_key=True, default=generate_default_id)
     name = Column(Unicode(128), nullable=False, unique=True)
     image = Column(Unicode(128), nullable=False)
@@ -80,9 +99,10 @@ class Badge(DeclarativeBase):
                         default=datetime.datetime.utcnow)
     tags = Column(Unicode(128))
 
-    def __unicode__(self):
-        return self.name
-
+    def __str__(self):
+        return to_unicode(self.name)
+    __unicode__ = __str__
+    
     def __json__(self):
         if self.image.startswith("http"):
             image = self.image
@@ -90,17 +110,19 @@ class Badge(DeclarativeBase):
             image = "/pngs/" + self.image
         return dict(
             version="0.5.0",
-            name=self.name,
             image=image,
-            description=self.description,
+            name=self.name,
+            tags=self.tags,
             criteria=self.criteria,
+            description=self.description,
             issuer=self.issuer.__json__(),
             created_on=time.mktime(self.created_on.timetuple()),
-            tags=self.tags,
         )
 
     def authorized(self, person):
-        """ Return true if a given person is authorized to admin a badge """
+        """ 
+        Return true if a given person is authorized to admin a badge 
+        """
         for authz in self.authorizations:
             if authz.person == person:
                 return True
@@ -110,12 +132,17 @@ class Badge(DeclarativeBase):
 
 class Team(DeclarativeBase):
     __tablename__ = "team"
+
     id = Column(Unicode(128), primary_key=True, default=generate_default_id)
     name = Column(Unicode(128), nullable=False, unique=True)
     series = relationship("Series", backref="team")
     created_on = Column(DateTime, nullable=False,
                         default=datetime.datetime.utcnow)
 
+    def __str__(self):
+        return to_unicode(self.name)
+    __unicode__ = __str__
+    
     def __json__(self):
         return dict(
             id=self.id,
@@ -126,6 +153,7 @@ class Team(DeclarativeBase):
 
 class Series(DeclarativeBase):
     __tablename__ = 'series'
+
     id = Column(Unicode(128), primary_key=True, default=generate_default_id)
     name = Column(Unicode(128), nullable=False, unique=True)
     description = Column(Unicode(128), nullable=False)
@@ -137,6 +165,10 @@ class Series(DeclarativeBase):
     tags = Column(Unicode(128))
     milestone = relationship("Milestone", backref="series")
     team_id = Column(Unicode(128), ForeignKey('team.id'), nullable=False)
+
+    def __str__(self):
+        return to_unicode(self.name)
+    __unicode__ = __str__
 
     def __json__(self):
         return dict(
@@ -153,6 +185,7 @@ class Milestone(DeclarativeBase):
     __table_args__ = (
         UniqueConstraint('position', 'badge_id', 'series_id'),
     )
+
     id = Column(Integer, unique=True, primary_key=True)
     position = Column(Integer, default=None)
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
@@ -161,13 +194,14 @@ class Milestone(DeclarativeBase):
     def __json__(self):
         return dict(
             position=self.position,
-            badge=self.badge.__json__(),
             series_id=self.series.id,
+            badge=self.badge.__json__(),
         )
 
 
 class Person(DeclarativeBase):
     __tablename__ = 'persons'
+
     id = Column(Integer, unique=True, primary_key=True)
     email = Column(Unicode(128), nullable=False, unique=True)
     authorizations = relationship("Authorization", backref="person")
@@ -179,6 +213,7 @@ class Person(DeclarativeBase):
                         default=datetime.datetime.utcnow)
     last_login = Column(DateTime, nullable=True, default=None)
     opt_out = Column(Boolean, nullable=False, default=False)
+
     # An integer that organizes the users by the number of
     # badges they have ever been awarded.  A value of None
     # indicates that they have not been ranked yet at all.
@@ -190,30 +225,32 @@ class Person(DeclarativeBase):
     @property
     def gravatar_link(self):
         d, s = 'mm', 24
-        hash = hashlib.md5(self.email).hexdigest()
-        url = "http://www.gravatar.com/avatar/%s?s=%i&d=%s" % (hash, s, d)
+        digest = hashlib.md5(self.email).hexdigest()
+        url = "http://www.gravatar.com/avatar/%s?s=%i&d=%s" % (digest, s, d)
         return url
 
-    def __unicode__(self):
-        return self.email
+    def __str__(self):
+        return to_unicode(self.email)
+    __unicode__ = __str__
 
     def __json__(self):
         return dict(
-            email=self.email,
             id=self.id,
-            nickname=self.nickname,
-            website=self.website,
             bio=self.bio,
             rank=self.rank,
+            email=self.email,
+            nickname=self.nickname,
+            website=self.website,
         )
 
 
 def invitation_id_default(context):
-    return unicode(hashlib.md5(salt_default(context)).hexdigest())
+    return to_unicode(hashlib.md5(salt_default(context)).hexdigest())
 
 
 class Invitation(DeclarativeBase):
-    """ This is a temporary invitation to receive a badge.
+    """ 
+    This is a temporary invitation to receive a badge.
 
     The idea is that a user can create a "You made my day" badge, and
     then award it to another user.  However, instead of just directly
@@ -222,6 +259,7 @@ class Invitation(DeclarativeBase):
 
     """
     __tablename__ = 'invitations'
+
     id = Column(
         Unicode(32), primary_key=True, unique=True,
         default=invitation_id_default,
@@ -243,6 +281,7 @@ class Invitation(DeclarativeBase):
 
 class Authorization(DeclarativeBase):
     __tablename__ = 'authorizations'
+
     id = Column(Integer, primary_key=True)
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
     person_id = Column(Integer, ForeignKey('persons.id'), nullable=False)
@@ -252,12 +291,12 @@ def recipient_default(context):
     Session = sessionmaker(context.engine)()
     person_id = context.current_parameters['person_id']
     person = Session.query(Person).filter_by(id=person_id).one()
-    return unicode(hashlib.sha256(
-        person.email + context.current_parameters['salt']).hexdigest())
+    data = person.email + context.current_parameters['salt']
+    return to_unicode(hashlib.sha256(bytes_(data)).hexdigest())
 
 
-def salt_default(context):
-    return unicode(uuid.uuid4())
+def salt_default(unused_context=None):
+    return str(uuid.uuid4())
 
 
 def assertion_id_default(context):
@@ -268,20 +307,23 @@ def assertion_id_default(context):
 
 class Assertion(DeclarativeBase):
     __tablename__ = 'assertions'
+
     id = Column(Unicode(128), primary_key=True, unique=True,
                 default=assertion_id_default)
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
     person_id = Column(Integer, ForeignKey('persons.id'), nullable=False)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
-    issued_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    issued_on = Column(DateTime, nullable=False,
+                       default=datetime.datetime.utcnow)
 
     # An optional link back to the event that warranted the award
     issued_for = Column(Unicode(256))
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
 
-    def __unicode__(self):
-        return unicode(self.badge) + "<->" + unicode(self.person)
+    def __str__(self):
+        return to_unicode(self.badge) + "<->" + to_unicode(self.person)
+    __unicode__ = __str__
 
     @property
     def _recipient(self):
@@ -291,7 +333,8 @@ class Assertion(DeclarativeBase):
         result = dict(
             recipient=self._recipient,
             salt=self.salt,
-            badge=self.badge.__json__(),)
+            badge=self.badge.__json__(),
+        )
         # Eliminate this check since I made issued_on not nullable?
         if self.issued_on:
             result['issued_on'] = self.issued_on.strftime("%Y-%m-%d")
@@ -306,10 +349,11 @@ class Assertion(DeclarativeBase):
         return lambda: DBSession.delete(self)
 
     def __pygments__(self):
+        HtmlFormatter = formatters.html.HtmlFormatter
+        JavascriptLexer = lexers.javascript.JavascriptLexer
         html_args = {'full': False}
         pretty_encoder = simplejson.encoder.JSONEncoder(indent=2)
-        html = pygments.highlight(
-            pretty_encoder.encode(self.__json__()),
-            pygments.lexers.JavascriptLexer(),
-            pygments.formatters.HtmlFormatter(**html_args)).strip()
+        html = pygments.highlight(pretty_encoder.encode(self.__json__()),
+                                  JavascriptLexer(),
+                                  HtmlFormatter(**html_args)).strip()
         return html
