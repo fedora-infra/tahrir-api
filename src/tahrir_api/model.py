@@ -61,7 +61,7 @@ class Issuer(DeclarativeBase):
                         default=datetime.datetime.utcnow)
 
     def __repr__(self):
-        return "<Issuer: '%s'" % self.name
+        return "<Issuer: '%s'>" % self.name
 
     def __str__(self):
         return to_unicode(self.name)
@@ -99,10 +99,13 @@ class Badge(DeclarativeBase):
                         default=datetime.datetime.utcnow)
     tags = Column(Unicode(128))
 
+    def __repr__(self):
+        return "<Badge: '%s'>" % self.name
+
     def __str__(self):
         return to_unicode(self.name)
     __unicode__ = __str__
-    
+
     def __json__(self):
         if self.image.startswith("http"):
             image = self.image
@@ -139,10 +142,13 @@ class Team(DeclarativeBase):
     created_on = Column(DateTime, nullable=False,
                         default=datetime.datetime.utcnow)
 
+    def __repr__(self):
+        return "<Team: '%s'>" % self.name
+
     def __str__(self):
         return to_unicode(self.name)
     __unicode__ = __str__
-    
+
     def __json__(self):
         return dict(
             id=self.id,
@@ -165,6 +171,9 @@ class Series(DeclarativeBase):
     tags = Column(Unicode(128))
     milestone = relationship("Milestone", backref="series")
     team_id = Column(Unicode(128), ForeignKey('team.id'), nullable=False)
+
+    def __repr__(self):
+        return "<Series: '%s'>" % self.name
 
     def __str__(self):
         return to_unicode(self.name)
@@ -190,6 +199,9 @@ class Milestone(DeclarativeBase):
     position = Column(Integer, default=None)
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
     series_id = Column(Unicode(128), ForeignKey('series.id'), nullable=False)
+
+    def __repr__(self):
+        return "<Milestone: ('%s','%s')>" % (self.badge_id, self.series_id)
 
     def __json__(self):
         return dict(
@@ -220,7 +232,7 @@ class Person(DeclarativeBase):
     rank = Column(Integer, default=None)
 
     def __repr__(self):
-        return "<Person: '%s <%s>'" % (self.nickname, self.email)
+        return "<Person: ('%s,%s)>'" % (self.nickname, self.email)
 
     @property
     def gravatar_link(self):
@@ -286,6 +298,9 @@ class Authorization(DeclarativeBase):
     badge_id = Column(Unicode(128), ForeignKey('badges.id'), nullable=False)
     person_id = Column(Integer, ForeignKey('persons.id'), nullable=False)
 
+    def __repr__(self):
+        return "<Authorization: ('%s,%s)>'" % (self.badge_id, self.person_id)
+
 
 def recipient_default(context):
     Session = sessionmaker(context.engine)()
@@ -320,6 +335,9 @@ class Assertion(DeclarativeBase):
     issued_for = Column(Unicode(256))
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
+
+    def __repr__(self):
+        return "<Assertion: ('%s,%s)>'" % (self.badge_id, self.person_id)
 
     def __str__(self):
         return to_unicode(self.badge) + "<->" + to_unicode(self.person)
