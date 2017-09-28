@@ -1,22 +1,24 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+.. $Id$
+"""
 
-import datetime
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+
 import os
 import sys
-import transaction
-import pprint
 
 from sqlalchemy import engine_from_config
+
 from paste.deploy import appconfig
 
-from ..model import (
-    DBSession,
-    Issuer,
-    Badge,
-    Person,
-    Assertion,
-    DeclarativeBase,
-)
+from tahrir_api.model import DBSession
+from tahrir_api.model import DeclarativeBase
 
+metadata = getattr(DeclarativeBase, 'metadata')
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
@@ -55,43 +57,42 @@ def main(argv=sys.argv):
             'sqlalchemy.url': template.format(**os.environ)
         }
 
-    settings = appconfig(config_name, name=section, relative_to=here_dir,
+    settings = appconfig(config_name, name=section, 
+                         relative_to=here_dir,
                          global_conf=global_conf)
 
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
-    DeclarativeBase.metadata.create_all(engine)
+    metadata.create_all(engine)
 
-    return  # Skip all the following... just leaving it for posterity
-
-    with transaction.manager:
-        issuer = Issuer(
-            name="Ralph Bean",
-            origin="http://badges.threebean.org",
-            org="threebean.org",
-            contact="rbean@redhat.com",
-        )
-        DBSession.add(issuer)
-        badge = Badge(
-            name="Plus One!",
-            image="/pngs/threebean-plus-one.png",
-            description="""
-            Got a recommendation from threebean for being awesome.
-            """.strip(),
-            criteria="/badges/plus-one",  # TODO -- how should this work?
-            issuer=issuer,
-        )
-        DBSession.add(badge)
-        person = Person(
-            email="rbean@redhat.com",
-        )
-        DBSession.add(person)
-        assertion = Assertion(
-            badge=badge,
-            person=person,
-            issued_on=datetime.datetime.now(),
-        )
-
-        DBSession.add(assertion)
-
-        pprint.pprint(assertion.__json__())
+#   Skip all the following... just leaving it for posterity
+#   with transaction.manager:
+#         issuer = Issuer(
+#             name="Ralph Bean",
+#             origin="http://badges.threebean.org",
+#             org="threebean.org",
+#             contact="rbean@redhat.com",
+#         )
+#         DBSession.add(issuer)
+#         badge = Badge(
+#             name="Plus One!",
+#             image="/pngs/threebean-plus-one.png",
+#             description="""
+#             Got a recommendation from threebean for being awesome.
+#             """.strip(),
+#             criteria="/badges/plus-one",  # TODO -- how should this work?
+#             issuer=issuer,
+#         )
+#         DBSession.add(badge)
+#         person = Person(
+#             email="rbean@redhat.com",
+#         )
+#         DBSession.add(person)
+#         assertion = Assertion(
+#             badge=badge,
+#             person=person,
+#             issued_on=datetime.datetime.now(),
+#         )
+#
+#         DBSession.add(assertion)
+#         pprint.pprint(assertion.__json__())
