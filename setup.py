@@ -57,6 +57,7 @@ setup(
         'pygments',
         'simplejson',
         'SQLAlchemy>=0.7.2',
+        'transaction',
         'zope.sqlalchemy',
     ],
     extras_require={
