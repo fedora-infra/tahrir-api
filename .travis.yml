@@ -1,10 +1,24 @@
 language: python
+sudo: false
 python:
-   - "2.6"
-   - "2.7"
-
-install: python setup.py install
-script: python setup.py test
-script: nosetests
+  - 2.7
+  - 3.6
+  - pypy
+  - pypy3
+script:
+  - coverage run -m zope.testrunner
+after_success:
+  - coveralls
 notifications:
-   email: false
+  email: dev-regression-tests@nextthought.com
+
+install:
+  - pip install -U pip
+  - pip install -U setuptools
+  - pip install -U coveralls coverage
+  - pip install -U -e ".[test]"
+
+cache: pip
+
+before_cache:
+  - rm -f $HOME/.cache/pip/log/debug.log

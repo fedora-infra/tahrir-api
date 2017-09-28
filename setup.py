@@ -1,60 +1,70 @@
-import os
-import sys
-
+import codecs
 from setuptools import setup, find_packages
 
-here = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(here, 'README.rst')).read()
+entry_points = {
+    'console_scripts': [
+        "initialize_tahrir_db = tahrir_api.scripts.initializedb:mai",
+        "populate_series_in_tahrir_db = tahrir_api.scripts.populateseries:main",
+    ],
+}
 
-#silly-ness to make tests work
-try:
-    import multiprocessing
-    import logging
-except ImportError:
-    pass
-
-requires = [
-    'pastedeploy',
-    'pygments',
-    'simplejson',
-    'SQLAlchemy>=0.7.2',
-    'zope.sqlalchemy',
-    'alembic',
-    'arrow',
+TESTS_REQUIRE = [
+    'nti.testing',
+    'zope.testrunner',
 ]
 
-if sys.version_info[0] == 2 and sys.version_info[1] <= 6:
-    requires.extend([
-        'ordereddict',
-    ])
+
+def _read(fname):
+    with codecs.open(fname, encoding='utf-8') as f:
+        return f.read()
 
 
-setup(name='tahrir-api',
-      version='0.8.1',
-      description='An API for interacting with the Tahrir database',
-      long_description=README,
-      license="GPLv3+",
-      classifiers=["Programming Language :: Python",
-                   "Framework :: Pyramid",
-                   "Topic :: Internet :: WWW/HTTP",
-                   "License :: OSI Approved :: "
-                   "GNU General Public License v3 or later (GPLv3+)",
-                   ],
-      author='Ross Delinger',
-      author_email='rdelinge@redhat.com',
-      url='http://github.com/rossdylan/tahrir-api',
-      keywords='web sqlalchemy api',
-      packages=['tahrir_api', 'tahrir_api.scripts'],
-      include_package_data=True,
-      zip_safe=False,
-      install_requires=requires,
-      tests_require=[
-          'nose',
-      ],
-      test_suite='nose.collector',
-      entry_points="""
-      [console_scripts]
-      initialize_tahrir_db = tahrir_api.scripts.initializedb:main
-      populate_series_in_tahrir_db = tahrir_api.scripts.populateseries:main
-      """
-      )
+setup(
+    name='tahrir-api',
+    version=_read('version.txt').strip(),
+    author='Ross Delinger',
+    author_email='rdelinge@redhat.com',
+    description="An API for interacting with the Tahrir database",
+    long_description=(_read('README.rst') + '\n\n' + _read('CHANGES.rst')),
+    license="GPLv3+",
+    keywords='web sqlalchemy api',
+    classifiers=[
+        'Intended Audience :: Developers',
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        "Framework :: Pyramid",
+        "Topic :: Internet :: WWW/HTTP",
+        "License :: OSI Approved :: "
+        "GNU General Public License v3 or later (GPLv3+)",
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: Implementation :: CPython',
+        'Programming Language :: Python :: Implementation :: PyPy',
+    ],
+    url="https://github.com/NextThought/nti.tahrir-api",
+    zip_safe=True,
+    packages=['tahrir_api', 'tahrir_api.scripts'],
+    package_dir={'': 'src'},
+    include_package_data=True,
+    tests_require=TESTS_REQUIRE,
+    install_requires=[
+        'setuptools',
+        'alembic',
+        'arrow',
+        'pastedeploy',
+        'pygments',
+        'simplejson',
+        'SQLAlchemy>=0.7.2',
+        'zope.sqlalchemy',
+    ],
+    extras_require={
+        'test': TESTS_REQUIRE,
+        'docs': [
+            'Sphinx',
+            'repoze.sphinx.autointerface',
+            'sphinx_rtd_theme',
+        ],
+    },
+)
