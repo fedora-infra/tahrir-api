@@ -1,3 +1,9 @@
+0.8.2
+-----
+
+- Add support for Python 3.6.
+- Drop support for Python 2.6
+- Remove console scripts
 
 0.8.1
 -----

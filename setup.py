@@ -3,8 +3,6 @@ from setuptools import setup, find_packages
 
 entry_points = {
     'console_scripts': [
-        "initialize_tahrir_db = tahrir_api.scripts.initializedb:mai",
-        "populate_series_in_tahrir_db = tahrir_api.scripts.populateseries:main",
     ],
 }
 
@@ -45,7 +43,7 @@ setup(
     ],
     url="https://github.com/NextThought/nti.tahrir-api",
     zip_safe=True,
-    packages=['tahrir_api', 'tahrir_api.scripts'],
+    packages=['tahrir_api',],
     package_dir={'': 'src'},
     include_package_data=True,
     tests_require=TESTS_REQUIRE,
@@ -57,7 +55,6 @@ setup(
         'pygments',
         'simplejson',
         'SQLAlchemy>=0.7.2',
-        'transaction',
         'zope.sqlalchemy',
     ],
     extras_require={
