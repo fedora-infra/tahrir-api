@@ -15,8 +15,8 @@ import uuid
 import hashlib
 import datetime
 
-import pygments
 from pygments import lexers
+from pygments import highlight
 from pygments import formatters
 
 import simplejson
@@ -371,7 +371,7 @@ class Assertion(DeclarativeBase):
         JavascriptLexer = lexers.javascript.JavascriptLexer
         html_args = {'full': False}
         pretty_encoder = simplejson.encoder.JSONEncoder(indent=2)
-        html = pygments.highlight(pretty_encoder.encode(self.__json__()),
-                                  JavascriptLexer(),
-                                  HtmlFormatter(**html_args)).strip()
+        html = highlight(pretty_encoder.encode(self.__json__()),
+                         JavascriptLexer(),
+                         HtmlFormatter(**html_args)).strip()
         return html
