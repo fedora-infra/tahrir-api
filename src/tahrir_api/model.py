@@ -41,7 +41,7 @@ from sqlalchemy.types import Integer
 
 from zope.sqlalchemy import ZopeTransactionExtension
 
-from tahrir_api._compat import bytes_
+from tahrir_api.utils import bytes_
 
 DeclarativeBase = declarative_base()
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
