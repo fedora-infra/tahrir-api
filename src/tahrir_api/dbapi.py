@@ -573,7 +573,9 @@ class TahrirDatabase(object):
 
     @autocommit
     def note_login(self, person_email=None, id=None, nickname=None):
-        """ Make a note that a person has logged in. """
+        """ 
+        Make a note that a person has logged in. 
+        """
 
         person = self.get_person(person_email, id, nickname)
 
@@ -742,7 +744,8 @@ class TahrirDatabase(object):
             self.session.flush()
             return new_issuer.id
 
-        return self.session.query(Issuer).filter_by(name=name, origin=origin).one().id
+        return self.session.query(Issuer) \
+                   .filter_by(name=name, origin=origin).one().id
 
     def get_all_issuers(self):
         """
@@ -900,7 +903,8 @@ class TahrirDatabase(object):
         return False
 
     def _adjust_ranks(self, person, old_rank):
-        """ Given a person model object and the 'old' rank of that person,
+        """
+        Given a person model object and the 'old' rank of that person,
         adjust the ranks of all persons between the 'old' rank and the present
         rank of the given person.
 
@@ -933,7 +937,8 @@ class TahrirDatabase(object):
             )
 
     def _make_leaderboard(self, start=None, stop=None):
-        """ Produce a dict mapping persons to information about
+        """
+        Produce a dict mapping persons to information about
         the number of badges they have been awarded and their
         rank, freshly calculated.  This is relatively expensive.
 
