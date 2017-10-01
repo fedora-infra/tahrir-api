@@ -961,7 +961,7 @@ class TahrirDatabase(object):
                 .filter(Assertion.issued_on >= start)\
                 .filter(Assertion.issued_on <= stop)
 
-        leaderboard = leaderboard\
+        leaderboard = leaderboard \
             .order_by('count_1 desc')\
             .filter(not_(Person.opt_out))\
             .group_by(Person)\
@@ -979,7 +979,6 @@ class TahrirDatabase(object):
         # Tweaked so that users with the same amount of badges share rank.
 
         user_to_rank = OrderedDict()
-
         prev_rank, prev_badges = None, None
 
         for idx, data in enumerate(leaderboard):
@@ -992,6 +991,7 @@ class TahrirDatabase(object):
                 prev_badges = badges
             user_to_rank[user] = {
                 'badges': badges,
-                'rank': rank}
+                'rank': rank
+            }
 
         return user_to_rank
