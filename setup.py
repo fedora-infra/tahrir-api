@@ -43,10 +43,9 @@ setup(
     ],
     url="https://github.com/NextThought/nti.tahrir-api",
     zip_safe=True,
-    packages=['tahrir_api',],
+    packages=find_packages("src"),
     package_dir={'': 'src'},
     include_package_data=True,
-    tests_require=TESTS_REQUIRE,
     install_requires=[
         'setuptools',
         'alembic',
@@ -55,9 +54,10 @@ setup(
         'pygments',
         'simplejson',
         'six',
-        'SQLAlchemy>=0.7.2',
+        'SQLAlchemy',
         'zope.sqlalchemy',
     ],
+    test_suite="tahrir-api.tests",
     extras_require={
         'test': TESTS_REQUIRE,
         'docs': [
