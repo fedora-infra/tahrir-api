@@ -42,7 +42,6 @@ from sqlalchemy.types import Integer
 from zope.sqlalchemy import ZopeTransactionExtension
 
 from tahrir_api._compat import bytes_
-from tahrir_api._compat import to_unicode
 
 DeclarativeBase = declarative_base()
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
@@ -259,7 +258,7 @@ class Person(DeclarativeBase):
 
 def invitation_id_default(context):
     data = bytes_(salt_default(context))
-    return to_unicode(hashlib.md5(data).hexdigest())
+    return six.text_type(hashlib.md5(data).hexdigest())
 
 
 class Invitation(DeclarativeBase):
@@ -309,11 +308,11 @@ def recipient_default(context):
     person_id = context.current_parameters['person_id']
     person = Session.query(Person).filter_by(id=person_id).one()
     data = bytes_(person.email) + bytes_(context.current_parameters['salt'])
-    return to_unicode(hashlib.sha256(data).hexdigest())
+    return six.text_type(hashlib.sha256(data).hexdigest())
 
 
 def salt_default(unused_context=None):
-    return to_unicode(str(uuid.uuid4()))
+    return six.text_type(str(uuid.uuid4()))
 
 
 def assertion_id_default(context):
