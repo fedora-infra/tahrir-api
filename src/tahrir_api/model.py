@@ -10,6 +10,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
+import six
 import time
 import uuid
 import hashlib
@@ -64,7 +65,7 @@ class Issuer(DeclarativeBase):
         return "<Issuer: '%s'>" % self.name
 
     def __str__(self):
-        return to_unicode(self.name)
+        return six.text_type(self.name)
     __unicode__ = __str__
 
     def __json__(self):
@@ -103,7 +104,7 @@ class Badge(DeclarativeBase):
         return "<Badge: '%s'>" % self.name
 
     def __str__(self):
-        return to_unicode(self.name)
+        return six.text_type(self.name)
     __unicode__ = __str__
 
     def __json__(self):
@@ -146,7 +147,7 @@ class Team(DeclarativeBase):
         return "<Team: '%s'>" % self.name
 
     def __str__(self):
-        return to_unicode(self.name)
+        return six.text_type(self.name)
     __unicode__ = __str__
 
     def __json__(self):
@@ -176,7 +177,7 @@ class Series(DeclarativeBase):
         return "<Series: '%s'>" % self.name
 
     def __str__(self):
-        return to_unicode(self.name)
+        return six.text_type(self.name)
     __unicode__ = __str__
 
     def __json__(self):
@@ -242,7 +243,7 @@ class Person(DeclarativeBase):
         return url
 
     def __str__(self):
-        return to_unicode(self.email)
+        return six.text_type(self.email)
     __unicode__ = __str__
 
     def __json__(self):
@@ -257,7 +258,8 @@ class Person(DeclarativeBase):
 
 
 def invitation_id_default(context):
-    return to_unicode(hashlib.md5(salt_default(context)).hexdigest())
+    data = bytes_(salt_default(context))
+    return to_unicode(hashlib.md5(data).hexdigest())
 
 
 class Invitation(DeclarativeBase):
@@ -306,12 +308,12 @@ def recipient_default(context):
     Session = sessionmaker(context.engine)()
     person_id = context.current_parameters['person_id']
     person = Session.query(Person).filter_by(id=person_id).one()
-    data = person.email + context.current_parameters['salt']
-    return to_unicode(hashlib.sha256(bytes_(data)).hexdigest())
+    data = bytes_(person.email) + bytes_(context.current_parameters['salt'])
+    return to_unicode(hashlib.sha256(data).hexdigest())
 
 
 def salt_default(unused_context=None):
-    return str(uuid.uuid4())
+    return to_unicode(str(uuid.uuid4()))
 
 
 def assertion_id_default(context):
@@ -340,7 +342,7 @@ class Assertion(DeclarativeBase):
         return "<Assertion: ('%s,%s)>'" % (self.badge_id, self.person_id)
 
     def __str__(self):
-        return to_unicode(self.badge) + "<->" + to_unicode(self.person)
+        return str(self.badge) + u"<->" + str(self.person)
     __unicode__ = __str__
 
     @property
