@@ -1,31 +1,16 @@
-*.py[co]
+*.py[cod]
 
-# Packages
-*.egg
-*.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
+/.project
+/.pydevproject
+/.settings/
 
-# Installer logs
-pip-log.txt
+*.DS_Store
 
-# Unit test / coverage reports
+# Distribution / packaging
+build/
+dist/
+/.tox/
+
 .coverage
-.tox
-
-#Translations
-*.mo
-
-#Mr Developer
-.mr.developer.cfg
-
-# swap etc
-*.swp
-*.swo
+htmlcov/
+docs/_build/

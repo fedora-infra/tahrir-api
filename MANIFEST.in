@@ -1,5 +1,19 @@
-include *.rst
+include README.rst
 include LICENSE
-include alembic.ini
-recursive-include alembic *
-recursive-include tests *.py
+include CHANGES.rst
+include .coveragerc
+include AUTHORS
+include INSTALL
+include TODO
+include babel.cfg
+include nose2.cfg
+include tox.ini
+include .travis.yml
+include *.txt
+exclude .nti_cover_package
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs Makefile
+recursive-include src *.zcml
+recursive-include examples *.py
+recursive-include scripts *.py

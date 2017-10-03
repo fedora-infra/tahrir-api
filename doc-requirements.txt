@@ -1,0 +1,4 @@
+setuptools >= 33.1.1
+zope.interface
+repoze.sphinx.autointerface
+sphinx_rtd_theme

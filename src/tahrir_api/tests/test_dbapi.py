@@ -1,42 +1,60 @@
-from __future__ import unicode_literals
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from tahrir_api.dbapi import TahrirDatabase
-from tahrir_api.model import DBSession, DeclarativeBase
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+
+# disable: accessing protected members, too many methods
+# pylint: disable=W0212,R0904
+
+from hamcrest import is_
+from hamcrest import none
+from hamcrest import is_in
+from hamcrest import is_not
+from hamcrest import has_length
+from hamcrest import assert_that
+from hamcrest import has_property
+
+import unittest
+
 from sqlalchemy import create_engine
 
+from tahrir_api.dbapi import TahrirDatabase
 
-try:
-    from subprocess import check_output as _check_output
+from tahrir_api.model import DBSession
+from tahrir_api.model import DeclarativeBase
 
-    def check_output(cmd):
-        try:
-            return _check_output(cmd)
-        except:
-            return None
-except:
-    import subprocess
+from subprocess import check_output as _check_output
 
-    def check_output(cmd):
-        try:
-            return subprocess.Popen(
-                cmd, stdout=subprocess.PIPE).communicate()[0]
-        except:
-            return None
+metadata = getattr(DeclarativeBase, 'metadata')
 
 
-class TestDBInit(object):
+def check_output(cmd):
+    try:
+        return _check_output(cmd)
+    except Exception:
+        return None
+
+
+class TestDBInit(unittest.TestCase):
 
     def setUp(self):
         check_output(['touch', 'testdb.db'])
         sqlalchemy_uri = "sqlite:///testdb.db"
         engine = create_engine(sqlalchemy_uri)
         DBSession.configure(bind=engine)
-        DeclarativeBase.metadata.create_all(engine)
+        metadata.create_all(engine)
 
         self.callback_calls = []
         self.api = TahrirDatabase(
             sqlalchemy_uri,
-            notification_callback=self.callback)
+            notification_callback=self.callback
+        )
+
+    def tearDown(self):
+        check_output(['rm', 'testdb.db'])
+        self.callback_calls = []
 
     def callback(self, *args, **kwargs):
         self.callback_calls.append((args, kwargs))
@@ -54,8 +72,7 @@ class TestDBInit(object):
 
     def test_add_team(self):
         self.api.create_team("TestTeam")
-
-        assert self.api.team_exists("testteam") is True
+        assert_that(self.api.team_exists("testteam"), is_(True))
 
     def test_add_series(self):
         team_id = self.api.create_team("TestTeam")
@@ -65,7 +82,7 @@ class TestDBInit(object):
                                team_id,
                                "test, series")
 
-        assert self.api.series_exists("testseries") is True
+        assert_that(self.api.series_exists("testseries"), is_(True))
 
     def test_add_milestone(self):
         team_id = self.api.create_team("TestTeam")
@@ -92,19 +109,19 @@ class TestDBInit(object):
         )
 
         milestone_id_1 = self.api.create_milestone(1,
-                                         badge_id_1,
-                                         series_id)
+                                                   badge_id_1,
+                                                   series_id)
 
         milestone_id_2 = self.api.create_milestone(2,
-                                         badge_id_2,
-                                         series_id)
+                                                   badge_id_2,
+                                                   series_id)
 
-        assert self.api.milestone_exists(milestone_id_1) is True
-        assert self.api.milestone_exists(milestone_id_2) is True
+        assert_that(self.api.milestone_exists(milestone_id_1), is_(True))
+        assert_that(self.api.milestone_exists(milestone_id_2), is_(True))
 
     def test_add_person(self):
         self.api.add_person("test@tester.com")
-        assert self.api.person_exists("test@tester.com") is True
+        assert_that(self.api.person_exists("test@tester.com"), is_(True))
 
     def test_add_issuer(self):
         _id = self.api.add_issuer(
@@ -113,7 +130,7 @@ class TestDBInit(object):
             "TestOrg",
             "TestContact"
         )
-        assert self.api.issuer_exists("TestOrigin", "TestName") is True
+        assert_that(self.api.issuer_exists("TestOrigin", "TestName"), is_(True))
 
     def test_add_invitation(self):
         badge_id = self.api.add_badge(
@@ -127,15 +144,15 @@ class TestDBInit(object):
             badge_id,
         )
 
-        assert self.api.invitation_exists(_id)
+        assert_that(self.api.invitation_exists(_id), is_(True))
 
     def test_last_login(self):
         email = "test@tester.com"
         person_id = self.api.add_person(email)
         person = self.api.get_person(person_id)
-        assert not person.last_login
+        assert_that(person, has_property('last_login', is_(none())))
         self.api.note_login(nickname=person.nickname)
-        assert person.last_login
+        assert_that(person, has_property('last_login', is_not(none())))
 
     def test_add_assertion(self):
         issuer_id = self.api.add_issuer(
@@ -152,18 +169,21 @@ class TestDBInit(object):
             issuer_id,
         )
         email = "test@tester.com"
-        person_id = self.api.add_person(email)
-        assertion_id = self.api.add_assertion(badge_id, email, None, 'link')
-        assert self.api.assertion_exists(badge_id, email)
+        self.api.add_person(email)
+        self.api.add_assertion(badge_id, email, None, 'link')
+        assert_that(self.api.assertion_exists(badge_id, email), is_(True))
 
         badge = self.api.get_badge(badge_id)
-        assert badge.assertions[0].issued_for == 'link'
+        assert_that(badge, 
+                    has_property('assertions', has_length(1)))
+        assert_that(badge.assertions[0],
+                    has_property('issued_for', is_('link')))
 
         # Ensure that we would have published two fedmsg messages for that.
-        assert len(self.callback_calls) == 2
+        assert_that(self.callback_calls, has_length(2))
 
         # Ensure that the first message had a 'badge_id' in the message.
-        assert 'badge_id' in self.callback_calls[0][1]['msg']['badge']
+        assert_that('badge_id', is_in(self.callback_calls[0][1]['msg']['badge']))
 
     def test_get_badges_from_tags(self):
         issuer_id = self.api.add_issuer(
@@ -205,10 +225,6 @@ class TestDBInit(object):
 
         tags = ['test', 'tester']
         badges_any = self.api.get_badges_from_tags(tags, match_all=False)
-        assert len(badges_any) == 3
+        assert_that(badges_any, has_length(3))
         badges_all = self.api.get_badges_from_tags(tags, match_all=True)
-        assert len(badges_all) == 1
-
-    def tearDown(self):
-        check_output(['rm', 'testdb.db'])
-        self.callback_calls = []
+        assert_that(badges_all, has_length(1))
