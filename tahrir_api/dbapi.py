@@ -3,9 +3,9 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
-from utils import autocommit, convert_name_to_id
-from model import Badge, Invitation, Issuer, Assertion, Person, Authorization
-from model import Team, Series, Milestone
+from .utils import autocommit, convert_name_to_id
+from .model import Badge, Invitation, Issuer, Assertion, Person, Authorization
+from .model import Team, Series, Milestone
 from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import (
