@@ -56,3 +56,14 @@ This is an example of awarding a badge via Tahrir-API:
 
     db.add_person(person_email)
     db.add_assertion(badge_id, person_email, issued_on)
+
+
+Development
+===========
+
+Run the tests
+-------------
+
+You can run the tests with ``tox``::
+
+    $ tox
