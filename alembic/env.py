@@ -1,4 +1,3 @@
-
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
@@ -18,6 +17,7 @@ fileConfig(config.config_file_name)
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from tahrir_api import model
+
 target_metadata = model.DeclarativeBase.metadata
 
 
@@ -25,6 +25,7 @@ target_metadata = model.DeclarativeBase.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
@@ -54,13 +55,12 @@ def run_migrations_online():
     """
     engine = engine_from_config(
         config.get_section(config.config_ini_section),
-        prefix='sqlalchemy.',
-        poolclass=pool.NullPool)
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
 
     connection = engine.connect()
-    context.configure(
-        connection=connection,
-        target_metadata=target_metadata)
+    context.configure(connection=connection, target_metadata=target_metadata)
 
     trans = connection.begin()
     try:
@@ -74,6 +74,7 @@ def run_migrations_online():
         trans.rollback()
     finally:
         connection.close()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

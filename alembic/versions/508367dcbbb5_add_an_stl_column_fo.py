@@ -7,18 +7,18 @@ Create Date: 2014-07-11 09:36:33.211281
 """
 
 # revision identifiers, used by Alembic.
-revision = '508367dcbbb5'
-down_revision = '2879ed5a6297'
+revision = "508367dcbbb5"
+down_revision = "2879ed5a6297"
 
 from alembic import op
 import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('badges', sa.Column('stl', sa.Unicode(128)))
+    op.add_column("badges", sa.Column("stl", sa.Unicode(128)))
 
 
 def downgrade():
     # Downgrade will fail if using SQLite. The transaction will
     # be rolled back as per env.py.
-    op.drop_column('badges', 'stl')
+    op.drop_column("badges", "stl")
