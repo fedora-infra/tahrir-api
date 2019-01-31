@@ -17,8 +17,8 @@ from ..model import (
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
-    print('usage: %s <config_uri>\n'
-          '(example: "%s development.ini")' % (cmd, cmd))
+    print(('usage: %s <config_uri>\n'
+          '(example: "%s development.ini")' % (cmd, cmd)))
     sys.exit(1)
 
 
@@ -125,8 +125,8 @@ def main(argv=sys.argv):
                 series = DBSession.query(Series).filter(Series.name == series_name).first()
 
                 if not series:
-                    print('Series <%s> does not exist, skipping '
-                          'processing badge %s' % (series_name, badge.name))
+                    print(('Series <%s> does not exist, skipping '
+                          'processing badge %s' % (series_name, badge.name)))
                     continue
                 milestone = Milestone()
                 milestone.badge_id = badge.id

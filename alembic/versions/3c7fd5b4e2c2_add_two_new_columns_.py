@@ -17,8 +17,8 @@ import datetime
 
 
 def upgrade():
-    op.add_column(u'persons', sa.Column('created_on', sa.DateTime()))
-    op.add_column(u'persons', sa.Column('opt_out', sa.Boolean()))
+    op.add_column('persons', sa.Column('created_on', sa.DateTime()))
+    op.add_column('persons', sa.Column('opt_out', sa.Boolean()))
 
     # We have to do this manually because I can't figure out how to make
     # alembic apply defaults to sqlite.
@@ -34,5 +34,5 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_column(u'persons', 'opt_out')
-    op.drop_column(u'persons', 'created_on')
+    op.drop_column('persons', 'opt_out')
+    op.drop_column('persons', 'created_on')

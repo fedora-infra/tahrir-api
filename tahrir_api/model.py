@@ -47,7 +47,9 @@ class Issuer(DeclarativeBase):
                         default=datetime.datetime.utcnow)
 
     def __unicode__(self):
-        return self.name
+        return str(self.name)
+
+    __str__ = __unicode__
 
     def __json__(self):
         return dict(
@@ -81,7 +83,9 @@ class Badge(DeclarativeBase):
     tags = Column(Unicode(128))
 
     def __unicode__(self):
-        return self.name
+        return str(self.name)
+
+    __str__ = __unicode__
 
     def __json__(self):
         if self.image.startswith("http"):
@@ -195,7 +199,9 @@ class Person(DeclarativeBase):
         return url
 
     def __unicode__(self):
-        return self.email
+        return str(self.email)
+
+    __str__ = __unicode__
 
     def __json__(self):
         return dict(
@@ -209,7 +215,7 @@ class Person(DeclarativeBase):
 
 
 def invitation_id_default(context):
-    return unicode(hashlib.md5(salt_default(context)).hexdigest())
+    return hashlib.md5(salt_default(context).encode("utf-8")).hexdigest()
 
 
 class Invitation(DeclarativeBase):
@@ -252,12 +258,14 @@ def recipient_default(context):
     Session = sessionmaker(context.engine)()
     person_id = context.current_parameters['person_id']
     person = Session.query(Person).filter_by(id=person_id).one()
-    return unicode(hashlib.sha256(
-        person.email + context.current_parameters['salt']).hexdigest())
+
+    return hashlib.sha256(
+        (person.email + context.current_parameters["salt"]).encode("utf-8")
+        ).hexdigest()
 
 
 def salt_default(context):
-    return unicode(uuid.uuid4())
+    return str(uuid.uuid4())
 
 
 def assertion_id_default(context):
@@ -281,7 +289,9 @@ class Assertion(DeclarativeBase):
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
 
     def __unicode__(self):
-        return unicode(self.badge) + "<->" + unicode(self.person)
+        return str(self.badge) + "<->" + str(self.person)
+
+    __str__ = __unicode__
 
     @property
     def _recipient(self):
