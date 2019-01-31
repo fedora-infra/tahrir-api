@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 
 from tahrir_api.dbapi import TahrirDatabase
 from tahrir_api.model import DBSession, DeclarativeBase
@@ -49,7 +49,7 @@ class TestDBInit(object):
             "TestCriteria",
             1337
         )
-
+        assert self.api.get_badge("testbadge").__str__() == "TestBadge"
         assert self.api.badge_exists("testbadge") is True
 
     def test_add_team(self):
@@ -104,6 +104,7 @@ class TestDBInit(object):
 
     def test_add_person(self):
         self.api.add_person("test@tester.com")
+        assert self.api.get_person("test@tester.com").__str__() == "test@tester.com"
         assert self.api.person_exists("test@tester.com") is True
 
     def test_add_issuer(self):
@@ -113,6 +114,7 @@ class TestDBInit(object):
             "TestOrg",
             "TestContact"
         )
+        assert self.api.get_issuer(_id).__str__() == "TestName"
         assert self.api.issuer_exists("TestOrigin", "TestName") is True
 
     def test_add_invitation(self):
@@ -158,6 +160,8 @@ class TestDBInit(object):
 
         badge = self.api.get_badge(badge_id)
         assert badge.assertions[0].issued_for == 'link'
+        assert (self.api.get_assertions_by_badge(badge_id)[0].__str__() ==
+                "TestBadge<->test@tester.com")
 
         # Ensure that we would have published two fedmsg messages for that.
         assert len(self.callback_calls) == 2

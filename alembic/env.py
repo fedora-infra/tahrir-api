@@ -1,4 +1,4 @@
-from __future__ import with_statement
+
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
@@ -68,9 +68,9 @@ def run_migrations_online():
             context.run_migrations()
             trans.commit()
     except sa.exc.OperationalError as e:
-        print "SQLite does not allow one of these operations. Rolling back."
-        print "The exception was:"
-        print repr(e)
+        print("SQLite does not allow one of these operations. Rolling back.")
+        print("The exception was:")
+        print(repr(e))
         trans.rollback()
     finally:
         connection.close()
