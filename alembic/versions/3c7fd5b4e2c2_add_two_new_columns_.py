@@ -7,8 +7,8 @@ Create Date: 2013-06-26 14:46:28.361709
 """
 
 # revision identifiers, used by Alembic.
-revision = '3c7fd5b4e2c2'
-down_revision = '16943d9088cf'
+revision = "3c7fd5b4e2c2"
+down_revision = "16943d9088cf"
 
 import tahrir_api
 from alembic import op
@@ -17,8 +17,8 @@ import datetime
 
 
 def upgrade():
-    op.add_column('persons', sa.Column('created_on', sa.DateTime()))
-    op.add_column('persons', sa.Column('opt_out', sa.Boolean()))
+    op.add_column("persons", sa.Column("created_on", sa.DateTime()))
+    op.add_column("persons", sa.Column("opt_out", sa.Boolean()))
 
     # We have to do this manually because I can't figure out how to make
     # alembic apply defaults to sqlite.
@@ -34,5 +34,5 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_column('persons', 'opt_out')
-    op.drop_column('persons', 'created_on')
+    op.drop_column("persons", "opt_out")
+    op.drop_column("persons", "created_on")

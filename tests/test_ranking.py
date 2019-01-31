@@ -1,5 +1,3 @@
-
-
 from nose.tools import eq_
 
 from tahrir_api.dbapi import TahrirDatabase
@@ -15,18 +13,20 @@ try:
             return _check_output(cmd)
         except:
             return None
+
+
 except:
     import subprocess
 
     def check_output(cmd):
         try:
-            return subprocess.Popen(
-                cmd, stdout=subprocess.PIPE).communicate()[0]
+            return subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
         except:
             return None
 
 
 import datetime
+
 now = datetime.datetime.now()
 yesterday = now - datetime.timedelta(days=1)
 one_week_ago = now - datetime.timedelta(days=7)
@@ -36,13 +36,12 @@ one_month_ago = now - datetime.timedelta(weeks=4)
 def assert_in(member, container):
     """ Just like assertTrue(a in b), but with a nicer default message. """
     if member not in container:
-        raise AssertionError('%r not found in %r' % (member, container))
+        raise AssertionError("%r not found in %r" % (member, container))
 
 
 class TestRanking(object):
-
     def setUp(self):
-        check_output(['touch', 'testdb.db'])
+        check_output(["touch", "testdb.db"])
         sqlalchemy_uri = "sqlite:///testdb.db"
         engine = create_engine(sqlalchemy_uri)
         DBSession.configure(bind=engine)
@@ -52,14 +51,11 @@ class TestRanking(object):
         self._create_test_data()
 
     def tearDown(self):
-        check_output(['rm', 'testdb.db'])
+        check_output(["rm", "testdb.db"])
 
     def _create_test_data(self):
         issuer_id = self.api.add_issuer(
-            "TestOrigin",
-            "TestName",
-            "TestOrg",
-            "TestContact"
+            "TestOrigin", "TestName", "TestOrg", "TestContact"
         )
         self.badge_id_1 = self.api.add_badge(
             "TestBadge1",
@@ -130,15 +126,9 @@ class TestRanking(object):
     def test_ranking_preexisting(self):
         """ Test that rank updating works for pre-existant users """
         person1 = self.api.get_person("test_1@tester.com")
-        new_assertion1 = Assertion(
-            badge_id=self.badge_id_1,
-            person_id=person1.id,
-        )
+        new_assertion1 = Assertion(badge_id=self.badge_id_1, person_id=person1.id)
         self.api.session.add(new_assertion1)
-        new_assertion2 = Assertion(
-            badge_id=self.badge_id_2,
-            person_id=person1.id,
-        )
+        new_assertion2 = Assertion(badge_id=self.badge_id_2, person_id=person1.id)
         self.api.session.add(new_assertion2)
         self.api.session.flush()
 
@@ -170,13 +160,13 @@ class TestRanking(object):
         epsilon = datetime.timedelta(hours=1)
 
         results = self.api._make_leaderboard(yesterday - epsilon, now)
-        eq_(results[person1]['badges'], 1)
-        eq_(results[person4]['badges'], 1)
+        eq_(results[person1]["badges"], 1)
+        eq_(results[person4]["badges"], 1)
 
         results = self.api._make_leaderboard(one_week_ago - epsilon, now)
-        eq_(results[person1]['badges'], 1)
-        eq_(results[person4]['badges'], 2)
+        eq_(results[person1]["badges"], 1)
+        eq_(results[person4]["badges"], 2)
 
         results = self.api._make_leaderboard(one_month_ago - epsilon, now)
-        eq_(results[person1]['badges'], 1)
-        eq_(results[person4]['badges'], 3)
+        eq_(results[person1]["badges"], 1)
+        eq_(results[person4]["badges"], 3)
