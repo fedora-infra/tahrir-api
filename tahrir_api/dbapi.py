@@ -6,7 +6,7 @@
 from .utils import autocommit, convert_name_to_id
 from .model import Badge, Invitation, Issuer, Assertion, Person, Authorization
 from .model import Team, Series, Milestone
-from sqlalchemy import create_engine, func, and_, not_
+from sqlalchemy import create_engine, func, and_, not_, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import datetime, timedelta
 from collections import OrderedDict
@@ -1020,7 +1020,7 @@ class TahrirDatabase(object):
             )
 
         leaderboard = (
-            leaderboard.order_by("count_1 desc")
+            leaderboard.order_by(text("count_1 desc"))
             .filter(not_(Person.opt_out))
             .group_by(Person)
             .all()
