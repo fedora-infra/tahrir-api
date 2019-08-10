@@ -1,5 +1,5 @@
 from tahrir_api.dbapi import TahrirDatabase
-from tahrir_api.model import DBSession, DeclarativeBase
+from tahrir_api.model import DeclarativeBase
 from sqlalchemy import create_engine
 
 
@@ -28,7 +28,6 @@ class TestDBInit(object):
         check_output(["touch", "testdb.db"])
         sqlalchemy_uri = "sqlite:///testdb.db"
         engine = create_engine(sqlalchemy_uri)
-        DBSession.configure(bind=engine)
         DeclarativeBase.metadata.create_all(engine)
 
         self.callback_calls = []

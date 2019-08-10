@@ -1,7 +1,6 @@
 from nose.tools import eq_
-
 from tahrir_api.dbapi import TahrirDatabase
-from tahrir_api.model import DBSession, DeclarativeBase, Assertion
+from tahrir_api.model import DeclarativeBase, Assertion
 from sqlalchemy import create_engine
 
 
@@ -44,7 +43,6 @@ class TestRanking(object):
         check_output(["touch", "testdb.db"])
         sqlalchemy_uri = "sqlite:///testdb.db"
         engine = create_engine(sqlalchemy_uri)
-        DBSession.configure(bind=engine)
         DeclarativeBase.metadata.create_all(engine)
 
         self.api = TahrirDatabase(sqlalchemy_uri)
