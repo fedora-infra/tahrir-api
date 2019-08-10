@@ -61,9 +61,50 @@ This is an example of awarding a badge via Tahrir-API:
 Development
 ===========
 
+Set-up your env
+---------------
+Install helper
+
+.. code-block:: bash
+
+    $ sudo dnf install -y python3-virtualenvwrapper  # RedHat-based OS
+
+Build your virtual env
+
+.. code-block:: bash
+
+    $ export WORKON_HOME=$HOME/.virtualenvs
+    $ mkvirtualenv tahrir-api
+
+Connect w/ your virutal env
+
+.. code-block:: bash
+
+    $ workon tahrir-api
+    (tahrir-api)$
+
+Install
+-------
+Requirements
+
+.. code-block:: bash
+
+    (tahrir-api)$ pip install -r requirements.txt
+
+Project installation
+
+.. code-block:: bash
+
+    (tahrir-api)$ python setup.py develop
+
+Happy hacking!
+
 Run the tests
 -------------
 
-You can run the tests with ``tox``::
+You can run the tests with ``tox``
 
-    $ tox
+.. code-block:: bash
+
+    (tahrir-api)$ pip install tox
+    (tahrir-api)$ tox

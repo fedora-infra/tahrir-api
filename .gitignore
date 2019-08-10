@@ -21,12 +21,15 @@ pip-log.txt
 .tox
 coverage.xml
 
-#Translations
+# Translations
 *.mo
 
-#Mr Developer
+# Mr Developer
 .mr.developer.cfg
 
 # swap etc
 *.swp
 *.swo
+
+## PyCharm
+.idea/
