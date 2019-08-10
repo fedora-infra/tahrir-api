@@ -1,7 +1,5 @@
 import os
-import sys
-
-from setuptools import setup, find_packages
+from setuptools import setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, "README.rst")).read()
@@ -13,18 +11,10 @@ try:
 except ImportError:
     pass
 
-requires = [
-    "pastedeploy",
-    "pygments",
-    "simplejson",
-    "SQLAlchemy>=0.7.2",
-    "zope.sqlalchemy",
-    "alembic",
-    "arrow",
-]
 
-if sys.version_info[0] == 2 and sys.version_info[1] <= 6:
-    requires.extend(["ordereddict"])
+def get_requires():
+    with open(os.path.join(here, "requirements.txt"), "r") as f:
+        return [line.strip() for line in f]
 
 
 setup(
@@ -37,16 +27,16 @@ setup(
         "Programming Language :: Python",
         "Framework :: Pyramid",
         "Topic :: Internet :: WWW/HTTP",
-        "License :: OSI Approved :: " "GNU General Public License v3 or later (GPLv3+)",
+        "License :: OSI Approved :: GNU General Public License v3 or later(GPLv3+)",
     ],
     author="Ross Delinger",
     author_email="rdelinge@redhat.com",
-    url="http://github.com/rossdylan/tahrir-api",
+    url="http://github.com/fedora-infra/tahrir-api",
     keywords="web sqlalchemy api",
     packages=["tahrir_api", "tahrir_api.scripts"],
     include_package_data=True,
     zip_safe=False,
-    install_requires=requires,
+    install_requires=get_requires(),
     tests_require=["nose"],
     test_suite="nose.collector",
     entry_points="""
