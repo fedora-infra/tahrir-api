@@ -9,11 +9,7 @@ from .model import Team, Series, Milestone
 from sqlalchemy import create_engine, func, and_, not_
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import datetime, timedelta
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
+from collections import OrderedDict
 
 
 class TahrirDatabase(object):
@@ -86,6 +82,8 @@ class TahrirDatabase(object):
 
         :type name: str
         :param name: Name of the team
+        :type team_id: int
+        :param team_id: Id of the team
         """
 
         if not team_id:
@@ -133,8 +131,8 @@ class TahrirDatabase(object):
         """
         Return the series related to a given team ID
 
-        :type series_id: str
-        :param series_id: The ID of the team
+        :type team_id: str
+        :param team_id: The ID of the team
         """
         if self.team_exists(team_id):
             return self.session.query(Series).filter(Series.team_id == team_id).all()
@@ -165,7 +163,8 @@ class TahrirDatabase(object):
 
         if not self.series_exists(series_id):
             new_series = Series(
-                id=series_id, name=name, description=desc, tags=tags, team_id=team_id
+                id=series_id, name=name, description=desc,
+                tags=tags, team_id=team_id
             )
 
             self.session.add(new_series)
@@ -956,7 +955,7 @@ class TahrirDatabase(object):
 
             self._adjust_ranks(person, old_rank)
 
-            return (person_email, badge_id)
+            return person_email, badge_id
 
         return False
 
@@ -986,7 +985,9 @@ class TahrirDatabase(object):
 
         if self.notification_callback:
             self.notification_callback(
-                topic="person.rank.advance", msg=dict(person=person, old_rank=old_rank)
+                topic="person.rank.advance", msg=dict(
+                    person=person, old_rank=old_rank
+                )
             )
 
     def _make_leaderboard(self, start=None, stop=None):
