@@ -1,4 +1,10 @@
 
+0.9.0
+-----
+
+- Port to python3 (dropping python2 support) `PR41 <https://github.com/fedora-infra/tahrir-api/pull/48`_
+- Drop deprecated/removed feature from SQAlchemy `PR40 <https://github.com/fedora-infra/tahrir-api/pull/47>`_
+
 0.8.1
 -----
 
@@ -52,8 +58,6 @@ Commits
   https://github.com/fedora-infra/tahrir-api/commit/1b5151371
 - 6ae013ea0 Skip badges with series in populate script
   https://github.com/fedora-infra/tahrir-api/commit/6ae013ea0
-Changelog
-=========
 
 0.7.2
 -----

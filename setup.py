@@ -19,7 +19,7 @@ def get_requires():
 
 setup(
     name="tahrir-api",
-    version="0.8.1",
+    version="0.9.0",
     description="An API for interacting with the Tahrir database",
     long_description=README,
     license="GPLv3+",
