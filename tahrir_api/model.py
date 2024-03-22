@@ -6,6 +6,7 @@ import datetime
 import time
 
 import arrow
+import zope.sqlalchemy
 
 from sqlalchemy import Column, DateTime, Unicode, ForeignKey, UniqueConstraint
 from sqlalchemy.types import Integer, Boolean
@@ -15,9 +16,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 
 
-from zope.sqlalchemy import ZopeTransactionEvents
+DBSession = scoped_session(sessionmaker())
+zope.sqlalchemy.register(DBSession)
 
-DBSession = scoped_session(sessionmaker(extension=ZopeTransactionEvents()))
 DeclarativeBase = declarative_base()
 DeclarativeBase.query = DBSession.query_property()
 
