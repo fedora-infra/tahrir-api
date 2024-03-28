@@ -986,7 +986,7 @@ class TahrirDatabase(object):
         if self.notification_callback:
             self.notification_callback(
                 topic="person.rank.advance", msg=dict(
-                    person=person, old_rank=old_rank
+                    person=person.__json__(), old_rank=old_rank
                 )
             )
 
