@@ -10,6 +10,7 @@ from sqlalchemy import create_engine, func, and_, not_, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import datetime, timedelta
 from collections import OrderedDict
+from tahrir_messages import PersonLoginFirstV1, BadgeAwardV1, PersonRankAdvanceV1
 
 
 class TahrirDatabase(object):
@@ -163,8 +164,7 @@ class TahrirDatabase(object):
 
         if not self.series_exists(series_id):
             new_series = Series(
-                id=series_id, name=name, description=desc,
-                tags=tags, team_id=team_id
+                id=series_id, name=name, description=desc, tags=tags, team_id=team_id
             )
 
             self.session.add(new_series)
@@ -495,7 +495,7 @@ class TahrirDatabase(object):
             return False
 
     def person_opted_out(self, email=None, id=None, nickname=None):
-        """ Returns true if a given person has opted out of tahrir. """
+        """Returns true if a given person has opted out of tahrir."""
 
         person = self.get_person(email, id, nickname)
 
@@ -604,7 +604,6 @@ class TahrirDatabase(object):
         """
 
         if not self.person_exists(email=email):
-
             # If no nickname is specified, just use the first bit of their
             # email as a convenient default.
             if not nickname:
@@ -621,17 +620,15 @@ class TahrirDatabase(object):
 
     @autocommit
     def note_login(self, person_email=None, id=None, nickname=None):
-        """ Make a note that a person has logged in. """
+        """Make a note that a person has logged in."""
 
         person = self.get_person(person_email, id, nickname)
 
         # If this is the first time they have ever logged in, optionally
         # publish a notification about the event.
         if not person.last_login and self.notification_callback:
-            self.notification_callback(
-                topic="person.login.first",
-                msg=dict(user=dict(username=person.nickname, badges_user_id=person.id)),
-            )
+            body = dict(user=dict(username=person.nickname, badges_user_id=person.id))
+            self.notification_callback(PersonLoginFirstV1(body=body))
 
         # Finally, update the field.
         person.last_login = datetime.utcnow()
@@ -891,7 +888,6 @@ class TahrirDatabase(object):
         """
 
         if self.person_exists(email=person_email) and self.badge_exists(badge_id):
-
             person = self.get_person(person_email)
 
             new_authz = Authorization(badge_id=badge_id, person_id=person.id)
@@ -925,7 +921,6 @@ class TahrirDatabase(object):
             issued_on = datetime.utcnow()
 
         if self.person_exists(email=person_email) and self.badge_exists(badge_id):
-
             badge = self.get_badge(badge_id)
             person = self.get_person(person_email)
             old_rank = person.rank
@@ -940,18 +935,16 @@ class TahrirDatabase(object):
             self.session.flush()
 
             if self.notification_callback:
-                self.notification_callback(
-                    topic="badge.award",
-                    msg=dict(
-                        badge=dict(
-                            name=badge.name,
-                            description=badge.description,
-                            image_url=badge.image,
-                            badge_id=badge_id,
-                        ),
-                        user=dict(username=person.nickname, badges_user_id=person.id),
+                body = dict(
+                    badge=dict(
+                        name=badge.name,
+                        description=badge.description,
+                        image_url=badge.image,
+                        badge_id=badge_id,
                     ),
+                    user=dict(username=person.nickname, badges_user_id=person.id),
                 )
+                self.notification_callback(BadgeAwardV1(body=body))
 
             self._adjust_ranks(person, old_rank)
 
@@ -960,7 +953,7 @@ class TahrirDatabase(object):
         return False
 
     def _adjust_ranks(self, person, old_rank):
-        """ Given a person model object and the 'old' rank of that person,
+        """Given a person model object and the 'old' rank of that person,
         adjust the ranks of all persons between the 'old' rank and the present
         rank of the given person.
 
@@ -983,15 +976,12 @@ class TahrirDatabase(object):
 
         self.session.flush()
 
+        body = dict(person=person.__json__(), old_rank=old_rank)
         if self.notification_callback:
-            self.notification_callback(
-                topic="person.rank.advance", msg=dict(
-                    person=person.__json__(), old_rank=old_rank
-                )
-            )
+            self.notification_callback(PersonRankAdvanceV1(body=body))
 
     def _make_leaderboard(self, start=None, stop=None):
-        """ Produce a dict mapping persons to information about
+        """Produce a dict mapping persons to information about
         the number of badges they have been awarded and their
         rank, freshly calculated.  This is relatively expensive.
 

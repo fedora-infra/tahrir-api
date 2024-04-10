@@ -12,7 +12,6 @@ try:
         except:
             return None
 
-
 except:
     import subprocess
 
@@ -119,6 +118,12 @@ class TestDBInit(object):
         self.api.note_login(nickname=person.nickname)
         assert person.last_login
 
+        assert len(self.callback_calls) == 1
+        message = self.callback_calls[0][0][0]
+        assert message.body == {"user": {"username": "test", "badges_user_id": 1}}
+        assert message.agent_name == "test"
+        assert message.summary == "test logged into badges for the first time"
+
     def test_add_assertion(self):
         issuer_id = self.api.add_issuer(
             "TestOrigin", "TestName", "TestOrg", "TestContact"
@@ -145,8 +150,36 @@ class TestDBInit(object):
         # Ensure that we would have published two fedmsg messages for that.
         assert len(self.callback_calls) == 2
 
-        # Ensure that the first message had a 'badge_id' in the message.
-        assert "badge_id" in self.callback_calls[0][1]["msg"]["badge"]
+        award_message = self.callback_calls[0][0][0]
+        rank_advance_message = self.callback_calls[1][0][0]
+
+        assert award_message.body == {
+            "badge": {
+                "name": "TestBadge",
+                "description": "A test badge for doing unit tests",
+                "image_url": "TestImage",
+                "badge_id": "testbadge",
+            },
+            "user": {"username": "test", "badges_user_id": 1},
+        }
+        assert award_message.agent_name == "test"
+        assert award_message.summary == "test was awarded the badge `TestBadge`"
+
+        assert rank_advance_message.body == {
+            "person": {
+                "email": "test@tester.com",
+                "id": 1,
+                "nickname": "test",
+                "website": None,
+                "bio": None,
+                "rank": 1,
+            },
+            "old_rank": None,
+        }
+        assert rank_advance_message.agent_name == "test"
+        assert (
+            rank_advance_message.summary == "test's Badges rank changed from None to 1"
+        )
 
     def test_get_badges_from_tags(self):
         issuer_id = self.api.add_issuer(
