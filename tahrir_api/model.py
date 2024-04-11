@@ -1,20 +1,16 @@
-import pygments
-import simplejson
-import hashlib
-import uuid
 import datetime
+import hashlib
 import time
+import uuid
 
 import arrow
+import pygments
+import simplejson
 import zope.sqlalchemy
-
-from sqlalchemy import Column, DateTime, Unicode, ForeignKey, UniqueConstraint
-from sqlalchemy.types import Integer, Boolean
-
+from sqlalchemy import Column, DateTime, ForeignKey, Unicode, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
-
-from sqlalchemy.orm import scoped_session, sessionmaker, relationship
-
+from sqlalchemy.orm import relationship, scoped_session, sessionmaker
+from sqlalchemy.types import Boolean, Integer
 
 DBSession = scoped_session(sessionmaker())
 zope.sqlalchemy.register(DBSession)
@@ -90,7 +86,7 @@ class Badge(DeclarativeBase):
         )
 
     def authorized(self, person):
-        """ Return true if a given person is authorized to admin a badge """
+        """Return true if a given person is authorized to admin a badge"""
         for authz in self.authorizations:
             if authz.person == person:
                 return True
@@ -169,13 +165,13 @@ class Person(DeclarativeBase):
     rank = Column(Integer, default=None)
 
     def __repr__(self):
-        return "<Person: '%s <%s>'" % (self.nickname, self.email)
+        return f"<Person: '{self.nickname} <{self.email}>'"
 
     @property
     def gravatar_link(self):
         d, s = "mm", 24
         hash = hashlib.md5(self.email).hexdigest()
-        url = "http://www.gravatar.com/avatar/%s?s=%i&d=%s" % (hash, s, d)
+        url = f"http://www.gravatar.com/avatar/{hash}?s={s}&d={d}"
         return url
 
     def __unicode__(self):
@@ -199,7 +195,7 @@ def invitation_id_default(context):
 
 
 class Invitation(DeclarativeBase):
-    """ This is a temporary invitation to receive a badge.
+    """This is a temporary invitation to receive a badge.
 
     The idea is that a user can create a "You made my day" badge, and
     then award it to another user.  However, instead of just directly
@@ -209,9 +205,7 @@ class Invitation(DeclarativeBase):
     """
 
     __tablename__ = "invitations"
-    id = Column(
-        Unicode(32), primary_key=True, unique=True, default=invitation_id_default
-    )
+    id = Column(Unicode(32), primary_key=True, unique=True, default=invitation_id_default)
     created_on = Column(DateTime, nullable=False)
     expires_on = Column(DateTime, nullable=False)
     badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
@@ -250,14 +244,12 @@ def salt_default(context):
 def assertion_id_default(context):
     person_id = context.current_parameters["person_id"]
     badge_id = context.current_parameters["badge_id"]
-    return "%s -> %r" % (badge_id, person_id)
+    return f"{badge_id} -> {person_id}"
 
 
 class Assertion(DeclarativeBase):
     __tablename__ = "assertions"
-    id = Column(
-        Unicode(128), primary_key=True, unique=True, default=assertion_id_default
-    )
+    id = Column(Unicode(128), primary_key=True, unique=True, default=assertion_id_default)
     badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
@@ -275,12 +267,10 @@ class Assertion(DeclarativeBase):
 
     @property
     def _recipient(self):
-        return "sha256${0}".format(self.recipient)
+        return f"sha256${self.recipient}"
 
     def __json__(self):
-        result = dict(
-            recipient=self._recipient, salt=self.salt, badge=self.badge.__json__()
-        )
+        result = dict(recipient=self._recipient, salt=self.salt, badge=self.badge.__json__())
         # Eliminate this check since I made issued_on not nullable?
         if self.issued_on:
             result["issued_on"] = self.issued_on.strftime("%Y-%m-%d")
@@ -289,7 +279,7 @@ class Assertion(DeclarativeBase):
     def __getitem__(self, key):
         if key not in ("pygments", "delete"):
             raise KeyError
-        return getattr(self, "__{0}__".format(key))()
+        return getattr(self, f"__{key}__")()
 
     def __delete__(self):
         return lambda: DBSession.delete(self)

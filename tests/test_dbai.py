@@ -1,7 +1,7 @@
-from tahrir_api.dbapi import TahrirDatabase
-from tahrir_api.model import DeclarativeBase
 from sqlalchemy import create_engine
 
+from tahrir_api.dbapi import TahrirDatabase
+from tahrir_api.model import DeclarativeBase
 
 try:
     from subprocess import check_output as _check_output
@@ -9,20 +9,20 @@ try:
     def check_output(cmd):
         try:
             return _check_output(cmd)
-        except:
+        except Exception:
             return None
 
-except:
+except Exception:
     import subprocess
 
     def check_output(cmd):
         try:
             return subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
-        except:
+        except Exception:
             return None
 
 
-class TestDBInit(object):
+class TestDBInit:
     def setUp(self):
         check_output(["touch", "testdb.db"])
         sqlalchemy_uri = "sqlite:///testdb.db"
@@ -61,9 +61,7 @@ class TestDBInit(object):
     def test_add_milestone(self):
         team_id = self.api.create_team("TestTeam")
 
-        series_id = self.api.create_series(
-            "TestSeries", "A test series", team_id, "test, series"
-        )
+        series_id = self.api.create_series("TestSeries", "A test series", team_id, "test, series")
 
         badge_id_1 = self.api.add_badge(
             "TestBadge-1",
@@ -125,9 +123,7 @@ class TestDBInit(object):
         assert message.summary == "test logged into badges for the first time"
 
     def test_add_assertion(self):
-        issuer_id = self.api.add_issuer(
-            "TestOrigin", "TestName", "TestOrg", "TestContact"
-        )
+        issuer_id = self.api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
         badge_id = self.api.add_badge(
             "TestBadge",
             "TestImage",
@@ -136,15 +132,14 @@ class TestDBInit(object):
             issuer_id,
         )
         email = "test@tester.com"
-        person_id = self.api.add_person(email)
-        assertion_id = self.api.add_assertion(badge_id, email, None, "link")
+        self.api.add_person(email)
+        self.api.add_assertion(badge_id, email, None, "link")
         assert self.api.assertion_exists(badge_id, email)
 
         badge = self.api.get_badge(badge_id)
         assert badge.assertions[0].issued_for == "link"
         assert (
-            self.api.get_assertions_by_badge(badge_id)[0].__str__()
-            == "TestBadge<->test@tester.com"
+            self.api.get_assertions_by_badge(badge_id)[0].__str__() == "TestBadge<->test@tester.com"
         )
 
         # Ensure that we would have published two fedmsg messages for that.
@@ -177,14 +172,10 @@ class TestDBInit(object):
             "old_rank": None,
         }
         assert rank_advance_message.agent_name == "test"
-        assert (
-            rank_advance_message.summary == "test's Badges rank changed from None to 1"
-        )
+        assert rank_advance_message.summary == "test's Badges rank changed from None to 1"
 
     def test_get_badges_from_tags(self):
-        issuer_id = self.api.add_issuer(
-            "TestOrigin", "TestName", "TestOrg", "TestContact"
-        )
+        issuer_id = self.api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
 
         # Badge tagged with "test"
         self.api.add_badge(

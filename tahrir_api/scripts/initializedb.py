@@ -1,18 +1,18 @@
 import datetime
 import os
-import sys
-import transaction
 import pprint
+import sys
 
-from sqlalchemy import engine_from_config
+import transaction
 from paste.deploy import appconfig
+from sqlalchemy import engine_from_config
 
-from ..model import DBSession, Issuer, Badge, Person, Assertion, DeclarativeBase
+from ..model import Assertion, Badge, DBSession, DeclarativeBase, Issuer, Person
 
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
-    print(("usage: %s <config_uri>\n" '(example: "%s development.ini")' % (cmd, cmd)))
+    print(f"usage: {cmd} <config_uri>\n '(example: \"{cmd} development.ini\"'")
     sys.exit(1)
 
 
@@ -44,9 +44,7 @@ def main(argv=sys.argv):
 
         global_conf = {"sqlalchemy.url": template.format(**os.environ)}
 
-    settings = appconfig(
-        config_name, name=section, relative_to=here_dir, global_conf=global_conf
-    )
+    settings = appconfig(config_name, name=section, relative_to=here_dir, global_conf=global_conf)
 
     engine = engine_from_config(settings, "sqlalchemy.")
     DBSession.configure(bind=engine)
@@ -74,9 +72,7 @@ def main(argv=sys.argv):
         DBSession.add(badge)
         person = Person(email="rbean@redhat.com")
         DBSession.add(person)
-        assertion = Assertion(
-            badge=badge, person=person, issued_on=datetime.datetime.now()
-        )
+        assertion = Assertion(badge=badge, person=person, issued_on=datetime.datetime.now())
 
         DBSession.add(assertion)
 

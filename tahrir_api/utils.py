@@ -2,7 +2,7 @@
 
 
 def autocommit(func):
-    """ A decorator that autocommits after API calls unless
+    """A decorator that autocommits after API calls unless
     configured otherwise.
     """
 
