@@ -506,12 +506,15 @@ class TahrirDatabase(object):
         # Otherwise, return whatever value they have in the DB.
         return person.opt_out
 
-    def get_all_persons(self):
+    def get_all_persons(self, include_opted_out=False):
         """
         Gets all the persons in the db.
         """
 
-        return self.session.query(Person)
+        query = self.session.query(Person)
+        if not include_opted_out:
+            query = query.filter(not_(Person.opt_out))
+        return query
 
     def get_person_email(self, person_id):
         """

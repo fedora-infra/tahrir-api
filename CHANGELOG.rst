@@ -1,3 +1,10 @@
+Changelog
+=========
+
+0.9.0
+-----
+
+- By default, don't include the users who have opted out in ``get_all_persons()``.
 
 0.8.1
 -----
@@ -52,8 +59,6 @@ Commits
   https://github.com/fedora-infra/tahrir-api/commit/1b5151371
 - 6ae013ea0 Skip badges with series in populate script
   https://github.com/fedora-infra/tahrir-api/commit/6ae013ea0
-Changelog
-=========
 
 0.7.2
 -----
