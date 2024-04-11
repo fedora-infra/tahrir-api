@@ -1,18 +1,17 @@
 import os
-import sys
-import transaction
 import re
+import sys
 
-from sqlalchemy import engine_from_config
+import transaction
 from paste.deploy import appconfig
+from sqlalchemy import engine_from_config
 
-
-from ..model import DBSession, Badge, Milestone, Series
+from ..model import Badge, DBSession, Milestone, Series
 
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
-    print(("usage: %s <config_uri>\n" '(example: "%s development.ini")' % (cmd, cmd)))
+    print(f"usage: {cmd} <config_uri>\n '(example: \"{cmd} development.ini\"'")
     sys.exit(1)
 
 
@@ -95,9 +94,7 @@ def main(argv=sys.argv):
 
         global_conf = {"sqlalchemy.url": template.format(**os.environ)}
 
-    settings = appconfig(
-        config_name, name=section, relative_to=here_dir, global_conf=global_conf
-    )
+    settings = appconfig(config_name, name=section, relative_to=here_dir, global_conf=global_conf)
 
     engine = engine_from_config(settings, "sqlalchemy.")
     DBSession.configure(bind=engine)
@@ -109,16 +106,12 @@ def main(argv=sys.argv):
                 continue
             series_name, ordering = get_series_name(badge.name)
             if series_name and ordering:
-                series = (
-                    DBSession.query(Series).filter(Series.name == series_name).first()
-                )
+                series = DBSession.query(Series).filter(Series.name == series_name).first()
 
                 if not series:
                     print(
-                        (
-                            "Series <%s> does not exist, skipping "
-                            "processing badge %s" % (series_name, badge.name)
-                        )
+                        f"Series <{series_name}> does not exist, skipping "
+                        f"processing badge {badge.name}"
                     )
                     continue
                 milestone = Milestone()

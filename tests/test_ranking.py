@@ -1,8 +1,8 @@
 from nose.tools import eq_
-from tahrir_api.dbapi import TahrirDatabase
-from tahrir_api.model import DeclarativeBase, Assertion
 from sqlalchemy import create_engine
 
+from tahrir_api.dbapi import TahrirDatabase
+from tahrir_api.model import Assertion, DeclarativeBase
 
 try:
     from subprocess import check_output as _check_output
@@ -10,17 +10,16 @@ try:
     def check_output(cmd):
         try:
             return _check_output(cmd)
-        except:
+        except Exception:
             return None
 
-
-except:
+except Exception:
     import subprocess
 
     def check_output(cmd):
         try:
             return subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
-        except:
+        except Exception:
             return None
 
 
@@ -33,12 +32,12 @@ one_month_ago = now - datetime.timedelta(weeks=4)
 
 
 def assert_in(member, container):
-    """ Just like assertTrue(a in b), but with a nicer default message. """
+    """Just like assertTrue(a in b), but with a nicer default message."""
     if member not in container:
-        raise AssertionError("%r not found in %r" % (member, container))
+        raise AssertionError(f"{member} not found in {container}")
 
 
-class TestRanking(object):
+class TestRanking:
     def setUp(self):
         check_output(["touch", "testdb.db"])
         sqlalchemy_uri = "sqlite:///testdb.db"
@@ -52,9 +51,7 @@ class TestRanking(object):
         check_output(["rm", "testdb.db"])
 
     def _create_test_data(self):
-        issuer_id = self.api.add_issuer(
-            "TestOrigin", "TestName", "TestOrg", "TestContact"
-        )
+        issuer_id = self.api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
         self.badge_id_1 = self.api.add_badge(
             "TestBadge1",
             "TestImage",
@@ -77,13 +74,13 @@ class TestRanking(object):
             issuer_id,
         )
         self.email_1 = "test_1@tester.com"
-        person_id_1 = self.api.add_person(self.email_1)
+        self.api.add_person(self.email_1)
         self.email_2 = "test_2@tester.com"
-        person_id_2 = self.api.add_person(self.email_2)
+        self.api.add_person(self.email_2)
         self.email_3 = "test_3@tester.com"
-        person_id_3 = self.api.add_person(self.email_3)
+        self.api.add_person(self.email_3)
         self.email_4 = "test_4@tester.com"
-        person_id_4 = self.api.add_person(self.email_4)
+        self.api.add_person(self.email_4)
 
     def test_ranking_simple(self):
         self.api.add_assertion(self.badge_id_1, self.email_1, None)
@@ -122,7 +119,7 @@ class TestRanking(object):
         eq_(person4.rank, 1)
 
     def test_ranking_preexisting(self):
-        """ Test that rank updating works for pre-existant users """
+        """Test that rank updating works for pre-existant users"""
         person1 = self.api.get_person("test_1@tester.com")
         new_assertion1 = Assertion(badge_id=self.badge_id_1, person_id=person1.id)
         self.api.session.add(new_assertion1)
