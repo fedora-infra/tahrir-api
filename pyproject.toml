@@ -1,0 +1,58 @@
+[tool.poetry]
+name = "tahrir-api"
+version = "0.8.1"
+description = "An API for interacting with the Tahrir database"
+
+license = "GPLv3+"
+
+authors = [
+  "Ross Delinger <rdelinge@redhat.com>",
+  "Fedora Infrastructure <admin@fedoraproject.org>",
+]
+
+readme = 'README.rst'
+
+repository = "https://github.com/fedora-infra/tahrir-api"
+homepage = "https://github.com/fedora-infra/tahrir-api"
+
+packages = [
+    { include = "tahrir_api" },
+]
+
+include = [
+    { path = "tests/*", format = "sdist" },
+]
+
+classifiers= [
+    "Programming Language :: Python",
+    "Framework :: Pyramid",
+    "Topic :: Internet :: WWW/HTTP",
+    "License :: OSI Approved :: GNU General Public License v3 or later(GPLv3+)",
+]
+
+[tool.poetry.dependencies]
+python = "^3.8.0"
+pastedeploy = "^3.1.0"
+pygments = "^2.17.2"
+simplejson = "^3.19.2"
+sqlalchemy = "^2.0.29"
+zope-sqlalchemy = "^3.1"
+arrow = "^1.3.0"
+alembic = "^1.13.1"
+fedora-messaging = "^3.5.0"
+tahrir-messages = "^1.0.2"
+
+
+[tool.poetry.group.dev.dependencies]
+nose = "^1.3.7"
+coverage = "^7.4.4"
+
+[tool.poetry.scripts]
+initialize_tahrir_db = "tahrir_api.scripts.initializedb:main"
+populate_series_in_tahrir_db = "tahrir_api.scripts.populateseries:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
