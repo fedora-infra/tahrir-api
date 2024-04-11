@@ -1,4 +1,5 @@
-from nose.tools import eq_
+import unittest
+
 from sqlalchemy import create_engine
 
 from tahrir_api.dbapi import TahrirDatabase
@@ -37,7 +38,7 @@ def assert_in(member, container):
         raise AssertionError(f"{member} not found in {container}")
 
 
-class TestRanking:
+class TestRanking(unittest.TestCase):
     def setUp(self):
         check_output(["touch", "testdb.db"])
         sqlalchemy_uri = "sqlite:///testdb.db"
@@ -92,8 +93,8 @@ class TestRanking:
         person1 = self.api.get_person("test_1@tester.com")
         person4 = self.api.get_person("test_4@tester.com")
 
-        eq_(person1.rank, 2)
-        eq_(person4.rank, 1)
+        assert person1.rank == 2
+        assert person4.rank == 1
 
     def test_ranking_tie(self):
         self.api.add_assertion(self.badge_id_1, self.email_1, None)
@@ -113,10 +114,10 @@ class TestRanking:
         person3 = self.api.get_person("test_3@tester.com")
         person4 = self.api.get_person("test_4@tester.com")
 
-        eq_(person1.rank, 4)
-        eq_(person2.rank, 2)
-        eq_(person3.rank, 2)
-        eq_(person4.rank, 1)
+        assert person1.rank == 4
+        assert person2.rank == 2
+        assert person3.rank == 2
+        assert person4.rank == 1
 
     def test_ranking_preexisting(self):
         """Test that rank updating works for pre-existant users"""
@@ -129,18 +130,18 @@ class TestRanking:
 
         # For persons who existed *before* we added cached ranks, they should
         # have a null-rank.
-        eq_(person1.rank, None)
+        assert person1.rank is None
 
         # But once *anyone* else gets a badge, old ranks should be updated too.
         self.api.add_assertion(self.badge_id_1, self.email_2, None)
-        eq_(person1.rank, 1)
+        assert person1.rank == 1
 
         person2 = self.api.get_person("test_2@tester.com")
-        eq_(person2.rank, 2)
+        assert person2.rank == 2
 
         # but people with no badges should still be null ranked.
         person3 = self.api.get_person("test_3@tester.com")
-        eq_(person3.rank, None)
+        assert person3.rank is None
 
     def test_ranking_with_time_limits(self):
         self.api.add_assertion(self.badge_id_1, self.email_1, yesterday)
@@ -155,13 +156,13 @@ class TestRanking:
         epsilon = datetime.timedelta(hours=1)
 
         results = self.api._make_leaderboard(yesterday - epsilon, now)
-        eq_(results[person1]["badges"], 1)
-        eq_(results[person4]["badges"], 1)
+        assert results[person1]["badges"] == 1
+        assert results[person4]["badges"] == 1
 
         results = self.api._make_leaderboard(one_week_ago - epsilon, now)
-        eq_(results[person1]["badges"], 1)
-        eq_(results[person4]["badges"], 2)
+        assert results[person1]["badges"] == 1
+        assert results[person4]["badges"] == 2
 
         results = self.api._make_leaderboard(one_month_ago - epsilon, now)
-        eq_(results[person1]["badges"], 1)
-        eq_(results[person4]["badges"], 3)
+        assert results[person1]["badges"] == 1
+        assert results[person4]["badges"] == 3
