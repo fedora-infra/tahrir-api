@@ -1,6 +1,0 @@
-include requirements.txt
-include *.rst
-include LICENSE
-include alembic.ini
-recursive-include alembic *
-recursive-include tests *.py
