@@ -1,30 +1,11 @@
+import datetime
+import subprocess
 import unittest
 
 from sqlalchemy import create_engine
 
 from tahrir_api.dbapi import TahrirDatabase
 from tahrir_api.model import Assertion, DeclarativeBase
-
-try:
-    from subprocess import check_output as _check_output
-
-    def check_output(cmd):
-        try:
-            return _check_output(cmd)
-        except Exception:
-            return None
-
-except Exception:
-    import subprocess
-
-    def check_output(cmd):
-        try:
-            return subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
-        except Exception:
-            return None
-
-
-import datetime
 
 now = datetime.datetime.now()
 yesterday = now - datetime.timedelta(days=1)
@@ -40,7 +21,7 @@ def assert_in(member, container):
 
 class TestRanking(unittest.TestCase):
     def setUp(self):
-        check_output(["touch", "testdb.db"])
+        subprocess.run(["touch", "testdb.db"])
         sqlalchemy_uri = "sqlite:///testdb.db"
         engine = create_engine(sqlalchemy_uri)
         DeclarativeBase.metadata.create_all(engine)
@@ -49,7 +30,7 @@ class TestRanking(unittest.TestCase):
         self._create_test_data()
 
     def tearDown(self):
-        check_output(["rm", "testdb.db"])
+        subprocess.run(["rm", "testdb.db"])
 
     def _create_test_data(self):
         issuer_id = self.api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
