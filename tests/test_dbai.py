@@ -1,3 +1,5 @@
+import unittest
+
 from sqlalchemy import create_engine
 
 from tahrir_api.dbapi import TahrirDatabase
@@ -22,7 +24,7 @@ except Exception:
             return None
 
 
-class TestDBInit:
+class TestDBInit(unittest.TestCase):
     def setUp(self):
         check_output(["touch", "testdb.db"])
         sqlalchemy_uri = "sqlite:///testdb.db"
