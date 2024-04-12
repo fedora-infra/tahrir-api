@@ -99,14 +99,14 @@ def main(argv=sys.argv):
     engine = engine_from_config(settings, "sqlalchemy.")
     DBSession.configure(bind=engine)
 
-    with transaction.manager:
-        for badge in DBSession.query(Badge).all():
+    with DBSession() as session:
+        for badge in session.query(Badge).all():
             if badge.milestone:
                 # Skip badges that already are in some series.
                 continue
             series_name, ordering = get_series_name(badge.name)
             if series_name and ordering:
-                series = DBSession.query(Series).filter(Series.name == series_name).first()
+                series = session.query(Series).filter(Series.name == series_name).first()
 
                 if not series:
                     print(
@@ -118,4 +118,5 @@ def main(argv=sys.argv):
                 milestone.badge_id = badge.id
                 milestone.position = ordering
                 milestone.series_id = series_name.lower().replace(" ", "-")
-                DBSession.add(milestone)
+                session.add(milestone)
+        session.commit()

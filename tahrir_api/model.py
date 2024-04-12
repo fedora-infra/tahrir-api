@@ -6,14 +6,12 @@ import uuid
 import arrow
 import pygments
 import simplejson
-import zope.sqlalchemy
 from sqlalchemy import Column, DateTime, ForeignKey, Unicode, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 from sqlalchemy.types import Boolean, Integer
 
 DBSession = scoped_session(sessionmaker())
-zope.sqlalchemy.register(DBSession)
 
 DeclarativeBase = declarative_base()
 DeclarativeBase.query = DBSession.query_property()
