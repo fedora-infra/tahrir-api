@@ -25,7 +25,7 @@ class Issuer(DeclarativeBase):
     def __str__(self):
         return str(self.name)
 
-    def __json__(self):
+    def as_dict(self):
         return dict(
             origin=self.origin,
             name=self.name,
@@ -58,7 +58,7 @@ class Badge(DeclarativeBase):
     def __str__(self):
         return str(self.name)
 
-    def __json__(self):
+    def as_dict(self):
         if self.image.startswith("http"):
             image = self.image
         else:
@@ -69,7 +69,7 @@ class Badge(DeclarativeBase):
             image=image,
             description=self.description,
             criteria=self.criteria,
-            issuer=self.issuer.__json__(),
+            issuer=self.issuer.as_dict(),
             created_on=time.mktime(self.created_on.timetuple()),
             tags=self.tags,
         )
@@ -90,7 +90,7 @@ class Team(DeclarativeBase):
     series = relationship("Series", backref="team")
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
-    def __json__(self):
+    def as_dict(self):
         return dict(id=self.id, name=self.name, created_on=str(self.created_on))
 
 
@@ -110,13 +110,13 @@ class Series(DeclarativeBase):
     milestone = relationship("Milestone", backref="series")
     team_id = Column(Unicode(128), ForeignKey("team.id"), nullable=False)
 
-    def __json__(self):
+    def as_dict(self):
         return dict(
             id=self.id,
             name=self.name,
             created_on=str(self.created_on),
             last_updated=str(self.last_updated),
-            team=self.team.__json__(),
+            team=self.team.as_dict(),
         )
 
 
@@ -128,10 +128,10 @@ class Milestone(DeclarativeBase):
     badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
     series_id = Column(Unicode(128), ForeignKey("series.id"), nullable=False)
 
-    def __json__(self):
+    def as_dict(self):
         return dict(
             position=self.position,
-            badge=self.badge.__json__(),
+            badge=self.badge.as_dict(),
             series_id=self.series.id,
         )
 
@@ -174,7 +174,7 @@ class Person(DeclarativeBase):
     def __str__(self):
         return str(self.email)
 
-    def __json__(self):
+    def as_dict(self):
         return dict(
             email=self.email,
             id=self.id,
@@ -262,8 +262,8 @@ class Assertion(DeclarativeBase):
     def _recipient(self):
         return f"sha256${self.recipient}"
 
-    def __json__(self):
-        result = dict(recipient=self._recipient, salt=self.salt, badge=self.badge.__json__())
+    def as_dict(self):
+        result = dict(recipient=self._recipient, salt=self.salt, badge=self.badge.as_dict())
         # Eliminate this check since I made issued_on not nullable?
         if self.issued_on:
             result["issued_on"] = self.issued_on.strftime("%Y-%m-%d")
@@ -282,7 +282,7 @@ class Assertion(DeclarativeBase):
         html_args = {"full": False}
         pretty_encoder = simplejson.encoder.JSONEncoder(indent=2)
         html = pygments.highlight(
-            pretty_encoder.encode(self.__json__()),
+            pretty_encoder.encode(self.as_dict()),
             pygments.lexers.JavascriptLexer(),
             pygments.formatters.HtmlFormatter(**html_args),
         ).strip()

@@ -944,7 +944,7 @@ class TahrirDatabase:
 
         self.session.flush()
 
-        body = dict(person=person.__json__(), old_rank=old_rank)
+        body = dict(person=person.as_dict(), old_rank=old_rank)
         if self.notification_callback:
             self.notification_callback(PersonRankAdvanceV1(body=body))
 
