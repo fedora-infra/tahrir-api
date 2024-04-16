@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tahrir-api"
-version = "0.8.1"
+version = "1.0.0"
 description = "An API for interacting with the Tahrir database"
 
 license = "GPLv3+"

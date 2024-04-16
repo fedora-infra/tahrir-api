@@ -1,10 +1,28 @@
 Changelog
 =========
 
-0.9.0
+1.0.0
 -----
 
-- By default, don't include the users who have opted out in ``get_all_persons()``.
+- Add tox as a test runner (`31a84c4 <https://github.com/fedora-infra/tahrir-api/commit/31a84c4>`_)
+- Migrate tahrir-api from Python2 to Python3 (`1f55486 <https://github.com/fedora-infra/tahrir-api/commit/1f55486>`_)
+- SQLAlchemy: explicitly declare order_by expression as text (#36) (`b6f4984 <https://github.com/fedora-infra/tahrir-api/commit/b6f4984>`_)
+- Avoid configuring Session since it already is scoped and will have no effect (`a06f8cb <https://github.com/fedora-infra/tahrir-api/commit/a06f8cb>`_)
+- Add a few step to start hack on the project in development section README (`56a289d <https://github.com/fedora-infra/tahrir-api/commit/56a289d>`_)
+- Add CI with Github Actions (`05f6803 <https://github.com/fedora-infra/tahrir-api/commit/05f6803>`_)
+- Explicitely convert Person to json before sending it to fedora-messaging (`bc18ba9 <https://github.com/fedora-infra/tahrir-api/commit/bc18ba9>`_)
+- send fedoramessaging objects in notifications_callbacks (`5a92e20 <https://github.com/fedora-infra/tahrir-api/commit/5a92e20>`_)
+- By default, don't include people who have opted out in ``get_all_persons()`` (`60f9a4c <https://github.com/fedora-infra/tahrir-api/commit/60f9a4c>`_)
+- Use Poetry (`3e0b926 <https://github.com/fedora-infra/tahrir-api/commit/3e0b926>`_)
+- Use Black and Ruff (`2121f3b <https://github.com/fedora-infra/tahrir-api/commit/2121f3b>`_)
+- Use pytest rather than nose (`182ed36 <https://github.com/fedora-infra/tahrir-api/commit/182ed36>`_)
+- Add pre-commit config (`0f549aa <https://github.com/fedora-infra/tahrir-api/commit/0f549aa>`_)
+- add renovate config (`00e83e4 <https://github.com/fedora-infra/tahrir-api/commit/00e83e4>`_)
+- Drop zope.sqlalchemy (`63cea5b <https://github.com/fedora-infra/tahrir-api/commit/63cea5b>`_)
+- Use sqlalchemy-helpers (`83ef45c <https://github.com/fedora-infra/tahrir-api/commit/83ef45c>`_)
+- Replace ``datetime.datetime.utcnow()`` as is deprecated (`d985b4a <https://github.com/fedora-infra/tahrir-api/commit/d985b4a>`_)
+- Add a couple properties on Person instances (`d163926 <https://github.com/fedora-infra/tahrir-api/commit/d163926>`_)
+- Replace the ``__json__()`` method by ``as_dict()`` (`c0d8702 <https://github.com/fedora-infra/tahrir-api/commit/c0d8702>`_)
 
 0.8.1
 -----
