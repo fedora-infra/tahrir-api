@@ -1,11 +1,8 @@
 import datetime
-import subprocess
-import unittest
 
-from sqlalchemy import create_engine
+import pytest
 
-from tahrir_api.dbapi import TahrirDatabase
-from tahrir_api.model import Assertion, DeclarativeBase
+from tahrir_api.model import Assertion
 
 now = datetime.datetime.now()
 yesterday = now - datetime.timedelta(days=1)
@@ -19,131 +16,132 @@ def assert_in(member, container):
         raise AssertionError(f"{member} not found in {container}")
 
 
-class TestRanking(unittest.TestCase):
-    def setUp(self):
-        subprocess.run(["touch", "testdb.db"])
-        sqlalchemy_uri = "sqlite:///testdb.db"
-        engine = create_engine(sqlalchemy_uri)
-        DeclarativeBase.metadata.create_all(engine)
+@pytest.fixture
+def test_data(api):
+    issuer_id = api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
+    badge_id_1 = api.add_badge(
+        "TestBadge1",
+        "TestImage",
+        "A test badge for doing unit tests",
+        "TestCriteria",
+        issuer_id,
+    )
+    badge_id_2 = api.add_badge(
+        "TestBadge2",
+        "TestImage",
+        "A test badge for doing unit tests",
+        "TestCriteria",
+        issuer_id,
+    )
+    badge_id_3 = api.add_badge(
+        "TestBadge3",
+        "TestImage",
+        "A test badge for doing unit tests",
+        "TestCriteria",
+        issuer_id,
+    )
+    email_1 = "test_1@tester.com"
+    api.add_person(email_1)
+    email_2 = "test_2@tester.com"
+    api.add_person(email_2)
+    email_3 = "test_3@tester.com"
+    api.add_person(email_3)
+    email_4 = "test_4@tester.com"
+    api.add_person(email_4)
+    return {
+        "badge_1": badge_id_1,
+        "badge_2": badge_id_2,
+        "badge_3": badge_id_3,
+        "email_1": email_1,
+        "email_2": email_2,
+        "email_3": email_3,
+        "email_4": email_4,
+    }
 
-        self.api = TahrirDatabase(sqlalchemy_uri)
-        self._create_test_data()
 
-    def tearDown(self):
-        subprocess.run(["rm", "testdb.db"])
+def test_ranking_simple(api, test_data):
+    api.add_assertion(test_data["badge_1"], test_data["email_1"], None)
 
-    def _create_test_data(self):
-        issuer_id = self.api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
-        self.badge_id_1 = self.api.add_badge(
-            "TestBadge1",
-            "TestImage",
-            "A test badge for doing unit tests",
-            "TestCriteria",
-            issuer_id,
-        )
-        self.badge_id_2 = self.api.add_badge(
-            "TestBadge2",
-            "TestImage",
-            "A test badge for doing unit tests",
-            "TestCriteria",
-            issuer_id,
-        )
-        self.badge_id_3 = self.api.add_badge(
-            "TestBadge3",
-            "TestImage",
-            "A test badge for doing unit tests",
-            "TestCriteria",
-            issuer_id,
-        )
-        self.email_1 = "test_1@tester.com"
-        self.api.add_person(self.email_1)
-        self.email_2 = "test_2@tester.com"
-        self.api.add_person(self.email_2)
-        self.email_3 = "test_3@tester.com"
-        self.api.add_person(self.email_3)
-        self.email_4 = "test_4@tester.com"
-        self.api.add_person(self.email_4)
+    api.add_assertion(test_data["badge_1"], test_data["email_4"], None)
+    api.add_assertion(test_data["badge_2"], test_data["email_4"], None)
+    api.add_assertion(test_data["badge_3"], test_data["email_4"], None)
 
-    def test_ranking_simple(self):
-        self.api.add_assertion(self.badge_id_1, self.email_1, None)
+    person1 = api.get_person("test_1@tester.com")
+    person4 = api.get_person("test_4@tester.com")
 
-        self.api.add_assertion(self.badge_id_1, self.email_4, None)
-        self.api.add_assertion(self.badge_id_2, self.email_4, None)
-        self.api.add_assertion(self.badge_id_3, self.email_4, None)
+    assert person1.rank == 2
+    assert person4.rank == 1
 
-        person1 = self.api.get_person("test_1@tester.com")
-        person4 = self.api.get_person("test_4@tester.com")
 
-        assert person1.rank == 2
-        assert person4.rank == 1
+def test_ranking_tie(api, test_data):
+    api.add_assertion(test_data["badge_1"], test_data["email_1"], None)
 
-    def test_ranking_tie(self):
-        self.api.add_assertion(self.badge_id_1, self.email_1, None)
+    api.add_assertion(test_data["badge_1"], test_data["email_2"], None)
+    api.add_assertion(test_data["badge_2"], test_data["email_2"], None)
 
-        self.api.add_assertion(self.badge_id_1, self.email_2, None)
-        self.api.add_assertion(self.badge_id_2, self.email_2, None)
+    api.add_assertion(test_data["badge_1"], test_data["email_3"], None)
+    api.add_assertion(test_data["badge_2"], test_data["email_3"], None)
 
-        self.api.add_assertion(self.badge_id_1, self.email_3, None)
-        self.api.add_assertion(self.badge_id_2, self.email_3, None)
+    api.add_assertion(test_data["badge_1"], test_data["email_4"], None)
+    api.add_assertion(test_data["badge_2"], test_data["email_4"], None)
+    api.add_assertion(test_data["badge_3"], test_data["email_4"], None)
 
-        self.api.add_assertion(self.badge_id_1, self.email_4, None)
-        self.api.add_assertion(self.badge_id_2, self.email_4, None)
-        self.api.add_assertion(self.badge_id_3, self.email_4, None)
+    person1 = api.get_person("test_1@tester.com")
+    person2 = api.get_person("test_2@tester.com")
+    person3 = api.get_person("test_3@tester.com")
+    person4 = api.get_person("test_4@tester.com")
 
-        person1 = self.api.get_person("test_1@tester.com")
-        person2 = self.api.get_person("test_2@tester.com")
-        person3 = self.api.get_person("test_3@tester.com")
-        person4 = self.api.get_person("test_4@tester.com")
+    assert person1.rank == 4
+    assert person2.rank == 2
+    assert person3.rank == 2
+    assert person4.rank == 1
 
-        assert person1.rank == 4
-        assert person2.rank == 2
-        assert person3.rank == 2
-        assert person4.rank == 1
 
-    def test_ranking_preexisting(self):
-        """Test that rank updating works for pre-existant users"""
-        person1 = self.api.get_person("test_1@tester.com")
-        new_assertion1 = Assertion(badge_id=self.badge_id_1, person_id=person1.id)
-        self.api.session.add(new_assertion1)
-        new_assertion2 = Assertion(badge_id=self.badge_id_2, person_id=person1.id)
-        self.api.session.add(new_assertion2)
-        self.api.session.flush()
+def test_ranking_preexisting(api, test_data):
+    """Test that rank updating works for pre-existant users"""
+    person1 = api.get_person("test_1@tester.com")
+    new_assertion1 = Assertion(badge_id=test_data["badge_1"], person_id=person1.id)
+    api.session.add(new_assertion1)
+    new_assertion2 = Assertion(badge_id=test_data["badge_2"], person_id=person1.id)
+    api.session.add(new_assertion2)
+    api.session.flush()
 
-        # For persons who existed *before* we added cached ranks, they should
-        # have a null-rank.
-        assert person1.rank is None
+    # For persons who existed *before* we added cached ranks, they should
+    # have a null-rank.
+    assert person1.rank is None
 
-        # But once *anyone* else gets a badge, old ranks should be updated too.
-        self.api.add_assertion(self.badge_id_1, self.email_2, None)
-        assert person1.rank == 1
+    # But once *anyone* else gets a badge, old ranks should be updated too.
+    api.add_assertion(test_data["badge_1"], test_data["email_2"], None)
+    assert person1.rank == 1
 
-        person2 = self.api.get_person("test_2@tester.com")
-        assert person2.rank == 2
+    person2 = api.get_person("test_2@tester.com")
+    assert person2.rank == 2
 
-        # but people with no badges should still be null ranked.
-        person3 = self.api.get_person("test_3@tester.com")
-        assert person3.rank is None
+    # but people with no badges should still be null ranked.
+    person3 = api.get_person("test_3@tester.com")
+    assert person3.rank is None
 
-    def test_ranking_with_time_limits(self):
-        self.api.add_assertion(self.badge_id_1, self.email_1, yesterday)
 
-        self.api.add_assertion(self.badge_id_1, self.email_4, yesterday)
-        self.api.add_assertion(self.badge_id_2, self.email_4, one_week_ago)
-        self.api.add_assertion(self.badge_id_3, self.email_4, one_month_ago)
+def test_ranking_with_time_limits(api, test_data):
+    api.add_assertion(test_data["badge_1"], test_data["email_1"], yesterday)
 
-        person1 = self.api.get_person("test_1@tester.com")
-        person4 = self.api.get_person("test_4@tester.com")
+    api.add_assertion(test_data["badge_1"], test_data["email_4"], yesterday)
+    api.add_assertion(test_data["badge_2"], test_data["email_4"], one_week_ago)
+    api.add_assertion(test_data["badge_3"], test_data["email_4"], one_month_ago)
 
-        epsilon = datetime.timedelta(hours=1)
+    person1 = api.get_person("test_1@tester.com")
+    person4 = api.get_person("test_4@tester.com")
 
-        results = self.api._make_leaderboard(yesterday - epsilon, now)
-        assert results[person1]["badges"] == 1
-        assert results[person4]["badges"] == 1
+    epsilon = datetime.timedelta(hours=1)
 
-        results = self.api._make_leaderboard(one_week_ago - epsilon, now)
-        assert results[person1]["badges"] == 1
-        assert results[person4]["badges"] == 2
+    results = api._make_leaderboard(yesterday - epsilon, now)
+    assert results[person1]["badges"] == 1
+    assert results[person4]["badges"] == 1
 
-        results = self.api._make_leaderboard(one_month_ago - epsilon, now)
-        assert results[person1]["badges"] == 1
-        assert results[person4]["badges"] == 3
+    results = api._make_leaderboard(one_week_ago - epsilon, now)
+    assert results[person1]["badges"] == 1
+    assert results[person4]["badges"] == 2
+
+    results = api._make_leaderboard(one_month_ago - epsilon, now)
+    assert results[person1]["badges"] == 1
+    assert results[person4]["badges"] == 3

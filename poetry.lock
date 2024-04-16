@@ -1274,6 +1274,25 @@ pymysql = ["pymysql"]
 sqlcipher = ["sqlcipher3_binary"]
 
 [[package]]
+name = "sqlalchemy-helpers"
+version = "0.13.0"
+description = "SQLAlchemy Helpers"
+optional = false
+python-versions = ">=3.8.0,<4.0.0"
+files = [
+    {file = "sqlalchemy_helpers-0.13.0-py3-none-any.whl", hash = "sha256:15667669dfd4c0bef77287b471c0a25a0664d7194947b990848362a6b3a6fad0"},
+    {file = "sqlalchemy_helpers-0.13.0.tar.gz", hash = "sha256:0a7f170300f68f990a6ac485de3955ab9bc9e66d8272ce5772b8e7a6490a77a2"},
+]
+
+[package.dependencies]
+alembic = ">=1.6.5"
+SQLAlchemy = ">=1.3.0"
+
+[package.extras]
+docs = ["Flask (>=2.0.0,<4.0.0)", "myst-parser", "sphinx", "sphinxcontrib-napoleon"]
+flask = ["Flask (>=2.0.0,<4.0.0)"]
+
+[[package]]
 name = "tahrir-messages"
 version = "1.0.2"
 description = "A schema package for messages sent by tahrir"
@@ -1519,4 +1538,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9.0"
-content-hash = "f76c05ce3d4357605bb10836c09a6ce1e505998954e3553bc20e13ca501e7247"
+content-hash = "24f41ca8c51207739a0e457e1d4d01c3690bd9465ccf0a16be6d1b54fb94c5ee"

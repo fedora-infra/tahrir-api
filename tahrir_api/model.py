@@ -7,14 +7,9 @@ import arrow
 import pygments
 import simplejson
 from sqlalchemy import Column, DateTime, ForeignKey, Unicode, UniqueConstraint
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, scoped_session, sessionmaker
+from sqlalchemy.orm import object_session, relationship, sessionmaker
 from sqlalchemy.types import Boolean, Integer
-
-DBSession = scoped_session(sessionmaker())
-
-DeclarativeBase = declarative_base()
-DeclarativeBase.query = DBSession.query_property()
+from sqlalchemy_helpers import Base as DeclarativeBase
 
 
 class Issuer(DeclarativeBase):
@@ -27,10 +22,8 @@ class Issuer(DeclarativeBase):
     badges = relationship("Badge", backref="issuer")
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.name)
-
-    __str__ = __unicode__
 
     def __json__(self):
         return dict(
@@ -62,10 +55,8 @@ class Badge(DeclarativeBase):
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     tags = Column(Unicode(128))
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.name)
-
-    __str__ = __unicode__
 
     def __json__(self):
         if self.image.startswith("http"):
@@ -172,10 +163,8 @@ class Person(DeclarativeBase):
         url = f"http://www.gravatar.com/avatar/{hash}?s={s}&d={d}"
         return url
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.email)
-
-    __str__ = __unicode__
 
     def __json__(self):
         return dict(
@@ -258,10 +247,8 @@ class Assertion(DeclarativeBase):
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.badge) + "<->" + str(self.person)
-
-    __str__ = __unicode__
 
     @property
     def _recipient(self):
@@ -280,7 +267,8 @@ class Assertion(DeclarativeBase):
         return getattr(self, f"__{key}__")()
 
     def __delete__(self):
-        return lambda: DBSession.delete(self)
+        session = object_session(self)
+        return lambda: session.delete(self)
 
     def __pygments__(self):
         html_args = {"full": False}

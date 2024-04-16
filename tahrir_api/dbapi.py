@@ -2,11 +2,12 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
+import importlib.resources
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
-from sqlalchemy import and_, create_engine, func, not_, text
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy import and_, func, not_, text
+from sqlalchemy_helpers import DatabaseManager
 from tahrir_messages import BadgeAwardV1, PersonLoginFirstV1, PersonRankAdvanceV1
 
 from .model import (
@@ -45,11 +46,15 @@ class TahrirDatabase:
             raise ValueError("Provide only one, either 'dburi' or 'session'")
 
         self.autocommit = autocommit
-        self.session = session
 
         if dburi:
-            self.session_maker = sessionmaker(bind=create_engine(dburi))
-            self.session = scoped_session(self.session_maker)
+            with importlib.resources.as_file(
+                importlib.resources.files("tahrir_api").joinpath("migrations")
+            ) as alembic_path:
+                self.db_mgr = DatabaseManager(dburi, alembic_path.as_posix())
+            self.session = self.db_mgr.Session()
+        else:
+            self.session = session
 
         self.notification_callback = notification_callback
 
@@ -641,7 +646,7 @@ class TahrirDatabase:
         if self.person_exists(email=created_by_email):
             created_by = self.get_person(created_by_email).id
         else:
-            created_by = "1"
+            created_by = self.session.query(Person).first().id
 
         invitation = Invitation(
             created_on=created_on,

@@ -2,27 +2,14 @@ import os
 import re
 import sys
 
-import transaction
-from paste.deploy import appconfig
-from sqlalchemy import engine_from_config
-
-from ..model import Badge, DBSession, Milestone, Series
+from ..model import Badge, Milestone, Series
+from .utils import get_db_manager_from_paste
 
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
     print(f"usage: {cmd} <config_uri>\n '(example: \"{cmd} development.ini\"'")
     sys.exit(1)
-
-
-def _getpathsec(config_uri, name):
-    if "#" in config_uri:
-        path, section = config_uri.split("#", 1)
-    else:
-        path, section = config_uri, "main"
-    if name:
-        section = name
-    return path, section
 
 
 _ROMAN_TO_ARABIC = dict(
@@ -81,25 +68,8 @@ def main(argv=sys.argv):
         usage(argv)
 
     config_uri = argv[1]
-    path, section = _getpathsec(config_uri, "pyramid")
-    config_name = "config:%s" % path
-    here_dir = os.getcwd()
-
-    global_conf = None
-    if "OPENSHIFT_APP_NAME" in os.environ:
-        if "OPENSHIFT_MYSQL_DB_URL" in os.environ:
-            template = "{OPENSHIFT_MYSQL_DB_URL}{OPENSHIFT_APP_NAME}"
-        elif "OPENSHIFT_POSTGRESQL_DB_URL" in os.environ:
-            template = "{OPENSHIFT_POSTGRESQL_DB_URL}{OPENSHIFT_APP_NAME}"
-
-        global_conf = {"sqlalchemy.url": template.format(**os.environ)}
-
-    settings = appconfig(config_name, name=section, relative_to=here_dir, global_conf=global_conf)
-
-    engine = engine_from_config(settings, "sqlalchemy.")
-    DBSession.configure(bind=engine)
-
-    with DBSession() as session:
+    db_mgr = get_db_manager_from_paste(config_uri)
+    with db_mgr.Session() as session:
         for badge in session.query(Badge).all():
             if badge.milestone:
                 # Skip badges that already are in some series.

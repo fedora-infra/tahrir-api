@@ -1,7 +1,9 @@
-from alembic import context
-from sqlalchemy import engine_from_config, pool
-from logging.config import fileConfig
+# from logging.config import fileConfig
 
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
+
+from alembic import context
 import sqlalchemy as sa
 
 # this is the Alembic Config object, which provides
@@ -10,7 +12,8 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-fileConfig(config.config_file_name)
+# if config.config_file_name is not None:
+#     fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -27,7 +30,7 @@ target_metadata = model.DeclarativeBase.metadata
 # ... etc.
 
 
-def run_migrations_offline():
+def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
     This configures the context with just a URL
@@ -40,40 +43,37 @@ def run_migrations_offline():
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(url=url)
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
 
     with context.begin_transaction():
         context.run_migrations()
 
 
-def run_migrations_online():
+def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
     and associate a connection with the context.
 
     """
-    engine = engine_from_config(
-        config.get_section(config.config_ini_section),
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    connection = engine.connect()
-    context.configure(connection=connection, target_metadata=target_metadata)
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection, target_metadata=target_metadata
+        )
 
-    trans = connection.begin()
-    try:
         with context.begin_transaction():
             context.run_migrations()
-            trans.commit()
-    except sa.exc.OperationalError as e:
-        print("SQLite does not allow one of these operations. Rolling back.")
-        print("The exception was:")
-        print(repr(e))
-        trans.rollback()
-    finally:
-        connection.close()
 
 
 if context.is_offline_mode():

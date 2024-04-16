@@ -1,19 +1,10 @@
-import datetime
+import importlib.resources
 import os
-import pprint
-import sys
 
-import transaction
 from paste.deploy import appconfig
-from sqlalchemy import engine_from_config
+from sqlalchemy_helpers import DatabaseManager
 
-from ..model import Assertion, Badge, DBSession, DeclarativeBase, Issuer, Person
-
-
-def usage(argv):
-    cmd = os.path.basename(argv[0])
-    print(f"usage: {cmd} <config_uri>\n '(example: \"{cmd} development.ini\"'")
-    sys.exit(1)
+from ..model import Assertion, Badge, DeclarativeBase, Issuer, Person  # noqa: F401
 
 
 def _getpathsec(config_uri, name):
@@ -26,11 +17,7 @@ def _getpathsec(config_uri, name):
     return path, section
 
 
-def main(argv=sys.argv):
-    if len(argv) != 2:
-        usage(argv)
-
-    config_uri = argv[1]
+def get_db_manager_from_paste(config_uri):
     path, section = _getpathsec(config_uri, "pyramid")
     config_name = "config:%s" % path
     here_dir = os.getcwd()
@@ -46,6 +33,10 @@ def main(argv=sys.argv):
 
     settings = appconfig(config_name, name=section, relative_to=here_dir, global_conf=global_conf)
 
-    engine = engine_from_config(settings, "sqlalchemy.")
-    DBSession.configure(bind=engine)
-    DeclarativeBase.metadata.create_all(engine)
+    prefix = "sqlalchemy."
+    db_options = {key[len(prefix) :]: settings[key] for key in settings if key.startswith(prefix)}
+    dburi = db_options.pop("url")
+    with importlib.resources.as_file(
+        importlib.resources.files("tahrir_api").joinpath("migrations")
+    ) as alembic_path:
+        return DatabaseManager(dburi, alembic_path.as_posix())
