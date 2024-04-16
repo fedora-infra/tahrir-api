@@ -28,7 +28,7 @@ classifiers= [
     "Programming Language :: Python",
     "Framework :: Pyramid",
     "Topic :: Internet :: WWW/HTTP",
-    "License :: OSI Approved :: GNU General Public License v3 or later(GPLv3+)",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
 ]
 
 [tool.poetry.dependencies]
