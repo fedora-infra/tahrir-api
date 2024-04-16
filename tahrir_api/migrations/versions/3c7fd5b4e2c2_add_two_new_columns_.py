@@ -6,14 +6,16 @@ Create Date: 2013-06-26 14:46:28.361709
 
 """
 
+import datetime
+
+import sqlalchemy as sa
+from alembic import op
+
+import tahrir_api
+
 # revision identifiers, used by Alembic.
 revision = "3c7fd5b4e2c2"
 down_revision = "16943d9088cf"
-
-import tahrir_api
-from alembic import op
-import sqlalchemy as sa
-import datetime
 
 
 def upgrade():

@@ -6,14 +6,14 @@ Create Date: 2016-09-02 20:51:14.951460
 
 """
 
-# revision identifiers, used by Alembic.
-revision = "e7040e76728"
-down_revision = "508367dcbbb5"
-
 import datetime
 
 import sqlalchemy as sa
 from alembic import op
+
+# revision identifiers, used by Alembic.
+revision = "e7040e76728"
+down_revision = "508367dcbbb5"
 
 
 def generate_default_id(context):
