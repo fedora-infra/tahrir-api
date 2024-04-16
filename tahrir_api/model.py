@@ -20,7 +20,7 @@ class Issuer(DeclarativeBase):
     org = Column(Unicode(128), nullable=False)
     contact = Column(Unicode(128), nullable=False)
     badges = relationship("Badge", backref="issuer")
-    created_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
     def __str__(self):
         return str(self.name)
@@ -52,7 +52,7 @@ class Badge(DeclarativeBase):
     authorizations = relationship("Authorization", backref="badge")
     assertions = relationship("Assertion", backref="badge")
     invitations = relationship("Invitation", backref="badge")
-    created_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
     tags = Column(Unicode(128))
 
     def __str__(self):
@@ -88,7 +88,7 @@ class Team(DeclarativeBase):
     id = Column(Unicode(128), primary_key=True, default=generate_default_id)
     name = Column(Unicode(128), nullable=False, unique=True)
     series = relationship("Series", backref="team")
-    created_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
     def __json__(self):
         return dict(id=self.id, name=self.name, created_on=str(self.created_on))
@@ -99,12 +99,12 @@ class Series(DeclarativeBase):
     id = Column(Unicode(128), primary_key=True, default=generate_default_id)
     name = Column(Unicode(128), nullable=False, unique=True)
     description = Column(Unicode(128), nullable=False)
-    created_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
     last_updated = Column(
         DateTime,
         nullable=False,
-        default=datetime.datetime.utcnow,
-        onupdate=datetime.datetime.utcnow,
+        default=datetime.datetime.now,
+        onupdate=datetime.datetime.now,
     )
     tags = Column(Unicode(128))
     milestone = relationship("Milestone", backref="series")
@@ -145,7 +145,7 @@ class Person(DeclarativeBase):
     nickname = Column(Unicode(128), unique=True)
     website = Column(Unicode(128))
     bio = Column(Unicode(140))
-    created_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
     last_login = Column(DateTime, nullable=True, default=None)
     opt_out = Column(Boolean, nullable=False, default=False)
     # An integer that organizes the users by the number of
@@ -200,7 +200,7 @@ class Invitation(DeclarativeBase):
 
     @property
     def expired(self):
-        return datetime.datetime.utcnow() > self.expires_on
+        return datetime.datetime.now() > self.expires_on
 
     @property
     def expires_on_relative(self):
@@ -240,7 +240,7 @@ class Assertion(DeclarativeBase):
     badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
-    issued_on = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    issued_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
     # An optional link back to the event that warranted the award
     issued_for = Column(Unicode(256))

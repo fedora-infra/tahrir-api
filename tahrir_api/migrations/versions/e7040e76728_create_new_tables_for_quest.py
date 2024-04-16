@@ -12,8 +12,8 @@ down_revision = "508367dcbbb5"
 
 import datetime
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 
 def generate_default_id(context):
@@ -24,38 +24,34 @@ def upgrade():
 
     op.create_table(
         "team",
-        sa.Column(
-            "id", sa.Unicode(length=128), nullable=False, default=generate_default_id
-        ),
+        sa.Column("id", sa.Unicode(length=128), nullable=False, default=generate_default_id),
         sa.Column("name", sa.Unicode(length=128), nullable=False),
         sa.Column(
             "created_on",
             sa.DateTime(),
             nullable=False,
-            default=datetime.datetime.utcnow,
+            default=datetime.datetime.now,
         ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("name"),
     )
     op.create_table(
         "series",
-        sa.Column(
-            "id", sa.Unicode(length=128), nullable=False, default=generate_default_id
-        ),
+        sa.Column("id", sa.Unicode(length=128), nullable=False, default=generate_default_id),
         sa.Column("name", sa.Unicode(length=128), nullable=False),
         sa.Column("description", sa.Unicode(length=128), nullable=False),
         sa.Column(
             "created_on",
             sa.DateTime(),
             nullable=False,
-            default=datetime.datetime.utcnow,
+            default=datetime.datetime.now,
         ),
         sa.Column(
             "last_updated",
             sa.DateTime(),
             nullable=False,
-            default=datetime.datetime.utcnow,
-            onupdate=datetime.datetime.utcnow,
+            default=datetime.datetime.now,
+            onupdate=datetime.datetime.now,
         ),
         sa.Column("tags", sa.Unicode(length=128), nullable=True),
         sa.Column("team_id", sa.Unicode(length=128), nullable=False),

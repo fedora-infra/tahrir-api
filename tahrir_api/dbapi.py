@@ -4,7 +4,7 @@
 
 import importlib.resources
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import and_, func, not_, text
 from sqlalchemy_helpers import DatabaseManager
@@ -607,7 +607,7 @@ class TahrirDatabase:
             self.notification_callback(PersonLoginFirstV1(body=body))
 
         # Finally, update the field.
-        person.last_login = datetime.utcnow()
+        person.last_login = datetime.now(timezone.utc)
 
     def issuer_exists(self, origin, name):
         """
@@ -641,7 +641,7 @@ class TahrirDatabase:
         if not self.badge_exists(badge_id):
             raise ValueError("No such badge %r" % badge_id)
 
-        created_on = created_on or datetime.utcnow()
+        created_on = created_on or datetime.now(timezone.utc)
         expires_on = expires_on or (created_on + timedelta(hours=1))
         if self.person_exists(email=created_by_email):
             created_by = self.get_person(created_by_email).id
@@ -886,7 +886,7 @@ class TahrirDatabase:
         """
 
         if issued_on is None:
-            issued_on = datetime.utcnow()
+            issued_on = datetime.now(timezone.utc)
 
         if self.person_exists(email=person_email) and self.badge_exists(badge_id):
             badge = self.get_badge(badge_id)
