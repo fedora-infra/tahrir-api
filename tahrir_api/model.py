@@ -159,9 +159,17 @@ class Person(DeclarativeBase):
     @property
     def gravatar_link(self):
         d, s = "mm", 24
-        hash = hashlib.md5(self.email).hexdigest()
+        hash = self.email_md5
         url = f"http://www.gravatar.com/avatar/{hash}?s={s}&d={d}"
         return url
+
+    @property
+    def email_md5(self):
+        return hashlib.md5(self.email.encode("utf-8")).hexdigest()
+
+    @property
+    def email_sha1(self):
+        return hashlib.sha1(self.email.encode("utf-8")).hexdigest()
 
     def __str__(self):
         return str(self.email)
