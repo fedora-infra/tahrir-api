@@ -13,6 +13,7 @@ from alembic import op
 
 import tahrir_api
 
+
 # revision identifiers, used by Alembic.
 revision = "3c7fd5b4e2c2"
 down_revision = "16943d9088cf"

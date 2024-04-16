@@ -9,6 +9,7 @@ from sqlalchemy import engine_from_config, pool
 # target_metadata = mymodel.Base.metadata
 from tahrir_api import model
 
+
 target_metadata = model.DeclarativeBase.metadata
 
 # this is the Alembic Config object, which provides
