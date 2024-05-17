@@ -564,7 +564,7 @@ class TahrirDatabase:
         return False
 
     @autocommit
-    def add_person(self, email, nickname=None, website=None, bio=None):
+    def add_person(self, email, nickname=None, website=None, bio=None, avatar=None):
         """
         Add a new Person to the database
 
@@ -577,8 +577,11 @@ class TahrirDatabase:
         :type website: str
         :param website: This Person's website
 
-        :type website: str
+        :type bio: str
         :param bio: This Person's bio
+
+        :type avatar: str
+        :param avatar: This Person's avatar
         """
 
         if not self.person_exists(email=email):
@@ -587,7 +590,9 @@ class TahrirDatabase:
             if not nickname:
                 nickname = email.split("@")[0]
 
-            new_person = Person(email=email, nickname=nickname, website=website, bio=bio)
+            new_person = Person(
+                email=email, nickname=nickname, website=website, bio=bio, _avatar=avatar
+            )
             self.session.add(new_person)
             self.session.flush()
 
@@ -639,7 +644,7 @@ class TahrirDatabase:
         """
 
         if not self.badge_exists(badge_id):
-            raise ValueError("No such badge %r" % badge_id)
+            raise ValueError(f"No such badge {badge_id!r}")
 
         created_on = created_on or datetime.now(timezone.utc)
         expires_on = expires_on or (created_on + timedelta(hours=1))
