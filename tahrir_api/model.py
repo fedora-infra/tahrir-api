@@ -140,6 +140,7 @@ class Person(DeclarativeBase):
     __tablename__ = "persons"
     id = Column(Integer, unique=True, primary_key=True)
     email = Column(Unicode(128), nullable=False, unique=True)
+    _avatar = Column(Unicode(128), nullable=True)
     authorizations = relationship("Authorization", backref="person")
     assertions = relationship("Assertion", backref="person")
     nickname = Column(Unicode(128), unique=True)
@@ -157,19 +158,12 @@ class Person(DeclarativeBase):
         return f"<Person: '{self.nickname} <{self.email}>'"
 
     @property
-    def gravatar_link(self):
-        d, s = "mm", 24
-        hash = self.email_md5
-        url = f"http://www.gravatar.com/avatar/{hash}?s={s}&d={d}"
-        return url
-
-    @property
-    def email_md5(self):
-        return hashlib.md5(self.email.encode("utf-8")).hexdigest()
-
-    @property
     def email_sha1(self):
         return hashlib.sha1(self.email.encode("utf-8")).hexdigest()
+
+    @property
+    def avatar(self):
+        return self._avatar or self.email
 
     def __str__(self):
         return str(self.email)
