@@ -19,7 +19,7 @@ def _getpathsec(config_uri, name):
 
 def get_db_manager_from_paste(config_uri):
     path, section = _getpathsec(config_uri, "pyramid")
-    config_name = "config:%s" % path
+    config_name = f"config:{path}"
     here_dir = os.getcwd()
 
     global_conf = None
