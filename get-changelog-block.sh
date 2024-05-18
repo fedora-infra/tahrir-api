@@ -10,4 +10,4 @@ set -e
 COMMIT_URL=https://github.com/fedora-infra/tahrir-api/commit
 
 last_tag=$(git tag --sort=creatordate | tail -n 1)
-git log ${last_tag}..HEAD --no-merges --reverse --format="- %s (\`%h <${COMMIT_URL}/%h>\`_)"
+git log ${last_tag}..HEAD --no-merges --reverse --format="- %s ([%h](${COMMIT_URL}/%h>))"

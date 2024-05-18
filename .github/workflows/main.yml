@@ -44,8 +44,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - checks
-    # outputs:
-    #   release-notes: ${{ steps.extract-changelog.outputs.markdown }}
+    outputs:
+      release-notes: ${{ steps.extract-changelog.outputs.markdown }}
 
     steps:
 
@@ -67,17 +67,17 @@ jobs:
           name: python-package-distributions
           path: dist/
 
-      # - name: Extract changelog section
-      #   id: extract-changelog
-      #   uses: sean0x42/markdown-extract@v2
-      #   with:
-      #     file: docs/release_notes.md
-      #     pattern: 'Version\s+\[[[:word:].-]+\]\(.*\)'
-      #     no-print-matched-heading: true
-      # - name: Show the changelog
-      #   env:
-      #     CHANGELOG: ${{ steps.extract-changelog.outputs.markdown }}
-      #   run: echo "$CHANGELOG"
+      - name: Extract changelog section
+        id: extract-changelog
+        uses: sean0x42/markdown-extract@v2
+        with:
+          file: CHANGELOG.md
+          pattern: 'Version\s+[[:word:].-]+'
+          no-print-matched-heading: true
+      - name: Show the changelog
+        env:
+          CHANGELOG: ${{ steps.extract-changelog.outputs.markdown }}
+        run: echo "$CHANGELOG"
 
 
   publish-to-pypi:
@@ -131,5 +131,5 @@ jobs:
         with:
           files: dist/*
           fail_on_unmatched_files: true
-          generate_release_notes: true
-          # body: ${{ needs.build.outputs.release-notes }}
+          # generate_release_notes: true
+          body: ${{ needs.build.outputs.release-notes }}
