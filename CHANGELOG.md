@@ -1,6 +1,15 @@
 # Changelog
 
 
+## Version 1.1.0
+
+- Fix the github action to trigger on tags ([6edf093](https://github.com/fedora-infra/tahrir-api/commit/6edf093>))
+- Add a column for the avatar ([0841366](https://github.com/fedora-infra/tahrir-api/commit/0841366>))
+- Add a script to populate the user's avatars from FASJSON ([2d80012](https://github.com/fedora-infra/tahrir-api/commit/2d80012>))
+- Convert the changelog to markdown ([ade7496](https://github.com/fedora-infra/tahrir-api/commit/ade7496>))
+- Update dependencies
+
+
 ## Version 1.0.0
 
 - Add tox as a test runner ([31a84c4](https://github.com/fedora-infra/tahrir-api/commit/31a84c4))
