@@ -43,6 +43,7 @@ fedora-messaging = "^3.5.0"
 tahrir-messages = "^1.0.2"
 sqlalchemy-helpers = ">=0.13.0"
 fasjson-client = {version = "^1.0.8", optional = true}
+click = {version = "^8.0.0", optional = true}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -54,6 +55,7 @@ pytest-cov = ">=5.0.0"
 
 [tool.poetry.extras]
 scripts = [
+  "click",
   "fasjson-client",
 ]
 
