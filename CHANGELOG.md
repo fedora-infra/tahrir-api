@@ -1,6 +1,11 @@
 # Changelog
 
 
+## Version 1.1.1
+
+- Improve the `populate-avatars` script ([ea1cd9d](https://github.com/fedora-infra/tahrir-api/commit/ea1cd9d>))
+
+
 ## Version 1.1.0
 
 - Fix the github action to trigger on tags ([6edf093](https://github.com/fedora-infra/tahrir-api/commit/6edf093>))
