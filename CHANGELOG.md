@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 1.1.2
+
+- Fix the release github action ([3f1e397](https://github.com/fedora-infra/tahrir-api/commit/3f1e397>))
+- `add_invitation()`: don't assume a random user if not given ([091b06f](https://github.com/fedora-infra/tahrir-api/commit/091b06f>))
+
 
 ## Version 1.1.1
 
