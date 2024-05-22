@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_add_badges(api):
     issuer_id = api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
     api.add_badge(
@@ -76,9 +79,25 @@ def test_add_invitation(api):
         "TestCriteria",
         issuer_id,
     )
-    _id = api.add_invitation(badge_id)
+    _id = api.add_invitation(badge_id, created_by_email="test@tester.com")
 
     assert api.invitation_exists(_id)
+    invitation = api.get_invitation(_id)
+    assert api.get_person(id=invitation.created_by).email == "test@tester.com"
+
+
+def test_add_invitation_no_created_by(api):
+    issuer_id = api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
+    api.add_person("test@tester.com")
+    badge_id = api.add_badge(
+        "TestBadge",
+        "TestImage",
+        "A test badge for doing unit tests",
+        "TestCriteria",
+        issuer_id,
+    )
+    with pytest.raises(ValueError):
+        api.add_invitation(badge_id)
 
 
 def test_last_login(api, callback_calls):

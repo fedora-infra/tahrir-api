@@ -648,10 +648,9 @@ class TahrirDatabase:
 
         created_on = created_on or datetime.now(timezone.utc)
         expires_on = expires_on or (created_on + timedelta(hours=1))
-        if self.person_exists(email=created_by_email):
-            created_by = self.get_person(created_by_email).id
-        else:
-            created_by = self.session.query(Person).first().id
+        if not created_by_email or not self.person_exists(email=created_by_email):
+            raise ValueError(f"No user with email {created_by_email!r}. Ask them to login first.")
+        created_by = self.get_person(created_by_email).id
 
         invitation = Invitation(
             created_on=created_on,
