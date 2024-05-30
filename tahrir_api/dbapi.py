@@ -2,12 +2,10 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
-import importlib.resources
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import and_, func, not_, text
-from sqlalchemy_helpers import DatabaseManager
 from tahrir_messages import BadgeAwardV1, PersonLoginFirstV1, PersonRankAdvanceV1
 
 from .model import (
@@ -21,7 +19,7 @@ from .model import (
     Series,
     Team,
 )
-from .utils import autocommit, convert_name_to_id
+from .utils import autocommit, convert_name_to_id, get_db_manager_from_uri
 
 
 class TahrirDatabase:
@@ -48,11 +46,8 @@ class TahrirDatabase:
         self.autocommit = autocommit
 
         if dburi:
-            with importlib.resources.as_file(
-                importlib.resources.files("tahrir_api").joinpath("migrations")
-            ) as alembic_path:
-                self.db_mgr = DatabaseManager(dburi, alembic_path.as_posix())
-            self.session = self.db_mgr.Session()
+            db_mgr = get_db_manager_from_uri(dburi)
+            self.session = db_mgr.Session()
         else:
             self.session = session
 

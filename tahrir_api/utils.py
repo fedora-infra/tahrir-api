@@ -1,5 +1,9 @@
 """ Module to keep random utils. """
 
+import importlib.resources
+
+from sqlalchemy_helpers import DatabaseManager
+
 
 def autocommit(func):
     """A decorator that autocommits after API calls unless
@@ -33,3 +37,12 @@ def convert_name_to_id(name):
         badge_id = badge_id.replace(a, b)
 
     return badge_id
+
+
+def get_db_manager_from_uri(uri):
+    from .model import DeclarativeBase  # noqa: F401
+
+    with importlib.resources.as_file(
+        importlib.resources.files("tahrir_api").joinpath("migrations")
+    ) as alembic_path:
+        return DatabaseManager(uri, alembic_path.as_posix())

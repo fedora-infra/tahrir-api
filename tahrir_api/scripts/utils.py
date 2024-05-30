@@ -1,10 +1,8 @@
-import importlib.resources
 import os
 
 from paste.deploy import appconfig
-from sqlalchemy_helpers import DatabaseManager
 
-from ..model import Assertion, Badge, DeclarativeBase, Issuer, Person  # noqa: F401
+from ..utils import get_db_manager_from_uri
 
 
 def _getpathsec(config_uri, name):
@@ -36,7 +34,4 @@ def get_db_manager_from_paste(config_uri):
     prefix = "sqlalchemy."
     db_options = {key[len(prefix) :]: settings[key] for key in settings if key.startswith(prefix)}
     dburi = db_options.pop("url")
-    with importlib.resources.as_file(
-        importlib.resources.files("tahrir_api").joinpath("migrations")
-    ) as alembic_path:
-        return DatabaseManager(dburi, alembic_path.as_posix())
+    return get_db_manager_from_uri(dburi)
