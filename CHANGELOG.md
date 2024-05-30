@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 1.1.3
+
+- Refactor getting the db manager from the db URI ([17dea50](https://github.com/fedora-infra/tahrir-api/commit/17dea50>))
+- Update dependencies in lockfile and the ruff pre-commit hook
+  ([a27cadc](https://github.com/fedora-infra/tahrir-api/commit/a27cadc>), [b45bcfa](https://github.com/fedora-infra/tahrir-api/commit/b45bcfa>))
+
+
 ## Version 1.1.2
 
 - Fix the release github action ([3f1e397](https://github.com/fedora-infra/tahrir-api/commit/3f1e397>))
