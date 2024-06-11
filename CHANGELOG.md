@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 1.1.4
+
+- fix(deps): update dependency tahrir-messages to v2 ([757c4b6](https://github.com/fedora-infra/tahrir-api/commit/757c4b6>))
+- chore(deps): update dependencies in lockfile ([cd735d8](https://github.com/fedora-infra/tahrir-api/commit/cd735d8>))
+- chore(deps): update pre-commit hook charliermarsh/ruff-pre-commit to v0.4.8 ([6a40308](https://github.com/fedora-infra/tahrir-api/commit/6a40308>))
+
+
 ## Version 1.1.3
 
 - Refactor getting the db manager from the db URI ([17dea50](https://github.com/fedora-infra/tahrir-api/commit/17dea50>))
