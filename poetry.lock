@@ -1790,13 +1790,13 @@ typing-extensions = "*"
 
 [[package]]
 name = "tahrir-messages"
-version = "1.0.2"
+version = "2.0.0"
 description = "A schema package for messages sent by tahrir"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "tahrir_messages-1.0.2-py3-none-any.whl", hash = "sha256:7d5a213cccafbf1ef2f3f21f814fc6e6bf45ffb760a6e3abed638ac033453c6d"},
-    {file = "tahrir_messages-1.0.2.tar.gz", hash = "sha256:a51fab28856baef98376633c0f8e1b60783f4f5e50e41d04435f7b3ed41748ee"},
+    {file = "tahrir_messages-2.0.0-py3-none-any.whl", hash = "sha256:9804de3b5c76257169be7c37c91594960c94ef2c4bae7e15c535e9d6d4e890db"},
+    {file = "tahrir_messages-2.0.0.tar.gz", hash = "sha256:eadbe3dc8382e30476fb0f45279b46e0eee36df33e5828e0395928ebc9976761"},
 ]
 
 [package.dependencies]
@@ -2094,4 +2094,4 @@ scripts = ["click", "fasjson-client"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9.0"
-content-hash = "4fe53346aadf4a7702cde61a13a8fbb3d1fc5915fecbed692446ec2aedb88725"
+content-hash = "9d35e0290508738c83b811d2fae0878b9d2e6654a46b0b1b1eecb06673edda65"
