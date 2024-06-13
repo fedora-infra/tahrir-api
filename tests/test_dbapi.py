@@ -1,15 +1,28 @@
 import pytest
 
 
-def test_add_badges(api):
-    issuer_id = api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
-    api.add_badge(
+@pytest.fixture
+def dummy_issuer_id(api):
+    return api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
+
+
+@pytest.fixture
+def dummy_badge_id(api, dummy_issuer_id):
+    return api.add_badge(
         "TestBadge",
         "TestImage",
         "A test badge for doing unit tests",
         "TestCriteria",
-        issuer_id,
+        dummy_issuer_id,
     )
+
+
+@pytest.fixture
+def dummy_person_id(api):
+    return api.add_person("test@tester.com")
+
+
+def test_add_badges(api, dummy_badge_id):
     assert api.get_badge("testbadge").__str__() == "TestBadge"
     assert api.badge_exists("testbadge") is True
 
@@ -28,8 +41,7 @@ def test_add_series(api):
     assert api.series_exists("testseries") is True
 
 
-def test_add_milestone(api):
-    issuer_id = api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
+def test_add_milestone(api, dummy_issuer_id):
     team_id = api.create_team("TestTeam")
     series_id = api.create_series("TestSeries", "A test series", team_id, "test, series")
 
@@ -38,7 +50,7 @@ def test_add_milestone(api):
         "TestImage-2",
         "A test badge for doing 10 unit tests",
         "TestCriteria",
-        issuer_id,
+        dummy_issuer_id,
     )
 
     badge_id_2 = api.add_badge(
@@ -46,7 +58,7 @@ def test_add_milestone(api):
         "TestImage-2",
         "A test badge for doing 100 unit tests",
         "TestCriteria",
-        issuer_id,
+        dummy_issuer_id,
     )
 
     milestone_id_1 = api.create_milestone(1, badge_id_1, series_id)
@@ -57,53 +69,31 @@ def test_add_milestone(api):
     assert api.milestone_exists(milestone_id_2) is True
 
 
-def test_add_person(api):
-    api.add_person("test@tester.com")
+def test_add_person(api, dummy_person_id):
     assert api.get_person("test@tester.com").__str__() == "test@tester.com"
     assert api.person_exists("test@tester.com") is True
 
 
-def test_add_issuer(api):
-    _id = api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
-    assert api.get_issuer(_id).__str__() == "TestName"
+def test_add_issuer(api, dummy_issuer_id):
+    assert api.get_issuer(dummy_issuer_id).__str__() == "TestName"
     assert api.issuer_exists("TestOrigin", "TestName") is True
 
 
-def test_add_invitation(api):
-    issuer_id = api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
-    api.add_person("test@tester.com")
-    badge_id = api.add_badge(
-        "TestBadge",
-        "TestImage",
-        "A test badge for doing unit tests",
-        "TestCriteria",
-        issuer_id,
-    )
-    _id = api.add_invitation(badge_id, created_by_email="test@tester.com")
+def test_add_invitation(api, dummy_badge_id, dummy_person_id):
+    _id = api.add_invitation(dummy_badge_id, created_by_email="test@tester.com")
 
     assert api.invitation_exists(_id)
     invitation = api.get_invitation(_id)
     assert api.get_person(id=invitation.created_by).email == "test@tester.com"
 
 
-def test_add_invitation_no_created_by(api):
-    issuer_id = api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
-    api.add_person("test@tester.com")
-    badge_id = api.add_badge(
-        "TestBadge",
-        "TestImage",
-        "A test badge for doing unit tests",
-        "TestCriteria",
-        issuer_id,
-    )
+def test_add_invitation_no_created_by(api, dummy_badge_id, dummy_person_id):
     with pytest.raises(ValueError):
-        api.add_invitation(badge_id)
+        api.add_invitation(dummy_badge_id)
 
 
-def test_last_login(api, callback_calls):
-    email = "test@tester.com"
-    person_id = api.add_person(email)
-    person = api.get_person(person_id)
+def test_last_login(api, callback_calls, dummy_person_id):
+    person = api.get_person(dummy_person_id)
     assert not person.last_login
     api.note_login(nickname=person.nickname)
     assert person.last_login
@@ -115,23 +105,13 @@ def test_last_login(api, callback_calls):
     assert message.summary == "test logged into badges for the first time"
 
 
-def test_add_assertion(api, callback_calls):
-    issuer_id = api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
-    badge_id = api.add_badge(
-        "TestBadge",
-        "TestImage",
-        "A test badge for doing unit tests",
-        "TestCriteria",
-        issuer_id,
-    )
-    email = "test@tester.com"
-    api.add_person(email)
-    api.add_assertion(badge_id, email, None, "link")
-    assert api.assertion_exists(badge_id, email)
+def test_add_assertion(api, callback_calls, dummy_badge_id, dummy_person_id):
+    api.add_assertion(dummy_badge_id, "test@tester.com", None, "link")
+    assert api.assertion_exists(dummy_badge_id, "test@tester.com")
 
-    badge = api.get_badge(badge_id)
+    badge = api.get_badge(dummy_badge_id)
     assert badge.assertions[0].issued_for == "link"
-    assert api.get_assertions_by_badge(badge_id)[0].__str__() == "TestBadge<->test@tester.com"
+    assert api.get_assertions_by_badge(dummy_badge_id)[0].__str__() == "TestBadge<->test@tester.com"
 
     # Ensure that we would have published two fedmsg messages for that.
     assert len(callback_calls) == 2
@@ -166,16 +146,14 @@ def test_add_assertion(api, callback_calls):
     assert rank_advance_message.summary == "test's Badges rank changed from None to 1"
 
 
-def test_get_badges_from_tags(api):
-    issuer_id = api.add_issuer("TestOrigin", "TestName", "TestOrg", "TestContact")
-
+def test_get_badges_from_tags(api, dummy_issuer_id):
     # Badge tagged with "test"
     api.add_badge(
         "TestBadgeA",
         "TestImage",
         "A test badge for doing unit tests",
         "TestCriteria",
-        issuer_id,
+        dummy_issuer_id,
         tags="test",
     )
 
@@ -185,7 +163,7 @@ def test_get_badges_from_tags(api):
         "TestImage",
         "A second test badge for doing unit tests",
         "TestCriteria",
-        issuer_id,
+        dummy_issuer_id,
         tags="tester",
     )
 
@@ -195,7 +173,7 @@ def test_get_badges_from_tags(api):
         "TestImage",
         "A third test badge for doing unit tests",
         "TestCriteria",
-        issuer_id,
+        dummy_issuer_id,
         tags="test, tester",
     )
 
