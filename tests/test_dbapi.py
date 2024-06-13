@@ -146,6 +146,15 @@ def test_add_assertion(api, callback_calls, dummy_badge_id, dummy_person_id):
     assert rank_advance_message.summary == "test's Badges rank changed from None to 1"
 
 
+@pytest.mark.parametrize("test_email", ["test@tester.com", "Test@Tester.Com"])
+def test_get_assertions_by_email(api, callback_calls, dummy_badge_id, dummy_person_id, test_email):
+    api.add_assertion(dummy_badge_id, "test@tester.com", None, "link")
+    # This should be case-insensitive
+    assertions = api.get_assertions_by_email(person_email=test_email)
+    assert len(assertions) == 1
+    assert str(assertions[0]) == "TestBadge<->test@tester.com"
+
+
 def test_get_badges_from_tags(api, dummy_issuer_id):
     # Badge tagged with "test"
     api.add_badge(

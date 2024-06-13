@@ -775,11 +775,10 @@ class TahrirDatabase:
         :param person_email: Email of the person to get assertions for
         """
 
-        if self.person_exists(email=person_email):
-            person_id = self.session.query(Person).filter_by(email=person_email).one().id
-            return self.session.query(Assertion).filter_by(person_id=person_id).all()
-        else:
+        person = self.get_person(person_email=person_email)
+        if person is None:
             return False
+        return self.session.query(Assertion).filter_by(person_id=person.id).all()
 
     def get_assertions_by_badge(self, badge_id):
         """
