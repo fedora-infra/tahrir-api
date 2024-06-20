@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 1.1.5
+
+- Make `get_assertions_by_email()` case insensitive ([92084ed](https://github.com/fedora-infra/tahrir-api/commit/92084ed>))
+- Add a relationship on the Person table ([98ad984](https://github.com/fedora-infra/tahrir-api/commit/98ad984>))
+- Minor tests refactoring ([85a9aa1](https://github.com/fedora-infra/tahrir-api/commit/85a9aa1>))
+- Don't create a sessionmaker just to set the recipient in assertions ([47eafdd](https://github.com/fedora-infra/tahrir-api/commit/47eafdd>))
+- Update dependencies
+
+
 ## Version 1.1.4
 
 - fix(deps): update dependency tahrir-messages to v2 ([757c4b6](https://github.com/fedora-infra/tahrir-api/commit/757c4b6>))
