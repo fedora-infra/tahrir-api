@@ -6,8 +6,8 @@ import uuid
 import arrow
 import pygments
 import simplejson
-from sqlalchemy import Column, DateTime, ForeignKey, Unicode, UniqueConstraint
-from sqlalchemy.orm import object_session, relationship, sessionmaker
+from sqlalchemy import Column, DateTime, ForeignKey, select, Unicode, UniqueConstraint
+from sqlalchemy.orm import object_session, relationship
 from sqlalchemy.types import Boolean, Integer
 from sqlalchemy_helpers import Base as DeclarativeBase
 
@@ -218,13 +218,14 @@ class Authorization(DeclarativeBase):
 
 
 def recipient_default(context):
-    Session = sessionmaker(context.engine)()
     person_id = context.current_parameters["person_id"]
-    person = Session.query(Person).filter_by(id=person_id).one()
+    salt = context.current_parameters["salt"]
+    person_email = context.connection.scalar(select(Person.email).where(Person.id == person_id))
+    return get_assertion_recipient(person_email, salt)
 
-    return hashlib.sha256(
-        (person.email + context.current_parameters["salt"]).encode("utf-8")
-    ).hexdigest()
+
+def get_assertion_recipient(email, salt):
+    return hashlib.sha256((email + salt).encode("utf-8")).hexdigest()
 
 
 def salt_default(context):
