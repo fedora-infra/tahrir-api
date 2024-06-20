@@ -143,6 +143,7 @@ class Person(DeclarativeBase):
     _avatar = Column(Unicode(128), nullable=True)
     authorizations = relationship("Authorization", backref="person")
     assertions = relationship("Assertion", backref="person")
+    invitations = relationship("Invitation", backref="person")
     nickname = Column(Unicode(128), unique=True)
     website = Column(Unicode(128))
     bio = Column(Unicode(140))
