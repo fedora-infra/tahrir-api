@@ -26,14 +26,12 @@ include = [
 
 classifiers= [
     "Programming Language :: Python",
-    "Framework :: Pyramid",
     "Topic :: Internet :: WWW/HTTP",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
 ]
 
 [tool.poetry.dependencies]
 python = "^3.9.0"
-pastedeploy = "^3.1.0"
 pygments = "^2.17.2"
 simplejson = "^3.19.2"
 sqlalchemy = "^2.0.29"
@@ -60,8 +58,8 @@ scripts = [
 ]
 
 [tool.poetry.scripts]
-sync_tahrir_db = "tahrir_api.scripts.syncdb:main"
-populate_series_in_tahrir_db = "tahrir_api.scripts.populateseries:main"
+tahrir-sync-db = "tahrir_api.scripts.syncdb:main"
+tahrir-populate-series = "tahrir_api.scripts.populateseries:main"
 tahrir-populate-avatars = "tahrir_api.scripts.populate_avatars:main"
 
 

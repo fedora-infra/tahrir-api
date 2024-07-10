@@ -1,37 +1,26 @@
-import os
-
-from paste.deploy import appconfig
+import types
 
 from ..utils import get_db_manager_from_uri
 
 
-def _getpathsec(config_uri, name):
-    if "#" in config_uri:
-        path, section = config_uri.split("#", 1)
-    else:
-        path, section = config_uri, "main"
-    if name:
-        section = name
-    return path, section
+def _get_config_from_path(filename):
+    # See flask.config.Config.from_pyfile()
+    d = types.ModuleType("config")
+    d.__file__ = filename
+    try:
+        with open(filename, mode="rb") as config_file:
+            exec(compile(config_file.read(), filename, "exec"), d.__dict__)  # noqa: S102
+    except OSError as e:
+        e.strerror = f"Unable to load configuration file ({e.strerror})"
+        raise
+    config = {}
+    for key in dir(d):
+        if key.isupper():
+            config[key] = getattr(d, key)
+    return config
 
 
-def get_db_manager_from_paste(config_uri):
-    path, section = _getpathsec(config_uri, "pyramid")
-    config_name = f"config:{path}"
-    here_dir = os.getcwd()
-
-    global_conf = None
-    if "OPENSHIFT_APP_NAME" in os.environ:
-        if "OPENSHIFT_MYSQL_DB_URL" in os.environ:
-            template = "{OPENSHIFT_MYSQL_DB_URL}{OPENSHIFT_APP_NAME}"
-        elif "OPENSHIFT_POSTGRESQL_DB_URL" in os.environ:
-            template = "{OPENSHIFT_POSTGRESQL_DB_URL}{OPENSHIFT_APP_NAME}"
-
-        global_conf = {"sqlalchemy.url": template.format(**os.environ)}
-
-    settings = appconfig(config_name, name=section, relative_to=here_dir, global_conf=global_conf)
-
-    prefix = "sqlalchemy."
-    db_options = {key[len(prefix) :]: settings[key] for key in settings if key.startswith(prefix)}
-    dburi = db_options.pop("url")
+def get_db_manager_from_config(filename):
+    config = _get_config_from_path(filename)
+    dburi = config["SQLALCHEMY_DATABASE_URI"]
     return get_db_manager_from_uri(dburi)

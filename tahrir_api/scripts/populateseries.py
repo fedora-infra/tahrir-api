@@ -1,15 +1,9 @@
-import os
 import re
-import sys
+
+import click
 
 from ..model import Badge, Milestone, Series
-from .utils import get_db_manager_from_paste
-
-
-def usage(argv):
-    cmd = os.path.basename(argv[0])
-    print(f"usage: {cmd} <config_uri>\n '(example: \"{cmd} development.ini\"'")
-    sys.exit(1)
+from .utils import get_db_manager_from_config
 
 
 _ROMAN_TO_ARABIC = dict(
@@ -63,12 +57,10 @@ def get_series_name(name):
         return None, None
 
 
-def main(argv=sys.argv):
-    if len(argv) != 2:
-        usage(argv)
-
-    config_uri = argv[1]
-    db_mgr = get_db_manager_from_paste(config_uri)
+@click.command()
+@click.argument("config", type=click.Path(exists=True))
+def main(config):
+    db_mgr = get_db_manager_from_config(config)
     with db_mgr.Session() as session:
         for badge in session.query(Badge).all():
             if badge.milestone:

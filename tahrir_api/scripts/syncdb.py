@@ -1,7 +1,9 @@
 import os
 import sys
 
-from .utils import get_db_manager_from_paste
+import click
+
+from .utils import get_db_manager_from_config
 
 
 def usage(argv):
@@ -10,10 +12,8 @@ def usage(argv):
     sys.exit(1)
 
 
-def main(argv=sys.argv):
-    if len(argv) != 2:
-        usage(argv)
-
-    config_uri = argv[1]
-    db_mgr = get_db_manager_from_paste(config_uri)
+@click.command()
+@click.argument("config", type=click.Path(exists=True))
+def main(config):
+    db_mgr = get_db_manager_from_config(config)
     db_mgr.sync()

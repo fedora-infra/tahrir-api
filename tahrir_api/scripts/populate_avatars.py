@@ -4,16 +4,16 @@ from fasjson_client.errors import APIError
 from sqlalchemy import func, select
 
 from ..model import Person
-from .utils import get_db_manager_from_paste
+from .utils import get_db_manager_from_config
 
 
 @click.command()
-@click.argument("paste-config", type=click.Path(exists=True))
+@click.argument("config", type=click.Path(exists=True))
 @click.argument("fasjson-url", required=True)
-def main(paste_config, fasjson_url):
+def main(config, fasjson_url):
     fasjson = FasjsonClient(url=fasjson_url)
 
-    db_mgr = get_db_manager_from_paste(paste_config)
+    db_mgr = get_db_manager_from_config(config)
     with db_mgr.Session() as session:
         query = select(Person).where(
             Person.email.like("%@fedoraproject.org"),
