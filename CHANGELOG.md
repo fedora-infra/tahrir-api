@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 1.2.0
+
+- Change the scripts to use a Flask-style config file instead of the Paste/Pyramid one ([5db2f11](https://github.com/fedora-infra/tahrir-api/commit/5db2f11>))
+- Update dependencies
+
+
 ## Version 1.1.5
 
 - Make `get_assertions_by_email()` case insensitive ([92084ed](https://github.com/fedora-infra/tahrir-api/commit/92084ed>))
