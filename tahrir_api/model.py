@@ -36,6 +36,9 @@ class Issuer(DeclarativeBase):
 
 
 def generate_default_id(context):
+    # Allow flask_admin to peek without crashing.
+    if not context:
+        return None
     return context.current_parameters["name"].lower().replace(" ", "-")
 
 
@@ -180,8 +183,8 @@ class Person(DeclarativeBase):
         )
 
 
-def invitation_id_default(context):
-    return hashlib.md5(salt_default(context).encode("utf-8")).hexdigest()
+def invitation_id_default():
+    return hashlib.md5(salt_default().encode("utf-8")).hexdigest()
 
 
 class Invitation(DeclarativeBase):
@@ -218,6 +221,9 @@ class Authorization(DeclarativeBase):
 
 
 def recipient_default(context):
+    # Allow flask_admin to peek without crashing.
+    if not context:
+        return None
     person_id = context.current_parameters["person_id"]
     salt = context.current_parameters["salt"]
     person_email = context.connection.scalar(select(Person.email).where(Person.id == person_id))
@@ -228,11 +234,14 @@ def get_assertion_recipient(email, salt):
     return hashlib.sha256((email + salt).encode("utf-8")).hexdigest()
 
 
-def salt_default(context):
+def salt_default():
     return str(uuid.uuid4())
 
 
 def assertion_id_default(context):
+    # Allow flask_admin to peek without crashing.
+    if not context:
+        return None
     person_id = context.current_parameters["person_id"]
     badge_id = context.current_parameters["badge_id"]
     return f"{badge_id} -> {person_id}"
