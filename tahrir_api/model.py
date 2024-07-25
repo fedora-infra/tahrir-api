@@ -52,6 +52,7 @@ class Badge(DeclarativeBase):
     authorizations = relationship("Authorization", backref="badge")
     assertions = relationship("Assertion", backref="badge")
     invitations = relationship("Invitation", backref="badge")
+    current_values = relationship("CurrentValue", back_populates="badge")
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
     tags = Column(Unicode(128))
 
@@ -144,6 +145,7 @@ class Person(DeclarativeBase):
     authorizations = relationship("Authorization", backref="person")
     assertions = relationship("Assertion", backref="person")
     invitations = relationship("Invitation", backref="person")
+    current_values = relationship("CurrentValue", back_populates="person")
     nickname = Column(Unicode(128), unique=True)
     website = Column(Unicode(128))
     bio = Column(Unicode(140))
@@ -215,6 +217,22 @@ class Authorization(DeclarativeBase):
     id = Column(Integer, primary_key=True)
     badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
+
+
+class CurrentValue(DeclarativeBase):
+    """The current "value" that a user has for a badge they don't yet have      .
+
+    Most of the time this is going to be a message count.
+    """
+
+    __tablename__ = "current_values"
+    badge_id = Column(Unicode(128), ForeignKey("badges.id"), primary_key=True, nullable=False)
+    person_id = Column(Integer, ForeignKey("persons.id"), primary_key=True, nullable=False)
+    value = Column(Integer, nullable=False)
+    last_update = Column(DateTime, nullable=False)
+
+    badge = relationship("Badge", back_populates="current_values")
+    person = relationship("Person", back_populates="current_values")
 
 
 def recipient_default(context):

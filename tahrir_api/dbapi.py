@@ -5,13 +5,14 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import and_, func, not_, text
+from sqlalchemy import and_, func, not_, select, text
 from tahrir_messages import BadgeAwardV1, PersonLoginFirstV1, PersonRankAdvanceV1
 
 from .model import (
     Assertion,
     Authorization,
     Badge,
+    CurrentValue,
     Invitation,
     Issuer,
     Milestone,
@@ -917,6 +918,60 @@ class TahrirDatabase:
             return person_email, badge_id
 
         return False
+
+    def get_current_value(self, badge_id, person_email):
+        """
+        Return the current value for the given badge and the given person's email
+
+        :type badge_id: str
+        :param badge_id: The ID of the badge to query
+        :type person_email: str
+        :param person_email: The email of the person to query
+        """
+        if not self.badge_exists(badge_id):
+            raise ValueError(f"No such badge {badge_id!r}")
+
+        person = self.get_person(person_email=person_email)
+        if person is None:
+            return None
+
+        query = select(CurrentValue.value).where(
+            CurrentValue.badge_id == badge_id,
+            CurrentValue.person_id == person.id,
+        )
+        return self.session.scalar(query)
+
+    def set_current_value(self, badge_id, person_email, value):
+        """Set the current value for the given badge and the given person's email
+
+        :type badge_id: str
+        :param badge_id: The ID of the badge to query
+        :type person_email: str
+        :param person_email: The email of the person to query
+        :type value: int
+        :param value: The value to store
+        """
+        if not self.badge_exists(badge_id):
+            raise ValueError(f"No such badge {badge_id!r}")
+
+        person = self.get_person(person_email=person_email)
+        if person is None:
+            self.add_person(email=person_email)
+            person = self.get_person(person_email=person_email)
+
+        now = datetime.now(tz=timezone.utc)
+        query = select(CurrentValue).where(
+            CurrentValue.badge_id == badge_id,
+            CurrentValue.person_id == person.id,
+        )
+        current_value = self.session.scalar(query)
+        if current_value is None:
+            current_value = CurrentValue(badge_id=badge_id, value=value, last_update=now)
+            person.current_values.append(current_value)
+            self.session.flush()
+        else:
+            current_value.value = value
+            current_value.last_update = now
 
     def _adjust_ranks(self, person, old_rank):
         """Given a person model object and the 'old' rank of that person,
