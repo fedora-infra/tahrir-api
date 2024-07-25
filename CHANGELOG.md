@@ -1,5 +1,13 @@
 # Changelog
 
+
+## Version 1.3.0
+
+- Store a user's current value for a badge in the DB ([8a79422](https://github.com/fedora-infra/tahrir-api/commit/8a79422>))
+- Fix Alembic config ([8d19683](https://github.com/fedora-infra/tahrir-api/commit/8d19683>))
+- Update dependencies
+
+
 ## Version 1.2.0
 
 - Change the scripts to use a Flask-style config file instead of the Paste/Pyramid one ([5db2f11](https://github.com/fedora-infra/tahrir-api/commit/5db2f11>))
