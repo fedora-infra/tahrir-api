@@ -1,6 +1,12 @@
 # Changelog
 
 
+## Version 1.4.0
+
+- Don't adjust the ranks automatically after adding an assertion ([3de4f58](https://github.com/fedora-infra/tahrir-api/commit/3de4f58>))
+- The `make_leaderboard()` method is public, it's used in Tahrir ([fbf1117](https://github.com/fedora-infra/tahrir-api/commit/fbf1117>))
+
+
 ## Version 1.3.0
 
 - Store a user's current value for a badge in the DB ([8a79422](https://github.com/fedora-infra/tahrir-api/commit/8a79422>))
