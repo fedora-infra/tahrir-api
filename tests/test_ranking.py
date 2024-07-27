@@ -143,14 +143,14 @@ def test_ranking_with_time_limits(api, test_data):
 
     epsilon = datetime.timedelta(hours=1)
 
-    results = api._make_leaderboard(yesterday - epsilon, now)
+    results = api.make_leaderboard(yesterday - epsilon, now)
     assert results[person1]["badges"] == 1
     assert results[person4]["badges"] == 1
 
-    results = api._make_leaderboard(one_week_ago - epsilon, now)
+    results = api.make_leaderboard(one_week_ago - epsilon, now)
     assert results[person1]["badges"] == 1
     assert results[person4]["badges"] == 2
 
-    results = api._make_leaderboard(one_month_ago - epsilon, now)
+    results = api.make_leaderboard(one_month_ago - epsilon, now)
     assert results[person1]["badges"] == 1
     assert results[person4]["badges"] == 3

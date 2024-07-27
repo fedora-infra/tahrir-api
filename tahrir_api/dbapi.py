@@ -983,7 +983,7 @@ class TahrirDatabase:
         old_rank = person.rank
 
         # Build a dict of Persons to some freshly calculated rank info.
-        leaderboard = self._make_leaderboard()
+        leaderboard = self.make_leaderboard()
 
         # Recalculate rank in all cases, otherwise "overtaking" won't work
         # anymore (with rank being shared, a new badge won't change a person's
@@ -999,7 +999,7 @@ class TahrirDatabase:
         if self.notification_callback:
             self.notification_callback(PersonRankAdvanceV1(body=body))
 
-    def _make_leaderboard(self, start=None, stop=None):
+    def make_leaderboard(self, start=None, stop=None):
         """Produce a dict mapping persons to information about
         the number of badges they have been awarded and their
         rank, freshly calculated.  This is relatively expensive.
