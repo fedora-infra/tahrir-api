@@ -890,7 +890,6 @@ class TahrirDatabase:
         if self.person_exists(email=person_email) and self.badge_exists(badge_id):
             badge = self.get_badge(badge_id)
             person = self.get_person(person_email)
-            old_rank = person.rank
 
             new_assertion = Assertion(
                 badge_id=badge_id,
@@ -912,8 +911,6 @@ class TahrirDatabase:
                     user=dict(username=person.nickname, badges_user_id=person.id),
                 )
                 self.notification_callback(BadgeAwardV1(body=body))
-
-            self._adjust_ranks(person, old_rank)
 
             return person_email, badge_id
 
@@ -973,16 +970,17 @@ class TahrirDatabase:
             current_value.value = value
             current_value.last_update = now
 
-    def _adjust_ranks(self, person, old_rank):
-        """Given a person model object and the 'old' rank of that person,
-        adjust the ranks of all persons between the 'old' rank and the present
-        rank of the given person.
+    def adjust_ranks(self, person):
+        """Given a person model object, adjust the ranks of all persons between the 'old' rank and
+        the present rank of the given person.
 
         This is a utility function typically called when a person is awarded a
         new badge, and their rank advances.  Since we cache rank in the
         database, we want to also decrement the rank of all persons that the
         given person is "passing" on the all-time leaderboard.
         """
+
+        old_rank = person.rank
 
         # Build a dict of Persons to some freshly calculated rank info.
         leaderboard = self._make_leaderboard()

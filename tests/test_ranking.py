@@ -69,6 +69,8 @@ def test_ranking_simple(api, test_data):
 
     person1 = api.get_person("test_1@tester.com")
     person4 = api.get_person("test_4@tester.com")
+    api.adjust_ranks(person1)
+    api.adjust_ranks(person4)
 
     assert person1.rank == 2
     assert person4.rank == 1
@@ -91,6 +93,10 @@ def test_ranking_tie(api, test_data):
     person2 = api.get_person("test_2@tester.com")
     person3 = api.get_person("test_3@tester.com")
     person4 = api.get_person("test_4@tester.com")
+    api.adjust_ranks(person1)
+    api.adjust_ranks(person2)
+    api.adjust_ranks(person3)
+    api.adjust_ranks(person4)
 
     assert person1.rank == 4
     assert person2.rank == 2
@@ -101,6 +107,7 @@ def test_ranking_tie(api, test_data):
 def test_ranking_preexisting(api, test_data):
     """Test that rank updating works for pre-existant users"""
     person1 = api.get_person("test_1@tester.com")
+    person2 = api.get_person("test_2@tester.com")
     new_assertion1 = Assertion(badge_id=test_data["badge_1"], person_id=person1.id)
     api.session.add(new_assertion1)
     new_assertion2 = Assertion(badge_id=test_data["badge_2"], person_id=person1.id)
@@ -113,9 +120,8 @@ def test_ranking_preexisting(api, test_data):
 
     # But once *anyone* else gets a badge, old ranks should be updated too.
     api.add_assertion(test_data["badge_1"], test_data["email_2"], None)
+    api.adjust_ranks(person2)
     assert person1.rank == 1
-
-    person2 = api.get_person("test_2@tester.com")
     assert person2.rank == 2
 
     # but people with no badges should still be null ranked.
@@ -132,6 +138,8 @@ def test_ranking_with_time_limits(api, test_data):
 
     person1 = api.get_person("test_1@tester.com")
     person4 = api.get_person("test_4@tester.com")
+    api.adjust_ranks(person1)
+    api.adjust_ranks(person4)
 
     epsilon = datetime.timedelta(hours=1)
 

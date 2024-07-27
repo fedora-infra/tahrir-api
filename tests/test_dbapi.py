@@ -1,5 +1,7 @@
 import pytest
 
+from tahrir_api.model import Assertion
+
 
 @pytest.fixture
 def dummy_issuer_id(api):
@@ -113,11 +115,10 @@ def test_add_assertion(api, callback_calls, dummy_badge_id, dummy_person_id):
     assert badge.assertions[0].issued_for == "link"
     assert api.get_assertions_by_badge(dummy_badge_id)[0].__str__() == "TestBadge<->test@tester.com"
 
-    # Ensure that we would have published two fedmsg messages for that.
-    assert len(callback_calls) == 2
+    # Ensure that we would have published a fedmsg messages for that.
+    assert len(callback_calls) == 1
 
     award_message = callback_calls[0][0][0]
-    rank_advance_message = callback_calls[1][0][0]
 
     assert award_message.body == {
         "badge": {
@@ -131,6 +132,31 @@ def test_add_assertion(api, callback_calls, dummy_badge_id, dummy_person_id):
     assert award_message.agent_name == "test"
     assert award_message.summary == "test was awarded the badge `TestBadge`"
 
+
+@pytest.mark.parametrize("test_email", ["test@tester.com", "Test@Tester.Com"])
+def test_get_assertions_by_email(api, callback_calls, dummy_badge_id, dummy_person_id, test_email):
+    api.add_assertion(dummy_badge_id, "test@tester.com", None, "link")
+    # This should be case-insensitive
+    assertions = api.get_assertions_by_email(person_email=test_email)
+    assert len(assertions) == 1
+    assert str(assertions[0]) == "TestBadge<->test@tester.com"
+
+
+def test_adjust_ranks(api, callback_calls, dummy_badge_id, dummy_person_id):
+    person = api.get_person(dummy_person_id)
+    assertion = Assertion(
+        badge_id=dummy_badge_id,
+        person_id=person.id,
+        issued_for="link",
+    )
+    api.session.add(assertion)
+    api.session.flush()
+
+    api.adjust_ranks(person)
+
+    # Ensure that we would have published a fedmsg messages for that.
+    assert len(callback_calls) == 1
+    rank_advance_message = callback_calls[0][0][0]
     assert rank_advance_message.body == {
         "person": {
             "email": "test@tester.com",
@@ -144,15 +170,6 @@ def test_add_assertion(api, callback_calls, dummy_badge_id, dummy_person_id):
     }
     assert rank_advance_message.agent_name == "test"
     assert rank_advance_message.summary == "test's Badges rank changed from None to 1"
-
-
-@pytest.mark.parametrize("test_email", ["test@tester.com", "Test@Tester.Com"])
-def test_get_assertions_by_email(api, callback_calls, dummy_badge_id, dummy_person_id, test_email):
-    api.add_assertion(dummy_badge_id, "test@tester.com", None, "link")
-    # This should be case-insensitive
-    assertions = api.get_assertions_by_email(person_email=test_email)
-    assert len(assertions) == 1
-    assert str(assertions[0]) == "TestBadge<->test@tester.com"
 
 
 def test_get_badges_from_tags(api, dummy_issuer_id):
