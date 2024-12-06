@@ -23,7 +23,8 @@ def get_models_columns_with_defaults():
                         continue
                     if hasattr(default, "arg"):
                         models_columns_as_params.append(
-                            pytest.param(column, id=f"{name}.{colname}"))
+                            pytest.param(column, id=f"{name}.{colname}")
+                        )
 
     return models_columns_as_params
 
