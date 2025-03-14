@@ -1,6 +1,14 @@
 # Changelog
 
 
+## Version 1.4.1
+
+- Let `flask_admin` peek defaults without crashing ([7d649fa](https://github.com/fedora-infra/tahrir-api/commit/7d649fa))
+- Formatting ([d15063e](https://github.com/fedora-infra/tahrir-api/commit/d15063e), [eac7f75](https://github.com/fedora-infra/tahrir-api/commit/eac7f75))
+- Use the changelog generator from https://github.com/fedora-infra/shared ([61bc7a6](https://github.com/fedora-infra/tahrir-api/commit/61bc7a6))
+- Adjust tests for fixes in the message schemas ([fe8d898](https://github.com/fedora-infra/tahrir-api/commit/fe8d898))
+
+
 ## Version 1.4.0
 
 - Don't adjust the ranks automatically after adding an assertion ([3de4f58](https://github.com/fedora-infra/tahrir-api/commit/3de4f58>))
