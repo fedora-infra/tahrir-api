@@ -129,7 +129,8 @@ def test_add_assertion(api, callback_calls, dummy_badge_id, dummy_person_id):
         },
         "user": {"username": "test", "badges_user_id": 1},
     }
-    assert award_message.agent_name == "test"
+    assert award_message.agent_name is None
+    assert award_message.usernames == ["test"]
     assert award_message.summary == "test was awarded the badge `TestBadge`"
 
 
@@ -168,7 +169,8 @@ def test_adjust_ranks(api, callback_calls, dummy_badge_id, dummy_person_id):
         },
         "old_rank": None,
     }
-    assert rank_advance_message.agent_name == "test"
+    assert rank_advance_message.agent_name is None
+    assert rank_advance_message.usernames == ["test"]
     assert rank_advance_message.summary == "test's Badges rank changed from None to 1"
 
 
