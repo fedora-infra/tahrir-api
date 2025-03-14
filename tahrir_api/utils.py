@@ -1,4 +1,4 @@
-""" Module to keep random utils. """
+"""Module to keep random utils."""
 
 import importlib.resources
 
