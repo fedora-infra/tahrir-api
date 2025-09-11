@@ -242,3 +242,69 @@ def test_remove_assertion_nonexistent_assertion(api, dummy_badge_id, dummy_perso
     """Test removing non-existent assertion returns False"""
     result = api.remove_assertion(dummy_badge_id, "test@tester.com")
     assert result is False
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        # Test individual field updates
+        {"name": "UpdatedName"},
+        {"image": "UpdatedImage"},
+        {"description": "Updated description"},
+        {"criteria": "Updated criteria"},
+        {"tags": "updated, tags"},
+        {"tags": "updated, tags,"},
+        # Test multiple field updates
+        {
+            "name": "MultiUpdate",
+            "image": "MultiImage",
+            "description": "Multi description",
+            "criteria": "Multi criteria",
+            "tags": "multi, tags",
+        },
+        # Test empty update
+        {},
+    ],
+)
+def test_update_badge(api, dummy_badge_id, kwargs):
+    """Test updating badge"""
+    # Obtain
+    existing_badge = api.get_badge(dummy_badge_id)
+
+    # Create
+    expected_name = kwargs.get("name", existing_badge.name)
+    expected_image = kwargs.get("image", existing_badge.image)
+    expected_description = kwargs.get("description", existing_badge.description)
+    expected_criteria = kwargs.get("criteria", existing_badge.criteria)
+
+    # Handle
+    if "tags" in kwargs:
+        tags = kwargs["tags"]
+        expected_tags = tags + "," if tags and not tags.endswith(",") else tags
+    else:
+        expected_tags = existing_badge.tags
+
+    # Update
+    api.update_badge(dummy_badge_id, **kwargs)
+
+    # Obtain
+    updated_badge = api.get_badge(dummy_badge_id)
+
+    # Verify
+    assert updated_badge.name == expected_name
+    assert updated_badge.image == expected_image
+    assert updated_badge.description == expected_description
+    assert updated_badge.criteria == expected_criteria
+    assert updated_badge.tags == expected_tags
+
+
+def test_update_badge_nonexistent(api):
+    """Test updating badge which are non-existent and returns False"""
+    result = api.update_badge("nonexistent_badge_id", name="UpdatedName")
+    assert result is False
+
+
+def test_update_badge_invalid_fields(api, dummy_badge_id):
+    """Test updating badge with invalid fields and raises KeyError"""
+    with pytest.raises(KeyError, match="Invalid fields"):
+        api.update_badge(dummy_badge_id, invalid_field="value")
