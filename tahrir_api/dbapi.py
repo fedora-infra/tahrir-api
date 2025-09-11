@@ -445,6 +445,45 @@ class TahrirDatabase:
             self.session.flush()
         return badge_id
 
+    @autocommit
+    def update_badge(self, badge_id: str, **kwargs):
+        """
+        Update a badge in the database
+
+        :type badge_id: str
+        :param badge_id: Badge ID
+        :param kwargs: Fields to update. Allowed fields are:
+            - name: Badge name
+            - image: Badge image URL
+            - description: Badge description
+            - criteria: Badge criteria
+            - tags: Badge tags (comma will be auto-appended if missing)
+
+        :raises KeyError: If invalid field names are provided
+        :returns: badge_id if successful, False if badge doesn't exist
+        """
+
+        badge = self.get_badge(badge_id)
+        if not badge:
+            return False
+
+        # List of allowed fields to update
+        allowed_fields = ["name", "image", "description", "criteria", "tags"]
+
+        # Check for invalid fields
+        invalid_fields = set(kwargs.keys()) - set(allowed_fields)
+        if invalid_fields:
+            raise KeyError(f"Invalid fields: {invalid_fields}")
+
+        for attr, value in kwargs.items():
+            # Special handling for tags
+            if attr == "tags":
+                value = value + "," if value and not value.endswith(",") else value
+            setattr(badge, attr, value)
+
+        self.session.flush()
+        return badge_id
+
     def person_exists(self, email=None, id=None, nickname=None):
         """
         Check if a Person with this email is stored in the database
