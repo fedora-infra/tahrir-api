@@ -635,6 +635,47 @@ class TahrirDatabase:
         return False
 
     @autocommit
+    def update_person(
+        self, person_email=None, id=None, nickname=None, website=None, bio=None, avatar=None
+    ):
+        """
+        Update an existing Person's profile fields in the database
+
+        :type person_email: str
+        :param person_email: Email address of the Person to update
+
+        :type id: int
+        :param id: ID of the Person to update
+
+        :type nickname: str
+        :param nickname: Nickname of the Person to update
+
+        :type website: str
+        :param website: New website URL for this Person (optional)
+
+        :type bio: str
+        :param bio: New bio text for this Person (optional)
+
+        :type avatar: str
+        :param avatar: New avatar URL for this Person (optional)
+        """
+
+        person = self.get_person(person_email, id, nickname)
+        if not person:
+            return False
+
+        # Only update fields that are provided (not None)
+        if website is not None:
+            person.website = website
+        if bio is not None:
+            person.bio = bio
+        if avatar is not None:
+            person._avatar = avatar
+
+        self.session.flush()
+        return person
+
+    @autocommit
     def note_login(self, person_email=None, id=None, nickname=None):
         """Make a note that a person has logged in."""
 
