@@ -22,7 +22,6 @@ def generate_default_id(context):
 
 
 def upgrade():
-
     op.create_table(
         "team",
         sa.Column("id", sa.Unicode(length=128), nullable=False, default=generate_default_id),
@@ -75,7 +74,6 @@ def upgrade():
 
 
 def downgrade():
-
     op.drop_table("milestone")
     op.drop_table("series")
     op.drop_table("team")

@@ -916,6 +916,37 @@ class TahrirDatabase:
 
         return False
 
+    @autocommit
+    def remove_assertion(self, badge_id, person_email):
+        """
+        Remove an assertion (revoke a badge) from the database
+
+        :type badge_id: str
+        :param badge_id: ID of the badge to be revoked
+
+        :type person_email: str
+        :param person_email: Email of the Person to revoke the badge from
+
+        :returns: True if successful, False otherwise
+        """
+
+        if not self.person_exists(email=person_email):
+            return False
+
+        person = self.get_person(person_email)
+
+        assertion = (
+            self.session.query(Assertion).filter_by(person_id=person.id, badge_id=badge_id).first()
+        )
+
+        if not assertion:
+            return False
+
+        self.session.delete(assertion)
+        self.session.flush()
+
+        return True
+
     def get_current_value(self, badge_id, person_email):
         """
         Return the current value for the given badge and the given person's email

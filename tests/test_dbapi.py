@@ -210,3 +210,35 @@ def test_get_badges_from_tags(api, dummy_issuer_id):
     assert len(badges_any) == 3
     badges_all = api.get_badges_from_tags(tags, match_all=True)
     assert len(badges_all) == 1
+
+
+def test_remove_assertion_success(api, dummy_badge_id, dummy_person_id):
+    """Test successful removal of an assertion"""
+    result = api.add_assertion(dummy_badge_id, "test@tester.com", None)
+    assert result == ("test@tester.com", dummy_badge_id)
+    assert api.assertion_exists(dummy_badge_id, "test@tester.com") is True
+
+    result = api.remove_assertion(dummy_badge_id, "test@tester.com")
+    assert result
+    assert api.assertion_exists(dummy_badge_id, "test@tester.com") is False
+
+    assertions = api.get_assertions_by_email("test@tester.com")
+    assert len(assertions) == 0
+
+
+def test_remove_assertion_nonexistent_person(api, dummy_badge_id):
+    """Test removing assertion for non-existent person returns False"""
+    result = api.remove_assertion(dummy_badge_id, "nonexistent@example.com")
+    assert result is False
+
+
+def test_remove_assertion_nonexistent_badge(api, dummy_person_id):
+    """Test removing assertion for non-existent badge returns False"""
+    result = api.remove_assertion("nonexistent-badge", "test@tester.com")
+    assert result is False
+
+
+def test_remove_assertion_nonexistent_assertion(api, dummy_badge_id, dummy_person_id):
+    """Test removing non-existent assertion returns False"""
+    result = api.remove_assertion(dummy_badge_id, "test@tester.com")
+    assert result is False
