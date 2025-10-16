@@ -4,6 +4,7 @@
 
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from sqlalchemy import and_, func, not_, select, text
 from tahrir_messages import BadgeAwardV1, PersonLoginFirstV1, PersonRankAdvanceV1
@@ -860,12 +861,23 @@ class TahrirDatabase:
 
         return self.session.query(Issuer)
 
-    def get_all_assertions(self):
+    def get_all_assertions(self, begin: Optional[int] = None, limit: Optional[int] = None):
         """
-        Get all assertions in the db.
+        Get all assertions in the db, ordered by most recent first.
+
+        :type begin: int
+        :param begin: Number of assertions to skip (offset for pagination, default: 0)
+
+        :type limit: int
+        :param limit: Maximum number of assertions to return (default: 100)
         """
 
-        return self.session.query(Assertion)
+        result = self.session.query(Assertion).order_by(Assertion.issued_on.desc())
+
+        if begin is not None or limit is not None:
+            result = result.offset(begin or 0).limit(limit)
+
+        return result
 
     def get_assertions_by_email(self, person_email):
         """

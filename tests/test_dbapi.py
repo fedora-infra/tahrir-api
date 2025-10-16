@@ -26,6 +26,20 @@ def dummy_person_id(api):
     return api.add_person("test@tester.com")
 
 
+@pytest.fixture
+def initialize_list_assertions(api, dummy_person_id, dummy_issuer_id):
+    for unit in range(0, 10):
+        tmpbadge = api.add_badge(
+            f"AsrtName_{unit}",
+            f"AsrtShot_{unit}",
+            f"AsrtDesc_{unit}",
+            f"AsrtCrit_{unit}",
+            dummy_issuer_id,
+        )
+        api.add_assertion(tmpbadge, "test@tester.com", None, f"link_{unit}")
+    return 10
+
+
 def test_add_badges(api, dummy_badge_id):
     assert api.get_badge("testbadge").__str__() == "TestBadge"
     assert api.badge_exists("testbadge") is True
@@ -416,3 +430,31 @@ def test_update_person_nonexistent(api, identifier_type, identifier_value):
     update_args["website"] = "https://example.com"
     result = api.update_person(**update_args)
     assert result is False
+
+
+@pytest.mark.parametrize(
+    "begin, limit, expected_count",
+    [
+        (None, None, 10),
+        (0, 5, 5),
+        (5, 5, 5),
+        (0, 20, 10),
+        (5, None, 5),
+        (5, 10, 5),
+        (10, 10, 0),
+        (None, 0, 0),
+        (0, 1, 1),
+    ],
+)
+def test_get_all_assertions(api, initialize_list_assertions, begin, limit, expected_count):
+    """Test get_all_assertions with various begin and limit parameters."""
+    assertions = list(api.get_all_assertions(begin=begin, limit=limit))
+
+    assert len(assertions) == expected_count
+    if len(assertions) > 1:
+        assert assertions[0].issued_on >= assertions[1].issued_on
+
+    if begin is not None and begin > 0 and expected_count > 0:
+        first_batch = list(api.get_all_assertions(begin=0, limit=expected_count))
+        if len(first_batch) == expected_count:
+            assert assertions[0].id != first_batch[0].id
