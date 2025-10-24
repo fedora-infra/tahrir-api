@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import pytest
 
 from tahrir_api.model import Assertion
@@ -92,6 +94,31 @@ def test_add_invitation(api, dummy_badge_id, dummy_person_id):
 def test_add_invitation_no_created_by(api, dummy_badge_id, dummy_person_id):
     with pytest.raises(ValueError):
         api.add_invitation(dummy_badge_id)
+
+
+def test_expire_invitation(api, dummy_badge_id, dummy_person_id):
+    # Create
+    future_time = datetime.now() + timedelta(hours=2)
+    _id = api.add_invitation(
+        dummy_badge_id, created_by_email="test@tester.com", expires_on=future_time
+    )
+
+    # Verify
+    assert api.invitation_exists(_id)
+    invitation = api.get_invitation(_id)
+    assert not invitation.expired
+
+    # Expire
+    result = api.expire_invitation(_id)
+    assert result is True
+
+    # Verify
+    expired_invitation = api.get_invitation(_id)
+    assert expired_invitation.expired
+
+    # Absent
+    result = api.expire_invitation("non-existent-id")
+    assert result is False
 
 
 def test_last_login(api, callback_calls, dummy_person_id):

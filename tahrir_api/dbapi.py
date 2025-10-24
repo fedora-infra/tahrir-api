@@ -699,6 +699,24 @@ class TahrirDatabase:
 
         return self.session.query(Invitation).filter_by(created_by=person_id).all()
 
+    def expire_invitation(self, invitation_id):
+        """
+        Soft-delete an invitation by setting its expiry date to the current time.
+
+        :type invitation_id: str
+        :param invitation_id: The unique ID of this invitation
+
+        :returns: True if invitation was expired, False if not found
+        :rtype: bool
+        """
+        if not self.invitation_exists(invitation_id):
+            return False
+
+        invitation = self.session.query(Invitation).filter_by(id=invitation_id).one()
+        invitation.expires_on = datetime.now()
+        self.session.flush()
+        return True
+
     def get_issuer(self, issuer_id):
         """
         Return the issuer with the given ID
