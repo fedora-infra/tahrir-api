@@ -779,6 +779,7 @@ class TahrirDatabase:
 
         return self.session.query(Invitation).filter_by(created_by=person_id).all()
 
+    @autocommit
     def expire_invitation(self, invitation_id):
         """
         Soft-delete an invitation by setting its expiry date to the current time.
