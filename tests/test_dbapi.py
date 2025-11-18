@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from tahrir_api.model import Assertion
+from tahrir_api.model import Assertion, Authorization, Person
 
 
 @pytest.fixture
@@ -458,3 +458,49 @@ def test_get_all_assertions(api, initialize_list_assertions, begin, limit, expec
         first_batch = list(api.get_all_assertions(begin=0, limit=expected_count))
         if len(first_batch) == expected_count:
             assert assertions[0].id != first_batch[0].id
+
+
+def test_delete_authorization_success(api, dummy_badge_id, dummy_person_id):
+    """Test successful deletion of an authorization"""
+    person = api.session.query(Person).filter_by(email="test@tester.com").one()
+    authorization = Authorization(badge_id=dummy_badge_id, person_id=person.id)
+    api.session.add(authorization)
+    api.session.flush()
+
+    auth_count = (
+        api.session.query(Authorization)
+        .filter_by(badge_id=dummy_badge_id, person_id=person.id)
+        .count()
+    )
+    assert auth_count == 1
+
+    result = api.delete_authorization(dummy_badge_id, "test@tester.com")
+
+    auth_count = (
+        api.session.query(Authorization)
+        .filter_by(badge_id=dummy_badge_id, person_id=person.id)
+        .count()
+    )
+
+    assert result == ("test@tester.com", dummy_badge_id)
+    assert auth_count == 0
+
+
+def test_delete_authorization_nonexistent_person(api, dummy_badge_id):
+    """Test deleting authorization for non-existent person returns False"""
+    result = api.delete_authorization(dummy_badge_id, "nonexistent@example.com")
+    assert result is False
+
+
+def test_delete_authorization_nonexistent_authorization(api, dummy_badge_id, dummy_person_id):
+    """Test deleting non-existent authorization returns False"""
+    person = api.session.query(Person).filter_by(email="test@tester.com").one()
+    auth_count = (
+        api.session.query(Authorization)
+        .filter_by(badge_id=dummy_badge_id, person_id=person.id)
+        .count()
+    )
+    assert auth_count == 0
+
+    result = api.delete_authorization(dummy_badge_id, "test@tester.com")
+    assert result is False

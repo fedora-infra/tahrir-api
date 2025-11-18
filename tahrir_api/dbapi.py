@@ -977,6 +977,35 @@ class TahrirDatabase:
         return False
 
     @autocommit
+    def delete_authorization(self, badge_id, person_email):
+        """
+        Delete an authorization (remove someone's admin rights for a certain badge)
+
+        :type badge_id: str
+        :param badge_id: ID of the badge
+
+        :type person_email: str
+        :param person_email: Email of the Person to remove rights from
+        """
+
+        person = self.get_person(person_email)
+        if not person:
+            return False
+
+        authorization = (
+            self.session.query(Authorization)
+            .filter_by(person_id=person.id, badge_id=badge_id)
+            .first()
+        )
+
+        if authorization:
+            self.session.delete(authorization)
+            self.session.flush()
+            return (person_email, badge_id)
+
+        return False
+
+    @autocommit
     def add_assertion(self, badge_id, person_email, issued_on, issued_for=None):
         """
         Add an assertion (award a badge) to the database
