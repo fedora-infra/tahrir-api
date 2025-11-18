@@ -504,3 +504,23 @@ def test_delete_authorization_nonexistent_authorization(api, dummy_badge_id, dum
 
     result = api.delete_authorization(dummy_badge_id, "test@tester.com")
     assert result is False
+
+
+@pytest.mark.parametrize(
+    "badge_id,email,should_succeed",
+    [
+        ("testbadge", "test@tester.com", True),
+        ("testbadge", "nonexistent@example.com", False),
+        ("nonexistent-badge", "test@tester.com", False),
+    ],
+)
+def test_add_authorization(api, dummy_badge_id, dummy_person_id, badge_id, email, should_succeed):
+    """Test adding authorization with various badge and person combinations"""
+    result = api.add_authorization(badge_id, email)
+
+    if should_succeed:
+        assert result == (email, badge_id)
+        assert api.authorization_exists(badge_id, email) is True
+    else:
+        assert result is False
+        assert api.authorization_exists(badge_id, email) is False
