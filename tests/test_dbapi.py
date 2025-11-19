@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from tahrir_api.model import Assertion, Authorization, Person
+from tahrir_api.model import Assertion, Authorization, Badge, Milestone, Person, Series, Team
 
 
 @pytest.fixture
@@ -524,3 +524,116 @@ def test_add_authorization(api, dummy_badge_id, dummy_person_id, badge_id, email
     else:
         assert result is False
         assert api.authorization_exists(badge_id, email) is False
+
+
+def test_get_team(api):
+    """Test retrieving a team by ID"""
+    team = Team(id="test-team", name="Test Team")
+    api.session.add(team)
+    api.session.flush()
+
+    received_team = api.get_team("test-team")
+    assert received_team is not None
+    assert received_team.name == "Test Team"
+    assert received_team.id == "test-team"
+
+    absented_team = api.get_team("absented-team")
+    assert absented_team is None
+
+
+def test_get_series_from_team(api):
+    """Test retrieving series from a team"""
+    team = Team(id="test-team", name="Test Team")
+    api.session.add(team)
+    api.session.flush()
+
+    series = api.get_series_from_team("test-team")
+    assert series == []
+
+    series_a = Series(
+        id="test-series-alpha",
+        name="Test Series Alpha",
+        description="Alpha test series",
+        team_id="test-team",
+        tags="test, series",
+    )
+    series_b = Series(
+        id="test-series-bravo",
+        name="Test Series Bravo",
+        description="Bravo test series",
+        team_id="test-team",
+        tags="test, series",
+    )
+    api.session.add(series_a)
+    api.session.add(series_b)
+    api.session.flush()
+
+    series = api.get_series_from_team("test-team")
+    assert len(series) == 2
+
+    series_names = [s.name for s in series]
+    assert "Test Series Alpha" in series_names
+    assert "Test Series Bravo" in series_names
+
+    absented_series = api.get_series_from_team("absented-team")
+    assert absented_series is None
+
+
+def test_get_badges_from_team(api, dummy_issuer_id):
+    """Test retrieving badges from a team via series and milestones"""
+    team = Team(id="test-team", name="Test Team")
+    api.session.add(team)
+    api.session.flush()
+
+    badges = api.get_badges_from_team("test-team")
+    assert badges == []
+
+    series = Series(
+        id="test-series",
+        name="Test Series",
+        description="Test series",
+        team_id="test-team",
+        tags="test, series",
+    )
+    api.session.add(series)
+    api.session.flush()
+
+    badges = api.get_badges_from_team("test-team")
+    assert badges == []
+
+    badge_a = Badge(
+        id="test-badge-alpha",
+        name="Test Badge Alpha",
+        image="TestImageAlpha",
+        description="Test Badge Alpha",
+        criteria="TestCriteriaAlpha",
+        issuer_id=dummy_issuer_id,
+    )
+    badge_b = Badge(
+        id="test-badge-bravo",
+        name="Test Badge Bravo",
+        image="TestImageBravo",
+        description="Test Badge Bravo",
+        criteria="TestCriteriaBravo",
+        issuer_id=dummy_issuer_id,
+    )
+    api.session.add(badge_a)
+    api.session.add(badge_b)
+    api.session.flush()
+
+    milestone_a = Milestone(position=1, badge_id="test-badge-alpha", series_id="test-series")
+    milestone_b = Milestone(position=2, badge_id="test-badge-bravo", series_id="test-series")
+    api.session.add(milestone_a)
+    api.session.add(milestone_b)
+    api.session.flush()
+
+    badges = api.get_badges_from_team("test-team")
+    assert badges is not None
+    assert len(badges) == 2
+
+    badge_names = [b.name for b in badges]
+    assert "Test Badge Alpha" in badge_names
+    assert "Test Badge Bravo" in badge_names
+
+    absented_badges = api.get_badges_from_team("absented-team")
+    assert absented_badges is None
