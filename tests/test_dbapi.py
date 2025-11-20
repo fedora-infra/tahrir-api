@@ -637,3 +637,41 @@ def test_get_badges_from_team(api, dummy_issuer_id):
 
     absented_badges = api.get_badges_from_team("absented-team")
     assert absented_badges is None
+
+
+def test_get_series_existing(api):
+    """Test getting an existing series by ID."""
+    team = Team(id="test-team", name="Test Team")
+    api.session.add(team)
+    api.session.flush()
+    series = Series(
+        id="test-series",
+        name="Test Series",
+        description="A test series for unit testing",
+        tags="test, series",
+        team_id="test-team",
+    )
+    api.session.add(series)
+    api.session.flush()
+
+    retrieved_series = api.get_series("test-series")
+    assert retrieved_series is not None
+    assert retrieved_series.id == "test-series"
+    assert retrieved_series.name == "Test Series"
+    assert retrieved_series.description == "A test series for unit testing"
+    assert retrieved_series.tags == "test, series"
+
+
+def test_get_series_nonexistent(api):
+    """Test getting a non-existent series returns None."""
+    series = api.get_series("absented-series")
+    assert series is None
+
+
+def test_get_all_series_empty(api):
+    """Test getting all series when none exist."""
+    direct_count = api.session.query(Series).count()
+    assert direct_count == 0
+    series_query = api.get_all_series()
+    series_list = list(series_query)
+    assert len(series_list) == 0
