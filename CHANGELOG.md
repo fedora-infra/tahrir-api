@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 1.4.3
+
+- Add missing autocommit decorator on `expire_invitation` ([0e304f5](https://github.com/fedora-infra/tahrir-api/commit/0e304f59c174142513834821cfc25ac7b74e1272))
+- Add pagination and ordering to `get_all_assertions` method ([a1fdf5c](https://github.com/fedora-infra/tahrir-api/commit/a1fdf5ca6644c98732525999ed1c4ca730b9f7b1))
+- Add `delete_authorization` method with tests ([9c52221](https://github.com/fedora-infra/tahrir-api/commit/9c5222113d354ff983eb5e2311646755cdcb266c))
+- Add parametrized tests for `add_authorization` method ([f2d1077](https://github.com/fedora-infra/tahrir-api/commit/f2d1077b815ccaf7963af2235db96ed5052bbc0c))
+- Add test coverage for team management methods ([ff7d00a](https://github.com/fedora-infra/tahrir-api/commit/ff7d00a60f625d1d5c84017641cff28f803ec6c4))
+- Add test coverage for series management methods ([f618eb1](https://github.com/fedora-infra/tahrir-api/commit/f618eb1d92b80c6280554cd73fb9d772cdaa2525))
+- Include automated dependency updates
+
+
 ## Version 1.4.2
 
 - Introduce method for removing erroneously awarded badges ([52d0a4e](https://github.com/fedora-infra/tahrir-api/commit/52d0a4ef6d9a38e8094b724156e692215cd7d412))
