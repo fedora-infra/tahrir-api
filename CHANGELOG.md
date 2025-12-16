@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 1.4.2
+
+- Introduce method for removing erroneously awarded badges ([52d0a4e](https://github.com/fedora-infra/tahrir-api/commit/52d0a4ef6d9a38e8094b724156e692215cd7d412))
+- Add update operation for badges relation ([0e4b12a](https://github.com/fedora-infra/tahrir-api/commit/0e4b12aee071bd3aa942a7091ef24a648cf0eafa))
+- Add tests for update operation ([eeea65d](https://github.com/fedora-infra/tahrir-api/commit/eeea65de11abd25634d9b082c51e02178141214b))
+- Allow for updating data in existing users ([df9c107](https://github.com/fedora-infra/tahrir-api/commit/df9c10740ad99fa11b5c7d87f1dd0cd6c8e1b25a))
+- Add soft-delete functionality for invitations ([fbdcfb4](https://github.com/fedora-infra/tahrir-api/commit/fbdcfb47ff828085696546988c432cd5928fcfc1))
+- Include automated dependency updates
+
 
 ## Version 1.4.1
 
