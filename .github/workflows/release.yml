@@ -1,0 +1,35 @@
+name: Release Notes
+
+on:
+  push:
+    tags:
+      - '*' # Ενεργοποιείται αυτόματα όταν ο maintainer φτιάχνει ένα νέο tag (π.χ. v1.2.0)
+  workflow_dispatch:  
+
+permissions:
+  contents: write # Απαραίτητο δικαίωμα για να μπορεί το bot να δημοσιεύσει το Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Κατεβάζει όλο το ιστορικό για να μπορεί το towncrier να βρει σωστά τα αρχεία
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install towncrier
+
+      - name: Generate release notes
+        run: towncrier build --draft --version ${{ github.ref_name }} > release-notes.md
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
