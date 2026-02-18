@@ -50,6 +50,7 @@ black = ">=24.3.0"
 ruff = ">=0.3.5"
 pytest = ">=8.1.1"
 pytest-cov = ">=5.0.0"
+towncrier = "^25.8.0"
 
 [tool.poetry.extras]
 scripts = [
@@ -103,3 +104,31 @@ omit = [
     "tests/*",
     "tahrir_api/migrations/env.py",
 ]
+
+[tool.towncrier]
+package = "tahrir_api"
+package_dir = ""
+filename = "CHANGELOG.md"
+directory = "changelog.d"
+title_format = "## [{version}] - {project_date}"
+issue_format = "[#{issue}](https://github.com/fedora-infra/tahrir-api/issues/{issue})"
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bug Fixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "trivial"
+name = "Trivial/Internal Changes"
+showcontent = true
