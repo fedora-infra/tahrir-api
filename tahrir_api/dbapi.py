@@ -4,7 +4,7 @@
 
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Any, Callable, Optional, Union
 
 from sqlalchemy import and_, func, not_, select, text
 from tahrir_messages import BadgeAwardV1, PersonLoginFirstV1, PersonRankAdvanceV1
@@ -38,7 +38,13 @@ class TahrirDatabase:
     :param session: an already configured session object.
     """
 
-    def __init__(self, dburi=None, session=None, autocommit=True, notification_callback=None):
+    def __init__(
+        self,
+        dburi: Optional[str] = None,
+        session: Optional[Any] = None,
+        autocommit: bool = True,
+        notification_callback: Optional[Callable[..., Any]] = None,
+    ) -> None:
         if not dburi and not session:
             raise ValueError("You must provide either 'dburi' or 'session'")
 
@@ -55,7 +61,7 @@ class TahrirDatabase:
 
         self.notification_callback = notification_callback
 
-    def team_exists(self, team_id):
+    def team_exists(self, team_id: str) -> bool:
         """
         Check to see if this team already exists in the database
 
@@ -67,7 +73,7 @@ class TahrirDatabase:
             self.session.query(Team).filter(func.lower(Team.id) == func.lower(team_id)).count() != 0
         )
 
-    def get_team(self, team_id):
+    def get_team(self, team_id: str) -> Optional[Team]:
         """
         Return the team with the given ID
 
@@ -82,13 +88,13 @@ class TahrirDatabase:
         return None
 
     @autocommit
-    def create_team(self, name, team_id=None):
+    def create_team(self, name: str, team_id: Optional[str] = None) -> str:
         """
         Adds a new team to the database
 
         :type name: str
         :param name: Name of the team
-        :type team_id: int
+        :type team_id: str
         :param team_id: Id of the team
         """
 
@@ -102,7 +108,7 @@ class TahrirDatabase:
             self.session.flush()
         return team_id
 
-    def series_exists(self, series_id):
+    def series_exists(self, series_id: str) -> bool:
         """
         Check to see if this series already exists in the database
 
@@ -117,7 +123,7 @@ class TahrirDatabase:
             != 0
         )
 
-    def get_series(self, series_id):
+    def get_series(self, series_id: str) -> Optional[Series]:
         """
         Return the series with the given ID
 
@@ -133,7 +139,7 @@ class TahrirDatabase:
             )
         return None
 
-    def get_series_from_team(self, team_id):
+    def get_series_from_team(self, team_id: str) -> Optional[list[Series]]:
         """
         Return the series related to a given team ID
 
@@ -142,9 +148,17 @@ class TahrirDatabase:
         """
         if self.team_exists(team_id):
             return self.session.query(Series).filter(Series.team_id == team_id).all()
+        return None
 
     @autocommit
-    def create_series(self, name, desc, team_id, tags=None, series_id=None):
+    def create_series(
+        self,
+        name: str,
+        desc: str,
+        team_id: str,
+        tags: Optional[str] = None,
+        series_id: Optional[str] = None,
+    ) -> str:
         """
         Adds a new series to the database
 
@@ -176,14 +190,14 @@ class TahrirDatabase:
             self.session.flush()
         return series_id
 
-    def get_all_series(self):
+    def get_all_series(self) -> Any:
         """
         Get all series in the db.
         """
 
         return self.session.query(Series)
 
-    def milestone_exists(self, milestone_id):
+    def milestone_exists(self, milestone_id: str) -> bool:
         """
         Check to see if this milestone already exists in the database
 
@@ -192,7 +206,7 @@ class TahrirDatabase:
         """
         return self.session.query(Milestone).filter(Milestone.id == milestone_id).count() != 0
 
-    def milestone_exists_for_badge_series(self, badge_id, series_id):
+    def milestone_exists_for_badge_series(self, badge_id: str, series_id: str) -> bool:
         """
         Check if the milestone with the given series and badge id exists
 
@@ -204,7 +218,7 @@ class TahrirDatabase:
         """
         return self.get_milestone_from_badge_series(badge_id, series_id).count() != 0
 
-    def get_milestone_from_badge_series(self, badge_id, series_id):
+    def get_milestone_from_badge_series(self, badge_id: str, series_id: str) -> Any:
         """
         Return the milestone with the given series and badge id
 
@@ -221,7 +235,7 @@ class TahrirDatabase:
             )
         )
 
-    def get_milestone(self, milestone_id):
+    def get_milestone(self, milestone_id: str) -> Any:
         """
         Return the matching milestone from the database
 
@@ -230,7 +244,7 @@ class TahrirDatabase:
         """
         return self.session.query(Milestone).filter(Milestone.id == milestone_id)
 
-    def get_all_milestones(self, series_id):
+    def get_all_milestones(self, series_id: str) -> list[Milestone]:
         """
         Returns all the milestones for the series
 
@@ -240,12 +254,12 @@ class TahrirDatabase:
         return self.session.query(Milestone).filter(Milestone.series_id == series_id).all()
 
     @autocommit
-    def create_milestone(self, position, badge_id, series_id):
+    def create_milestone(self, position: int, badge_id: str, series_id: str) -> str:
         """
         Adds a new milestone to the database
 
-        :type name: int
-        :param name: position of the milestone in the series
+        :type position: int
+        :param position: position of the milestone in the series
 
         :type badge_id: str
         :param badge_id: Badge ID for the Milestone
@@ -263,12 +277,12 @@ class TahrirDatabase:
 
         return milestone_id
 
-    def get_milestone_from_series_ids(self, series_ids):
+    def get_milestone_from_series_ids(self, series_ids: list[str]) -> list[Milestone]:
         """
         Return list of milestones for the list of series ids
 
-        :type series: list
-        :param series: list of series ids
+        :type series_ids: list
+        :param series_ids: list of series ids
         """
         milestones = self.session.query(Milestone).filter(Milestone.series_id.in_(series_ids)).all()
 
@@ -283,7 +297,7 @@ class TahrirDatabase:
 
         return unique_milestones
 
-    def get_badges_from_team(self, team_id):
+    def get_badges_from_team(self, team_id: str) -> Optional[list[Badge]]:
         """
         Returns all the badges related to a team
 
@@ -292,16 +306,17 @@ class TahrirDatabase:
         """
         if self.team_exists(team_id):
             series = self.get_series_from_team(team_id)
-            series_ids = [elem.id for elem in series]
+            if series is not None:
+                series_ids = [elem.id for elem in series]
 
-            milestones = self.get_milestone_from_series_ids(series_ids)
-            badge_ids = list(set([milestone.badge_id for milestone in milestones]))
+                milestones = self.get_milestone_from_series_ids(series_ids)
+                badge_ids = list(set([milestone.badge_id for milestone in milestones]))
 
-            badges = self.get_badges(badge_ids)
-            return badges
+                badges = self.get_badges(badge_ids)
+                return badges
         return None
 
-    def badge_exists(self, badge_id):
+    def badge_exists(self, badge_id: str) -> bool:
         """
         Check to see if this badge already exists in the database
 
@@ -314,7 +329,7 @@ class TahrirDatabase:
             != 0
         )
 
-    def get_badge(self, badge_id):
+    def get_badge(self, badge_id: str) -> Optional[Badge]:
         """
         Return the badge with the given ID
 
@@ -328,7 +343,7 @@ class TahrirDatabase:
             )
         return None
 
-    def get_badges(self, badge_ids):
+    def get_badges(self, badge_ids: list[str]) -> list[Badge]:
         """
         Return the badges with the given IDs
 
@@ -339,7 +354,7 @@ class TahrirDatabase:
 
         return badges
 
-    def get_badges_from_tags(self, tags, match_all=False):
+    def get_badges_from_tags(self, tags: list[str], match_all: bool = False) -> list[Badge]:
         """
         Return badges matching tags.
 
@@ -377,7 +392,7 @@ class TahrirDatabase:
 
         return unique_badges
 
-    def get_all_badges(self):
+    def get_all_badges(self) -> Any:
         """
         Get all badges in the db.
         """
@@ -385,7 +400,7 @@ class TahrirDatabase:
         return self.session.query(Badge)
 
     @autocommit
-    def delete_badge(self, badge_id):
+    def delete_badge(self, badge_id: str) -> Union[str, bool]:
         """
         Delete a badge from the database
 
@@ -401,7 +416,16 @@ class TahrirDatabase:
         return False
 
     @autocommit
-    def add_badge(self, name, image, desc, criteria, issuer_id, tags=None, badge_id=None):
+    def add_badge(
+        self,
+        name: str,
+        image: str,
+        desc: str,
+        criteria: str,
+        issuer_id: int,
+        tags: Optional[str] = None,
+        badge_id: Optional[str] = None,
+    ) -> str:
         """
         Add a new badge to the database
 
@@ -447,7 +471,7 @@ class TahrirDatabase:
         return badge_id
 
     @autocommit
-    def update_badge(self, badge_id: str, **kwargs):
+    def update_badge(self, badge_id: str, **kwargs: Any) -> Union[str, bool]:
         """
         Update a badge in the database
 
@@ -485,7 +509,12 @@ class TahrirDatabase:
         self.session.flush()
         return badge_id
 
-    def person_exists(self, email=None, id=None, nickname=None):
+    def person_exists(
+        self,
+        email: Optional[str] = None,
+        id: Optional[Union[str, int]] = None,
+        nickname: Optional[str] = None,
+    ) -> bool:
         """
         Check if a Person with this email is stored in the database
 
@@ -502,14 +531,19 @@ class TahrirDatabase:
         query = self.session.query(Person)
         if email:
             return query.filter(func.lower(Person.email) == func.lower(email)).count() != 0
-        elif id:
+        elif id is not None:
             return query.filter_by(id=id).count() != 0
         elif nickname:
             return query.filter(func.lower(Person.nickname) == func.lower(nickname)).count() != 0
         else:
             return False
 
-    def person_opted_out(self, email=None, id=None, nickname=None):
+    def person_opted_out(
+        self,
+        email: Optional[str] = None,
+        id: Optional[Union[str, int]] = None,
+        nickname: Optional[str] = None,
+    ) -> bool:
         """Returns true if a given person has opted out of tahrir."""
 
         person = self.get_person(email, id, nickname)
@@ -521,7 +555,7 @@ class TahrirDatabase:
         # Otherwise, return whatever value they have in the DB.
         return person.opt_out
 
-    def get_all_persons(self, include_opted_out=False):
+    def get_all_persons(self, include_opted_out: bool = False) -> Any:
         """
         Gets all the persons in the db.
         """
@@ -531,7 +565,7 @@ class TahrirDatabase:
             query = query.filter(not_(Person.opt_out))
         return query
 
-    def get_person_email(self, person_id):
+    def get_person_email(self, person_id: Union[str, int]) -> Optional[str]:
         """
         Convience function to retrieve a person email from an id.
 
@@ -552,13 +586,18 @@ class TahrirDatabase:
         if self.person_exists(id=person_id):
             return (
                 self.session.query(Person)
-                .filter(func.lower(Person.id) == func.lower(person_id))
+                .filter(func.lower(Person.id) == func.lower(str(person_id)))
                 .one()
                 .email
             )
         return None
 
-    def get_person(self, person_email=None, id=None, nickname=None):
+    def get_person(
+        self,
+        person_email: Optional[str] = None,
+        id: Optional[Union[str, int]] = None,
+        nickname: Optional[str] = None,
+    ) -> Optional[Person]:
         """
         Convenience function to retrieve a person object from an email,
         id, or nickname.
@@ -577,7 +616,7 @@ class TahrirDatabase:
 
         if person_email and self.person_exists(email=person_email):
             return query.filter(func.lower(Person.email) == func.lower(person_email)).one()
-        elif id and self.person_exists(id=id):
+        elif id is not None and self.person_exists(id=id):
             return query.filter_by(id=id).one()
         elif nickname and self.person_exists(nickname=nickname):
             return query.filter(func.lower(Person.nickname) == func.lower(nickname)).one()
@@ -585,7 +624,7 @@ class TahrirDatabase:
             return None
 
     @autocommit
-    def delete_person(self, person_email):
+    def delete_person(self, person_email: str) -> Union[str, bool]:
         """
         Delete a person with the given email
 
@@ -594,13 +633,22 @@ class TahrirDatabase:
         """
 
         if self.person_exists(email=person_email):
-            self.session.delete(self.get_person(person_email))
-            self.session.flush()
-            return person_email
+            person = self.get_person(person_email)
+            if person:
+                self.session.delete(person)
+                self.session.flush()
+                return person_email
         return False
 
     @autocommit
-    def add_person(self, email, nickname=None, website=None, bio=None, avatar=None):
+    def add_person(
+        self,
+        email: str,
+        nickname: Optional[str] = None,
+        website: Optional[str] = None,
+        bio: Optional[str] = None,
+        avatar: Optional[str] = None,
+    ) -> Union[str, bool]:
         """
         Add a new Person to the database
 
@@ -637,8 +685,14 @@ class TahrirDatabase:
 
     @autocommit
     def update_person(
-        self, person_email=None, id=None, nickname=None, website=None, bio=None, avatar=None
-    ):
+        self,
+        person_email: Optional[str] = None,
+        id: Optional[Union[str, int]] = None,
+        nickname: Optional[str] = None,
+        website: Optional[str] = None,
+        bio: Optional[str] = None,
+        avatar: Optional[str] = None,
+    ) -> Union[Person, bool]:
         """
         Update an existing Person's profile fields in the database
 
@@ -677,10 +731,17 @@ class TahrirDatabase:
         return person
 
     @autocommit
-    def note_login(self, person_email=None, id=None, nickname=None):
+    def note_login(
+        self,
+        person_email: Optional[str] = None,
+        id: Optional[Union[str, int]] = None,
+        nickname: Optional[str] = None,
+    ) -> None:
         """Make a note that a person has logged in."""
 
         person = self.get_person(person_email, id, nickname)
+        if not person:
+            return
 
         # If this is the first time they have ever logged in, optionally
         # publish a notification about the event.
@@ -691,18 +752,26 @@ class TahrirDatabase:
         # Finally, update the field.
         person.last_login = datetime.now(timezone.utc)
 
-    def issuer_exists(self, origin, name):
+    def issuer_exists(self, origin: str, name: str) -> bool:
         """
         Check to see if an issuer with this ID is in the database
 
-        :type issuer_id: int
-        :param issuer_id: The unique ID of this issuer
+        :type origin: str
+        :param origin: The origin of this issuer
+        :type name: str
+        :param name: The name of this issuer
         """
 
         return self.session.query(Issuer).filter_by(origin=origin, name=name).count() != 0
 
     @autocommit
-    def add_invitation(self, badge_id, created_on=None, expires_on=None, created_by_email=None):
+    def add_invitation(
+        self,
+        badge_id: str,
+        created_on: Optional[datetime] = None,
+        expires_on: Optional[datetime] = None,
+        created_by_email: Optional[str] = None,
+    ) -> str:
         """
         Add a new invitation to the database
 
@@ -715,7 +784,7 @@ class TahrirDatabase:
         :type expires_on: datetime.datetime
         :param expires_on: When this invitation expires.
 
-        :type created_by: str
+        :type created_by_email: str
         :param created_by_email: User email of creator
 
         """
@@ -727,7 +796,12 @@ class TahrirDatabase:
         expires_on = expires_on or (created_on + timedelta(hours=1))
         if not created_by_email or not self.person_exists(email=created_by_email):
             raise ValueError(f"No user with email {created_by_email!r}. Ask them to login first.")
-        created_by = self.get_person(created_by_email).id
+        
+        person = self.get_person(created_by_email)
+        if not person:
+            raise ValueError(f"Could not retrieve person with email {created_by_email!r}")
+            
+        created_by = person.id
 
         invitation = Invitation(
             created_on=created_on,
@@ -739,7 +813,7 @@ class TahrirDatabase:
         self.session.flush()
         return invitation.id
 
-    def invitation_exists(self, invitation_id):
+    def invitation_exists(self, invitation_id: str) -> bool:
         """
         Check to see if an invitation exists with this ID.
 
@@ -749,14 +823,14 @@ class TahrirDatabase:
 
         return self.session.query(Invitation).filter_by(id=invitation_id).count() != 0
 
-    def get_all_invitations(self):
+    def get_all_invitations(self) -> Any:
         """
         Get all invitations in the db.
         """
 
         return self.session.query(Invitation)
 
-    def get_invitation(self, invitation_id):
+    def get_invitation(self, invitation_id: str) -> Union[Invitation, bool]:
         """
         Get invitation by an invitation id.
 
@@ -769,19 +843,19 @@ class TahrirDatabase:
         else:
             return False
 
-    def get_invitations(self, person_id):
+    def get_invitations(self, person_id: int) -> list[Invitation]:
         """
         Get invitations created by a particular person.
 
-        :type issuer_id: str
-        :param issuer_id: The person ID for which inviations
+        :type person_id: int
+        :param person_id: The person ID for which inviations
                           will be retrieved.
         """
 
         return self.session.query(Invitation).filter_by(created_by=person_id).all()
 
     @autocommit
-    def expire_invitation(self, invitation_id):
+    def expire_invitation(self, invitation_id: str) -> bool:
         """
         Soft-delete an invitation by setting its expiry date to the current time.
 
@@ -799,7 +873,7 @@ class TahrirDatabase:
         self.session.flush()
         return True
 
-    def get_issuer(self, issuer_id):
+    def get_issuer(self, issuer_id: int) -> Optional[Issuer]:
         """
         Return the issuer with the given ID
 
@@ -812,7 +886,7 @@ class TahrirDatabase:
         return None
 
     @autocommit
-    def delete_issuer(self, issuer_id):
+    def delete_issuer(self, issuer_id: int) -> Union[int, bool]:
         """
         Delete an issuer with the given ID
 
@@ -829,7 +903,7 @@ class TahrirDatabase:
         return False
 
     @autocommit
-    def add_issuer(self, origin, name, org, contact):
+    def add_issuer(self, origin: str, name: str, org: str, contact: str) -> int:
         """
         Add a new issuer to the Database
 
@@ -854,14 +928,14 @@ class TahrirDatabase:
 
         return self.session.query(Issuer).filter_by(name=name, origin=origin).one().id
 
-    def get_all_issuers(self):
+    def get_all_issuers(self) -> Any:
         """
         Get all issuers in the db.
         """
 
         return self.session.query(Issuer)
 
-    def get_all_assertions(self, begin: Optional[int] = None, limit: Optional[int] = None):
+    def get_all_assertions(self, begin: Optional[int] = None, limit: Optional[int] = None) -> Any:
         """
         Get all assertions in the db, ordered by most recent first.
 
@@ -879,7 +953,7 @@ class TahrirDatabase:
 
         return result
 
-    def get_assertions_by_email(self, person_email):
+    def get_assertions_by_email(self, person_email: str) -> Union[list[Assertion], bool]:
         """
         Get all assertions attached to the given email
 
@@ -892,7 +966,7 @@ class TahrirDatabase:
             return False
         return self.session.query(Assertion).filter_by(person_id=person.id).all()
 
-    def get_assertions_by_badge(self, badge_id):
+    def get_assertions_by_badge(self, badge_id: str) -> Union[list[Assertion], bool]:
         """
         Get all assertions of a particular badge.
 
@@ -909,7 +983,7 @@ class TahrirDatabase:
         else:
             return False
 
-    def assertion_exists(self, badge_id, email):
+    def assertion_exists(self, badge_id: str, email: str) -> bool:
         """
         Check if an assertion exists in the database
 
@@ -930,7 +1004,7 @@ class TahrirDatabase:
             != 0
         )
 
-    def authorization_exists(self, badge_id, email):
+    def authorization_exists(self, badge_id: str, email: str) -> bool:
         """
         Check if an authorization exists in the database
 
@@ -954,7 +1028,7 @@ class TahrirDatabase:
         )
 
     @autocommit
-    def add_authorization(self, badge_id, person_email):
+    def add_authorization(self, badge_id: str, person_email: str) -> Union[tuple[str, str], bool]:
         """
         Add an authorization (allow someone to admin a certain badge)
 
@@ -967,17 +1041,17 @@ class TahrirDatabase:
 
         if self.person_exists(email=person_email) and self.badge_exists(badge_id):
             person = self.get_person(person_email)
+            if person:
+                new_authz = Authorization(badge_id=badge_id, person_id=person.id)
+                self.session.add(new_authz)
+                self.session.flush()
 
-            new_authz = Authorization(badge_id=badge_id, person_id=person.id)
-            self.session.add(new_authz)
-            self.session.flush()
-
-            return (person_email, badge_id)
+                return (person_email, badge_id)
 
         return False
 
     @autocommit
-    def delete_authorization(self, badge_id, person_email):
+    def delete_authorization(self, badge_id: str, person_email: str) -> Union[tuple[str, str], bool]:
         """
         Delete an authorization (remove someone's admin rights for a certain badge)
 
@@ -1006,7 +1080,13 @@ class TahrirDatabase:
         return False
 
     @autocommit
-    def add_assertion(self, badge_id, person_email, issued_on, issued_for=None):
+    def add_assertion(
+        self,
+        badge_id: str,
+        person_email: str,
+        issued_on: Optional[datetime] = None,
+        issued_for: Optional[str] = None,
+    ) -> Union[tuple[str, str], bool]:
         """
         Add an assertion (award a badge) to the database
 
@@ -1030,34 +1110,35 @@ class TahrirDatabase:
         if self.person_exists(email=person_email) and self.badge_exists(badge_id):
             badge = self.get_badge(badge_id)
             person = self.get_person(person_email)
-
-            new_assertion = Assertion(
-                badge_id=badge_id,
-                person_id=person.id,
-                issued_on=issued_on,
-                issued_for=issued_for,
-            )
-            self.session.add(new_assertion)
-            self.session.flush()
-
-            if self.notification_callback:
-                body = dict(
-                    badge=dict(
-                        name=badge.name,
-                        description=badge.description,
-                        image_url=badge.image,
-                        badge_id=badge_id,
-                    ),
-                    user=dict(username=person.nickname, badges_user_id=person.id),
+            
+            if badge and person:
+                new_assertion = Assertion(
+                    badge_id=badge_id,
+                    person_id=person.id,
+                    issued_on=issued_on,
+                    issued_for=issued_for,
                 )
-                self.notification_callback(BadgeAwardV1(body=body))
+                self.session.add(new_assertion)
+                self.session.flush()
 
-            return person_email, badge_id
+                if self.notification_callback:
+                    body = dict(
+                        badge=dict(
+                            name=badge.name,
+                            description=badge.description,
+                            image_url=badge.image,
+                            badge_id=badge_id,
+                        ),
+                        user=dict(username=person.nickname, badges_user_id=person.id),
+                    )
+                    self.notification_callback(BadgeAwardV1(body=body))
+
+                return person_email, badge_id
 
         return False
 
     @autocommit
-    def remove_assertion(self, badge_id, person_email):
+    def remove_assertion(self, badge_id: str, person_email: str) -> bool:
         """
         Remove an assertion (revoke a badge) from the database
 
@@ -1074,6 +1155,8 @@ class TahrirDatabase:
             return False
 
         person = self.get_person(person_email)
+        if not person:
+            return False
 
         assertion = (
             self.session.query(Assertion).filter_by(person_id=person.id, badge_id=badge_id).first()
@@ -1087,7 +1170,7 @@ class TahrirDatabase:
 
         return True
 
-    def get_current_value(self, badge_id, person_email):
+    def get_current_value(self, badge_id: str, person_email: str) -> Optional[int]:
         """
         Return the current value for the given badge and the given person's email
 
@@ -1109,7 +1192,7 @@ class TahrirDatabase:
         )
         return self.session.scalar(query)
 
-    def set_current_value(self, badge_id, person_email, value):
+    def set_current_value(self, badge_id: str, person_email: str, value: int) -> None:
         """Set the current value for the given badge and the given person's email
 
         :type badge_id: str
@@ -1126,6 +1209,9 @@ class TahrirDatabase:
         if person is None:
             self.add_person(email=person_email)
             person = self.get_person(person_email=person_email)
+            
+        if not person:
+            return
 
         now = datetime.now(tz=timezone.utc)
         query = select(CurrentValue).where(
@@ -1141,7 +1227,7 @@ class TahrirDatabase:
             current_value.value = value
             current_value.last_update = now
 
-    def adjust_ranks(self, person):
+    def adjust_ranks(self, person: Person) -> None:
         """Given a person model object, adjust the ranks of all persons between the 'old' rank and
         the present rank of the given person.
 
@@ -1170,7 +1256,9 @@ class TahrirDatabase:
         if self.notification_callback:
             self.notification_callback(PersonRankAdvanceV1(body=body))
 
-    def make_leaderboard(self, start=None, stop=None):
+    def make_leaderboard(
+        self, start: Optional[datetime] = None, stop: Optional[datetime] = None
+    ) -> dict[Person, dict[str, Any]]:
         """Produce a dict mapping persons to information about
         the number of badges they have been awarded and their
         rank, freshly calculated.  This is relatively expensive.
