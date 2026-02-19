@@ -796,11 +796,11 @@ class TahrirDatabase:
         expires_on = expires_on or (created_on + timedelta(hours=1))
         if not created_by_email or not self.person_exists(email=created_by_email):
             raise ValueError(f"No user with email {created_by_email!r}. Ask them to login first.")
-        
+
         person = self.get_person(created_by_email)
         if not person:
             raise ValueError(f"Could not retrieve person with email {created_by_email!r}")
-            
+
         created_by = person.id
 
         invitation = Invitation(
@@ -1051,7 +1051,9 @@ class TahrirDatabase:
         return False
 
     @autocommit
-    def delete_authorization(self, badge_id: str, person_email: str) -> Union[tuple[str, str], bool]:
+    def delete_authorization(
+        self, badge_id: str, person_email: str
+    ) -> Union[tuple[str, str], bool]:
         """
         Delete an authorization (remove someone's admin rights for a certain badge)
 
@@ -1110,7 +1112,7 @@ class TahrirDatabase:
         if self.person_exists(email=person_email) and self.badge_exists(badge_id):
             badge = self.get_badge(badge_id)
             person = self.get_person(person_email)
-            
+
             if badge and person:
                 new_assertion = Assertion(
                     badge_id=badge_id,
@@ -1209,7 +1211,7 @@ class TahrirDatabase:
         if person is None:
             self.add_person(email=person_email)
             person = self.get_person(person_email=person_email)
-            
+
         if not person:
             return
 
