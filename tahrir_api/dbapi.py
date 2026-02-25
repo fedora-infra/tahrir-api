@@ -8,6 +8,7 @@ from typing import Any, Callable, Optional, Union
 
 from sqlalchemy import and_, func, not_, select, text
 from tahrir_messages import BadgeAwardV1, PersonLoginFirstV1, PersonRankAdvanceV1
+from sqlalchemy.orm import Query, Session
 
 from .model import (
     Assertion,
@@ -41,7 +42,7 @@ class TahrirDatabase:
     def __init__(
         self,
         dburi: Optional[str] = None,
-        session: Optional[Any] = None,
+        session: Optional[Session] = None,
         autocommit: bool = True,
         notification_callback: Optional[Callable[..., Any]] = None,
     ) -> None:
@@ -190,7 +191,7 @@ class TahrirDatabase:
             self.session.flush()
         return series_id
 
-    def get_all_series(self) -> Any:
+    def get_all_series(self) -> Query[Series]:
         """
         Get all series in the db.
         """
@@ -218,7 +219,7 @@ class TahrirDatabase:
         """
         return self.get_milestone_from_badge_series(badge_id, series_id).count() != 0
 
-    def get_milestone_from_badge_series(self, badge_id: str, series_id: str) -> Any:
+    def get_milestone_from_badge_series(self, badge_id: str, series_id: str) -> Query[Milestone]:
         """
         Return the milestone with the given series and badge id
 
@@ -235,7 +236,7 @@ class TahrirDatabase:
             )
         )
 
-    def get_milestone(self, milestone_id: str) -> Any:
+    def get_milestone(self, milestone_id: str) -> Query[Milestone]:
         """
         Return the matching milestone from the database
 
@@ -392,7 +393,7 @@ class TahrirDatabase:
 
         return unique_badges
 
-    def get_all_badges(self) -> Any:
+    def get_all_badges(self) -> Query[Badge]:
         """
         Get all badges in the db.
         """
@@ -512,7 +513,7 @@ class TahrirDatabase:
     def person_exists(
         self,
         email: Optional[str] = None,
-        id: Optional[Union[str, int]] = None,
+        id: Optional[int] = None,
         nickname: Optional[str] = None,
     ) -> bool:
         """
@@ -521,7 +522,7 @@ class TahrirDatabase:
         :type email: str
         :param email: An email address to search the database for
 
-        :type id: str
+        :type id: int
         :param id: A user id to search for.
 
         :type nickname: str
@@ -541,7 +542,7 @@ class TahrirDatabase:
     def person_opted_out(
         self,
         email: Optional[str] = None,
-        id: Optional[Union[str, int]] = None,
+        id: Optional[int] = None,
         nickname: Optional[str] = None,
     ) -> bool:
         """Returns true if a given person has opted out of tahrir."""
@@ -555,7 +556,7 @@ class TahrirDatabase:
         # Otherwise, return whatever value they have in the DB.
         return person.opt_out
 
-    def get_all_persons(self, include_opted_out: bool = False) -> Any:
+    def get_all_persons(self, include_opted_out: bool = False) -> Query[Person]:
         """
         Gets all the persons in the db.
         """
@@ -565,7 +566,7 @@ class TahrirDatabase:
             query = query.filter(not_(Person.opt_out))
         return query
 
-    def get_person_email(self, person_id: Union[str, int]) -> Optional[str]:
+    def get_person_email(self, person_id: int) -> Optional[str]:
         """
         Convience function to retrieve a person email from an id.
 
@@ -579,23 +580,19 @@ class TahrirDatabase:
         should make all these methods uniform (either get_x and
         get_x_by_email or get_x and get_x_by_id).
 
-        :type person_id: str
-        :param person_id: The email of a Person in the database.
+        :type person_id: int
+        :param person_id: The id of a Person in the database.
         """
 
-        if self.person_exists(id=person_id):
-            return (
-                self.session.query(Person)
-                .filter(func.lower(Person.id) == func.lower(str(person_id)))
-                .one()
-                .email
-            )
+        person = self.session.query(Person).filter_by(id=person_id).first()
+        if person:
+            return person.email
         return None
 
     def get_person(
         self,
         person_email: Optional[str] = None,
-        id: Optional[Union[str, int]] = None,
+        id: Optional[int] = None,
         nickname: Optional[str] = None,
     ) -> Optional[Person]:
         """
@@ -605,7 +602,7 @@ class TahrirDatabase:
         :type person_email: str
         :param person_email: The email address of a Person in the database
 
-        :type id: str
+        :type id: int
         :param id: The id of a Person in the database
 
         :type nickname: str
@@ -687,7 +684,7 @@ class TahrirDatabase:
     def update_person(
         self,
         person_email: Optional[str] = None,
-        id: Optional[Union[str, int]] = None,
+        id: Optional[int] = None,
         nickname: Optional[str] = None,
         website: Optional[str] = None,
         bio: Optional[str] = None,
@@ -734,7 +731,7 @@ class TahrirDatabase:
     def note_login(
         self,
         person_email: Optional[str] = None,
-        id: Optional[Union[str, int]] = None,
+        id: Optional[int] = None,
         nickname: Optional[str] = None,
     ) -> None:
         """Make a note that a person has logged in."""
@@ -787,6 +784,8 @@ class TahrirDatabase:
         :type created_by_email: str
         :param created_by_email: User email of creator
 
+        :return: The ID of the newly created invitation
+        :rtype: str
         """
 
         if not self.badge_exists(badge_id):
@@ -794,12 +793,13 @@ class TahrirDatabase:
 
         created_on = created_on or datetime.now(timezone.utc)
         expires_on = expires_on or (created_on + timedelta(hours=1))
-        if not created_by_email or not self.person_exists(email=created_by_email):
-            raise ValueError(f"No user with email {created_by_email!r}. Ask them to login first.")
+
+        if not created_by_email:
+            raise ValueError("No user email provided. Ask them to login first.")
 
         person = self.get_person(created_by_email)
         if not person:
-            raise ValueError(f"Could not retrieve person with email {created_by_email!r}")
+            raise ValueError(f"No user with email {created_by_email!r}. Ask them to login first.")
 
         created_by = person.id
 
@@ -823,7 +823,7 @@ class TahrirDatabase:
 
         return self.session.query(Invitation).filter_by(id=invitation_id).count() != 0
 
-    def get_all_invitations(self) -> Any:
+    def get_all_invitations(self) -> Query[Invitation]:
         """
         Get all invitations in the db.
         """
@@ -928,14 +928,16 @@ class TahrirDatabase:
 
         return self.session.query(Issuer).filter_by(name=name, origin=origin).one().id
 
-    def get_all_issuers(self) -> Any:
+    def get_all_issuers(self) -> Query[Issuer]:
         """
         Get all issuers in the db.
         """
 
         return self.session.query(Issuer)
 
-    def get_all_assertions(self, begin: Optional[int] = None, limit: Optional[int] = None) -> Any:
+    def get_all_assertions(
+        self, begin: Optional[int] = None, limit: Optional[int] = None
+    ) -> Query[Assertion]:
         """
         Get all assertions in the db, ordered by most recent first.
 
@@ -1038,15 +1040,15 @@ class TahrirDatabase:
         :type person_email: str
         :param person_email: Email of the Person grant rights to
         """
+        person = self.get_person(person_email)
+        badge = self.get_badge(badge_id)
 
-        if self.person_exists(email=person_email) and self.badge_exists(badge_id):
-            person = self.get_person(person_email)
-            if person:
-                new_authz = Authorization(badge_id=badge_id, person_id=person.id)
-                self.session.add(new_authz)
-                self.session.flush()
+        if person and badge:
+            new_authz = Authorization(badge_id=badge_id, person_id=person.id)
+            self.session.add(new_authz)
+            self.session.flush()
 
-                return (person_email, badge_id)
+            return (person_email, badge_id)
 
         return False
 
@@ -1109,33 +1111,32 @@ class TahrirDatabase:
         if issued_on is None:
             issued_on = datetime.now(timezone.utc)
 
-        if self.person_exists(email=person_email) and self.badge_exists(badge_id):
-            badge = self.get_badge(badge_id)
-            person = self.get_person(person_email)
+        badge = self.get_badge(badge_id)
+        person = self.get_person(person_email)
 
-            if badge and person:
-                new_assertion = Assertion(
-                    badge_id=badge_id,
-                    person_id=person.id,
-                    issued_on=issued_on,
-                    issued_for=issued_for,
+        if badge and person:
+            new_assertion = Assertion(
+                badge_id=badge_id,
+                person_id=person.id,
+                issued_on=issued_on,
+                issued_for=issued_for,
+            )
+            self.session.add(new_assertion)
+            self.session.flush()
+
+            if self.notification_callback:
+                body = dict(
+                    badge=dict(
+                        name=badge.name,
+                        description=badge.description,
+                        image_url=badge.image,
+                        badge_id=badge_id,
+                    ),
+                    user=dict(username=person.nickname, badges_user_id=person.id),
                 )
-                self.session.add(new_assertion)
-                self.session.flush()
+                self.notification_callback(BadgeAwardV1(body=body))
 
-                if self.notification_callback:
-                    body = dict(
-                        badge=dict(
-                            name=badge.name,
-                            description=badge.description,
-                            image_url=badge.image,
-                            badge_id=badge_id,
-                        ),
-                        user=dict(username=person.nickname, badges_user_id=person.id),
-                    )
-                    self.notification_callback(BadgeAwardV1(body=body))
-
-                return person_email, badge_id
+            return person_email, badge_id
 
         return False
 
@@ -1152,10 +1153,6 @@ class TahrirDatabase:
 
         :returns: True if successful, False otherwise
         """
-
-        if not self.person_exists(email=person_email):
-            return False
-
         person = self.get_person(person_email)
         if not person:
             return False
@@ -1211,9 +1208,6 @@ class TahrirDatabase:
         if person is None:
             self.add_person(email=person_email)
             person = self.get_person(person_email=person_email)
-
-        if not person:
-            return
 
         now = datetime.now(tz=timezone.utc)
         query = select(CurrentValue).where(
