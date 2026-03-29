@@ -675,3 +675,43 @@ def test_get_all_series_empty(api):
     series_query = api.get_all_series()
     series_list = list(series_query)
     assert len(series_list) == 0
+
+def test_get_persons_by_nickname(api):
+    api.add_person("alice@test.com", nickname="alice_wonder")
+    api.add_person("bob@test.com", nickname="bob_builder")
+    api.add_person("charlie@test.com", nickname="charlie_choc")
+
+    result = api.get_persons_by_nickname("alice")
+    assert result["total"] == 1
+    assert result["users"][0]["nickname"] == "alice_wonder"
+
+def test_get_persons_by_nickname_partial_match(api):
+    api.add_person("dave@test.com", nickname="dave_test")
+    api.add_person("diana@test.com", nickname="diana_test")
+    api.add_person("evan@test.com", nickname="evan_other")
+
+    result = api.get_persons_by_nickname("test")
+    assert result["total"] == 2
+
+def test_get_persons_by_nickname_pagination(api):
+    for i in range(5):
+        api.add_person(f"user{i}@test.com", nickname=f"user_{i}")
+
+    result = api.get_persons_by_nickname("user", begin=0, limit=2)
+    assert len(result["users"]) == 2
+    assert result["total"] == 5
+    assert result["begin"] == 0
+    assert result["limit"] == 2
+
+def test_get_persons_by_nickname_no_match(api):
+    api.add_person("test@test.com", nickname="test_user")
+
+    result = api.get_persons_by_nickname("zzznomatch")
+    assert result["total"] == 0
+    assert result["users"] == []
+
+def test_get_persons_by_nickname_case_insensitive(api):
+    api.add_person("upper@test.com", nickname="UpperCase")
+
+    result = api.get_persons_by_nickname("uppercase")
+    assert result["total"] == 1  
