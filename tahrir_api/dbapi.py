@@ -903,7 +903,9 @@ class TahrirDatabase:
         if self.badge_exists(badge_id):
             return (
                 self.session.query(Assertion)
+                .join(Person)
                 .filter(func.lower(Assertion.badge_id) == func.lower(badge_id))
+                .order_by(func.lower(func.coalesce(Person.nickname, '')))
                 .all()
             )
         else:
