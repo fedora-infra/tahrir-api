@@ -1259,3 +1259,32 @@ class TahrirDatabase:
             user_to_rank[user] = {"badges": badges, "rank": rank}
 
         return user_to_rank
+
+    def get_badges_by_string(self, search_string, begin=0, limit=100):
+        """
+        Get badges matching a search string in their name, description or tags with pagination.
+
+        :type search_string: str
+        :param search_string: The string to search for badges.
+        :type begin: int
+        :param begin: Offset for pagination (default 0).
+        :type limit: int
+        :param limit: Max results per page, capped at 100 (default 100).
+        """
+        safe_limit = min(limit, 100)
+
+        query = self.session.query(Badge).filter(
+            func.lower(Badge.name).like(f"%{search_string.lower()}%")
+            | func.lower(Badge.description).like(f"%{search_string.lower()}%")
+            | func.lower(Badge.tags).like(f"%{search_string.lower()}%")
+        )
+
+        total_count = query.count()
+        paginated_results = query.offset(begin).limit(safe_limit).all()
+
+        return {
+            "badges": paginated_results,
+            "total": total_count,
+            "begin": begin,
+            "limit": safe_limit,
+        }
