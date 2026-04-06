@@ -1,5 +1,6 @@
 from tahrir_api.dbapi import TahrirDatabase
 
+
 db = TahrirDatabase("backend://badges:badgesareawesome@localhost/badges")
 
 origin = "http://foss.rit.edu/badges"
