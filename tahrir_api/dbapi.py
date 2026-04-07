@@ -547,22 +547,9 @@ class TahrirDatabase:
         )
         total_count = query.count()
         paginated_results = query.offset(begin).limit(safe_limit).all()
-        users = [
-            {
-                "id": person.id,
-                "bio": person.bio if person.bio else None,
-                "created_on": person.created_on.timestamp() if person.created_on else None,
-                "email": person.avatar,  # the endpoint handles the hashing
-                "last_login": person.last_login.timestamp() if person.last_login else None,
-                "nickname": person.nickname,
-                "opt_out": person.opt_out,
-                "rank": person.rank,
-                "website": person.website,
-            }
-            for person in paginated_results
-        ]
+
         return {
-            "users": users,
+            "users": paginated_results,
             "total": total_count,
             "begin": begin,
             "limit": safe_limit,

@@ -684,7 +684,7 @@ def test_get_persons_by_nickname(api):
 
     result = api.get_persons_by_nickname("alice")
     assert result["total"] == 1
-    assert result["users"][0]["nickname"] == "alice_wonder"
+    assert result["users"][0].nickname == "alice_wonder"
 
 
 def test_get_persons_by_nickname_partial_match(api):
