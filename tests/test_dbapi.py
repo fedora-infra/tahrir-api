@@ -40,6 +40,51 @@ def initialize_list_assertions(api, dummy_person_id, dummy_issuer_id):
     return 10
 
 
+@pytest.fixture
+def search_test_badges(api, dummy_issuer_id):
+    api.add_badge(
+        name="Python Expert",
+        image="python_expert.png",
+        desc="Badge for Python programming excellence",
+        criteria="Complete 100 Python exercises",
+        issuer_id=dummy_issuer_id,
+        tags="python, programming, expert",
+    )
+    api.add_badge(
+        name="JavaScript Ninja",
+        image="js_ninja.png",
+        desc="Master the JavaScript language and frameworks",
+        criteria="Build 5 JavaScript projects",
+        issuer_id=dummy_issuer_id,
+        tags="javascript, web, frontend",
+    )
+    api.add_badge(
+        name="Frontend Master",
+        image="frontend.png",
+        desc="Expert web developer with full-stack capabilities",
+        criteria="Complete web development bootcamp",
+        issuer_id=dummy_issuer_id,
+        tags="web, development, fullstack",
+    )
+    api.add_badge(
+        name="Doc Writer",
+        image="doc_writer.png",
+        desc="Created comprehensive project documentation",
+        criteria="Write 50 pages of documentation",
+        issuer_id=dummy_issuer_id,
+        tags="documentation, writing, communication",
+    )
+    api.add_badge(
+        name="OSS Contributor",
+        image="oss_contributor.png",
+        desc="Active contributor to open source projects and python ecosystems",
+        criteria="Contribute to 3 open source projects",
+        issuer_id=dummy_issuer_id,
+        tags="opensource, python, community",
+    )
+    return 5
+
+
 def test_add_badges(api, dummy_badge_id):
     assert api.get_badge("testbadge").__str__() == "TestBadge"
     assert api.badge_exists("testbadge") is True
@@ -691,9 +736,7 @@ def test_get_persons_by_nickname_search(api, search_string, expected_total, expe
     api.add_person("dave@test.com", nickname="dave_test")
     api.add_person("diana@test.com", nickname="diana_test")
     api.add_person("upper@test.com", nickname="UpperCase")
-
     result = api.get_persons_by_nickname(search_string)
-
     assert result["total"] == expected_total
     nicknames = [p.nickname for p in result["users"]]
     assert nicknames == expected_nicknames
@@ -710,10 +753,59 @@ def test_get_persons_by_nickname_search(api, search_string, expected_total, expe
 def test_get_persons_by_nickname_pagination(api, begin, limit, expected_count):
     for i in range(5):
         api.add_person(f"user{i}@test.com", nickname=f"user_{i}")
-
     result = api.get_persons_by_nickname("user", begin=begin, limit=limit)
-
     assert len(result["users"]) == expected_count
     assert result["total"] == 5
     assert result["begin"] == begin
     assert result["limit"] == limit
+
+
+@pytest.mark.parametrize(
+    "query, expected_total, must_contain",
+    [
+        ("Python Expert", 1, ["Python Expert"]),
+        ("python", 2, ["Python Expert", "OSS Contributor"]),
+        ("PYTHON", 2, ["Python Expert", "OSS Contributor"]),
+        ("web developer", 1, ["Frontend Master"]),
+        ("documentation", 1, ["Doc Writer"]),
+        ("nonexistent_badge_xyz", 0, []),
+        (
+            "",
+            5,
+            [
+                "Python Expert",
+                "OSS Contributor",
+                "Frontend Master",
+                "Doc Writer",
+                "JavaScript Ninja",
+            ],
+        ),
+    ],
+)
+def test_search_filter_conditions(query, expected_total, must_contain, api, search_test_badges):
+    result = api.get_badges_by_string(query)
+
+    assert result["total"] == expected_total
+    badge_names = [b.name for b in result["badges"]]
+    for name in must_contain:
+        assert name in badge_names
+
+
+@pytest.mark.parametrize(
+    "query, begin, limit, expected_begin, expected_limit, expected_count",
+    [
+        ("python", 0, 100, 0, 100, 2),
+        ("python", 0, 1, 0, 1, 1),
+        ("python", 1, 1, 1, 1, 1),
+        ("python", 500, 1, 500, 1, 0),
+        ("", 0, 500, 0, 100, 5),
+    ],
+)
+def test_search_pagination_conditions(
+    query, begin, limit, expected_begin, expected_limit, expected_count, api, search_test_badges
+):
+    result = api.get_badges_by_string(query, begin=begin, limit=limit)
+
+    assert result["limit"] == expected_limit
+    assert len(result["badges"]) == expected_count
+    assert result["total"] >= expected_count
