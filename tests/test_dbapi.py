@@ -819,6 +819,10 @@ def test_get_all_persons(
     assert len(persons) == expected_count
 
     if begin is not None and isinstance(begin, (int)) and begin > 0 and expected_count > 0:
-        control_batch = list(api.get_all_persons(search_string, begin=0, limit=expected_count))
+        control_batch = list(
+            api.get_all_persons(
+                search_string, begin=0, limit=expected_count, include_opted_out=True
+            )
+        )
         if len(control_batch) == expected_count:
             assert persons[0].id != control_batch[0].id
