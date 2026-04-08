@@ -27,6 +27,22 @@ def dummy_person_id(api):
 
 
 @pytest.fixture
+def initialize_dummy_persons(api):
+    data = [
+        {"nickname": "John", "email": "test1@tester.com"},
+        {"nickname": "Joshua", "email": "test2@tester.com"},
+        {"nickname": "Jane", "email": "test3@tester.com"},
+        {"nickname": "Bane", "email": "test4@tester.com"},
+        {"nickname": "pear", "email": "test5@tester.com"},
+        {"nickname": "t0xic", "email": "test6@tester.com"},
+    ]
+
+    for person in range(0, 6):
+        api.add_person(data[person]["email"], data[person]["nickname"])
+    return True
+
+
+@pytest.fixture
 def initialize_list_assertions(api, dummy_person_id, dummy_issuer_id):
     for unit in range(0, 10):
         tmpbadge = api.add_badge(
@@ -675,3 +691,134 @@ def test_get_all_series_empty(api):
     series_query = api.get_all_series()
     series_list = list(series_query)
     assert len(series_list) == 0
+
+
+@pytest.mark.parametrize(
+    "search_string, begin, limit, expected_count",
+    [
+        ("", None, None, 6),  # tuples with "" checks the correctness of the pagination
+        ("", 0, 3, 3),
+        ("", 4, 2, 2),
+        ("", 3, 3, 3),
+        ("", 0, 20, 6),
+        ("", 2, None, 4),
+        ("", 3, 10, 3),
+        ("", 6, 6, 0),
+        ("", None, 0, 0),
+        ("", 0, 1, 1),
+        ("", "one", "two", 6),
+        ("test badge", 0, 6, 6),  # tuples below test for correct filteration
+        ("rabbit panda", 0, 6, 1),
+        ("rabbit", 0, 6, 3),
+        ("deer", 0, 6, 2),
+        ("moose", 0, 6, 0),
+        ("600", 0, 6, 1),
+        ("60", 0, 6, 2),
+        ("500", 0, 6, 0),
+        ("tag", 0, 6, 6),
+        ("tag4", 0, 6, 3),
+        ("tag0", 0, 6, 0),
+        ("tag3", 0, 6, 1),
+        (None, 0, 6, 6),
+    ],
+)
+def test_get_all_badges(api, search_string, begin, limit, expected_count, dummy_issuer_id):
+    """Test get_all_badges with various begin and limit parameters."""
+
+    # Seed with dummy badges
+    api.add_badge(
+        "TestBadge-1 rabbit",
+        "TestImage-2",
+        "A test badge for doing 10 unit tests",
+        "TestCriteria",
+        dummy_issuer_id,
+        tags="tag1",
+    )
+
+    api.add_badge(
+        "TestBadge-2 panda",
+        "TestImage-2",
+        "A test badge for doing 200 unit tests",
+        "TestCriteria",
+        dummy_issuer_id,
+        tags="tag4",
+    )
+
+    api.add_badge(
+        "TestBadge-3 rabbit panda",
+        "TestImage-4",
+        "A test badge for doing 60 unit tests",
+        "TestCriteria",
+        dummy_issuer_id,
+        tags="tag2",
+    )
+
+    api.add_badge(
+        "TestBadge-4 deer",
+        "TestImage-2",
+        "A test badge for doing 400 unit tests",
+        "TestCriteria",
+        dummy_issuer_id,
+        tags="tag1, tag4",
+    )
+    api.add_badge(
+        "TestBadge-5 rabbit",
+        "TestImage-3",
+        "A test badge for doing 50 unit tests",
+        "TestCriteria",
+        dummy_issuer_id,
+        tags="tag3",
+    )
+
+    api.add_badge(
+        "TestBadge-6 deer",
+        "TestImage-5",
+        "A test badge for doing 600 unit tests",
+        "TestCriteria",
+        dummy_issuer_id,
+        tags="tag2, tag4",
+    )
+
+    badges = list(api.get_all_badges(search_string, begin, limit))
+    assert len(badges) == expected_count
+
+    if len(badges) > 1:
+        assert badges[0].created_on >= badges[1].created_on
+        assert badges[0].created_on >= badges[-1].created_on
+
+    if begin is not None and isinstance(begin, (int)) and begin > 0 and expected_count > 0:
+        control_batch = list(api.get_all_badges(search_string, begin=0, limit=expected_count))
+        if len(control_batch) == expected_count:
+            assert badges[0].id != control_batch[0].id
+
+
+@pytest.mark.parametrize(
+    "search_string, begin, limit, expected_count",
+    [
+        ("", None, None, 6),  # tuples with "" checks the correctness of the pagination
+        ("", 0, 3, 3),
+        ("", 4, 2, 2),
+        ("", 3, 3, 3),
+        ("", 0, 20, 6),
+        ("", 2, None, 4),
+        ("", 3, 10, 3),
+        ("", 6, 6, 0),
+        ("", None, 0, 0),
+        ("", 0, 1, 1),
+        ("", "one", "two", 6),
+        ("jo", 0, 6, 2),  # tuples below test for correct filteration
+        ("ane", 0, 6, 2),
+        ("0x", 0, 6, 1),
+        (None, 0, 6, 6),
+    ],
+)
+def test_get_all_persons(
+    api, initialize_dummy_persons, search_string, begin, limit, expected_count
+):
+    persons = list(api.get_all_persons(search_string, begin, limit, include_opted_out=True))
+    assert len(persons) == expected_count
+
+    if begin is not None and isinstance(begin, (int)) and begin > 0 and expected_count > 0:
+        control_batch = list(api.get_all_persons(search_string, begin=0, limit=expected_count))
+        if len(control_batch) == expected_count:
+            assert persons[0].id != control_batch[0].id

@@ -377,12 +377,43 @@ class TahrirDatabase:
 
         return unique_badges
 
-    def get_all_badges(self):
+    def get_all_badges(
+        self,
+        search_string: Optional[str] = None,
+        begin: Optional[int] = None,
+        limit: Optional[int] = None,
+    ):
         """
         Get all badges in the db.
-        """
 
-        return self.session.query(Badge)
+        :type search_string: str
+        :param search_string: string to be searched for in the badges database
+
+        :type begin: int
+        :param begin: Number of assertions to skip (offset for pagination, default: 0)
+
+        :type limit: int
+        :param limit: Maximum number of assertions to return (default: 100)
+        """
+        if search_string is None:
+            search_string = ""
+
+        begin = begin if begin is not None and isinstance(begin, (int)) else 0
+        limit = limit if limit is not None and isinstance(limit, (int)) else 100
+
+        badges = (
+            self.session.query(Badge)
+            .filter(
+                func.lower(Badge.name).like(f"%{search_string.lower()}%")
+                | func.lower(Badge.description).like(f"%{search_string.lower()}%")
+                | func.lower(Badge.tags).like(f"%{search_string.lower()}%")
+            )
+            .order_by(Badge.created_on.desc())
+            .offset(begin)
+            .limit(limit)
+        )
+
+        return badges.all()
 
     @autocommit
     def delete_badge(self, badge_id):
@@ -521,15 +552,43 @@ class TahrirDatabase:
         # Otherwise, return whatever value they have in the DB.
         return person.opt_out
 
-    def get_all_persons(self, include_opted_out=False):
+    def get_all_persons(
+        self,
+        search_string: Optional[str] = None,
+        begin: Optional[int] = None,
+        limit: Optional[int] = None,
+        include_opted_out=False,
+    ):
         """
         Gets all the persons in the db.
+
+        :type search_string: str
+        :param search_string: string to be searched for in the badges database
+
+        :type begin: int
+        :param begin: Number of assertions to skip (offset for pagination, default: 0)
+
+        :type limit: int
+        :param limit: Maximum number of assertions to return (default: 100)
+
+        :type include_opted_out: boolean
+        :param include_opted_out: asks to return deactivated persons account or not
         """
 
-        query = self.session.query(Person)
+        if search_string is None:
+            search_string = ""
+
+        begin = begin if begin is not None and isinstance(begin, (int)) else 0
+        limit = limit if limit is not None and isinstance(limit, (int)) else 100
+
+        query = self.session.query(Person).filter(
+            func.lower(Person.nickname).like(f"%{search_string.lower()}%")
+        )
         if not include_opted_out:
             query = query.filter(not_(Person.opt_out))
-        return query
+
+        query = query.offset(begin).limit(limit)
+        return query.all()
 
     def get_person_email(self, person_id):
         """
