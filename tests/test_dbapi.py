@@ -675,3 +675,45 @@ def test_get_all_series_empty(api):
     series_query = api.get_all_series()
     series_list = list(series_query)
     assert len(series_list) == 0
+
+
+@pytest.mark.parametrize(
+    "search_string, expected_total, expected_nicknames",
+    [
+        ("alice", 1, ["alice_wonder"]),
+        ("test", 2, ["dave_test", "diana_test"]),
+        ("zzznomatch", 0, []),
+        ("uppercase", 1, ["UpperCase"]),
+    ],
+)
+def test_get_persons_by_nickname_search(api, search_string, expected_total, expected_nicknames):
+    api.add_person("alice@test.com", nickname="alice_wonder")
+    api.add_person("dave@test.com", nickname="dave_test")
+    api.add_person("diana@test.com", nickname="diana_test")
+    api.add_person("upper@test.com", nickname="UpperCase")
+
+    result = api.get_persons_by_nickname(search_string)
+
+    assert result["total"] == expected_total
+    nicknames = [p.nickname for p in result["users"]]
+    assert nicknames == expected_nicknames
+
+
+@pytest.mark.parametrize(
+    "begin, limit, expected_count",
+    [
+        (0, 2, 2),
+        (2, 2, 2),
+        (4, 2, 1),
+    ],
+)
+def test_get_persons_by_nickname_pagination(api, begin, limit, expected_count):
+    for i in range(5):
+        api.add_person(f"user{i}@test.com", nickname=f"user_{i}")
+
+    result = api.get_persons_by_nickname("user", begin=begin, limit=limit)
+
+    assert len(result["users"]) == expected_count
+    assert result["total"] == 5
+    assert result["begin"] == begin
+    assert result["limit"] == limit
