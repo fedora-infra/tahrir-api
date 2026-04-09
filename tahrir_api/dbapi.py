@@ -531,6 +531,33 @@ class TahrirDatabase:
             query = query.filter(not_(Person.opt_out))
         return query
 
+    def get_persons_by_nickname(self, search_string: str, begin: int = 0, limit: int = 100):
+        """
+        Search for persons by nickname with pagination.
+
+        :type search_string: str
+        :param search_string: The nickname pattern to search for.
+        :type begin: int
+        :param begin: Offset for pagination (default 0).
+        :type limit: int
+        :param limit: Max results per page, capped at 100 (default 100).
+        """
+
+        safe_limit = min(limit, 100)
+
+        query = self.session.query(Person).filter(
+            func.lower(Person.nickname).like(f"%{search_string.lower()}%")
+        )
+
+        total_count = query.count()
+        paginated_results = query.offset(begin).limit(safe_limit).all()
+        return {
+            "users": paginated_results,
+            "total": total_count,
+            "begin": begin,
+            "limit": safe_limit,
+        }
+
     def get_person_email(self, person_id):
         """
         Convience function to retrieve a person email from an id.
