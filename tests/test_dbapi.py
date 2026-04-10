@@ -4,6 +4,8 @@ import pytest
 
 from tahrir_api.model import Assertion, Authorization, Badge, Milestone, Person, Series, Team
 
+from .helpers import dummy_badges_for_search_string, dummy_persons_for_search_string
+
 
 @pytest.fixture
 def dummy_issuer_id(api):
@@ -24,22 +26,6 @@ def dummy_badge_id(api, dummy_issuer_id):
 @pytest.fixture
 def dummy_person_id(api):
     return api.add_person("test@tester.com")
-
-
-@pytest.fixture
-def initialize_dummy_persons(api):
-    data = [
-        {"nickname": "John", "email": "test1@tester.com"},
-        {"nickname": "Joshua", "email": "test2@tester.com"},
-        {"nickname": "Jane", "email": "test3@tester.com"},
-        {"nickname": "Bane", "email": "test4@tester.com"},
-        {"nickname": "pear", "email": "test5@tester.com"},
-        {"nickname": "t0xic", "email": "test6@tester.com"},
-    ]
-
-    for person in range(0, 6):
-        api.add_person(data[person]["email"], data[person]["nickname"])
-    return True
 
 
 @pytest.fixture
@@ -707,80 +693,14 @@ def test_get_all_series_empty(api):
         ("", None, 0, 0),
         ("", 0, 1, 1),
         ("", "one", "two", 6),
-        ("test badge", 0, 6, 6),  # tuples below test for correct filteration
-        ("rabbit panda", 0, 6, 1),
-        ("rabbit", 0, 6, 3),
-        ("deer", 0, 6, 2),
-        ("moose", 0, 6, 0),
-        ("600", 0, 6, 1),
-        ("60", 0, 6, 2),
-        ("500", 0, 6, 0),
-        ("tag", 0, 6, 6),
-        ("tag4", 0, 6, 3),
-        ("tag0", 0, 6, 0),
-        ("tag3", 0, 6, 1),
-        (90, 0, 6, 0),
-        (None, 0, 6, 0),
     ],
 )
-def test_get_badges_by_search_string(
+def test_get_badges_by_search_string_pagination(
     api, search_string, begin, limit, expected_count, dummy_issuer_id
 ):
-    """Test get_all_badges with various begin and limit parameters."""
+    """Test for the pagination function of get_badges_by_search_string_filter"""
 
-    # Seed with dummy badges
-    api.add_badge(
-        "TestBadge-1 rabbit",
-        "TestImage-2",
-        "A test badge for doing 10 unit tests",
-        "TestCriteria",
-        dummy_issuer_id,
-        tags="tag1",
-    )
-
-    api.add_badge(
-        "TestBadge-2 panda",
-        "TestImage-2",
-        "A test badge for doing 200 unit tests",
-        "TestCriteria",
-        dummy_issuer_id,
-        tags="tag4",
-    )
-
-    api.add_badge(
-        "TestBadge-3 rabbit panda",
-        "TestImage-4",
-        "A test badge for doing 60 unit tests",
-        "TestCriteria",
-        dummy_issuer_id,
-        tags="tag2",
-    )
-
-    api.add_badge(
-        "TestBadge-4 deer",
-        "TestImage-2",
-        "A test badge for doing 400 unit tests",
-        "TestCriteria",
-        dummy_issuer_id,
-        tags="tag1, tag4",
-    )
-    api.add_badge(
-        "TestBadge-5 rabbit",
-        "TestImage-3",
-        "A test badge for doing 50 unit tests",
-        "TestCriteria",
-        dummy_issuer_id,
-        tags="tag3",
-    )
-
-    api.add_badge(
-        "TestBadge-6 deer",
-        "TestImage-5",
-        "A test badge for doing 600 unit tests",
-        "TestCriteria",
-        dummy_issuer_id,
-        tags="tag2, tag4",
-    )
+    dummy_badges_for_search_string(api, dummy_issuer_id)
 
     badges = list(api.get_badges_by_search_string(search_string, begin, limit))
     assert len(badges) == expected_count
@@ -800,7 +720,41 @@ def test_get_badges_by_search_string(
 @pytest.mark.parametrize(
     "search_string, begin, limit, expected_count",
     [
-        ("", None, None, 6),  # tuples with "" checks the correctness of the pagination
+        ("test badge", 0, 6, 6),
+        ("rabbit panda", 0, 6, 1),
+        ("rabbit", 0, 6, 3),
+        ("deer", 0, 6, 2),
+        ("moose", 0, 6, 0),
+        ("600", 0, 6, 1),
+        ("60", 0, 6, 2),
+        ("500", 0, 6, 0),
+        ("tag", 0, 6, 6),
+        ("tag4", 0, 6, 3),
+        ("tag0", 0, 6, 0),
+        ("tag3", 0, 6, 1),
+        (90, 0, 6, 0),
+        (None, 0, 6, 0),
+    ],
+)
+def test_get_badges_by_search_string_filter(
+    api, search_string, begin, limit, expected_count, dummy_issuer_id
+):
+    """Test for the filtration function of get_badges_by_search_string_filter"""
+
+    dummy_badges_for_search_string(api, dummy_issuer_id)
+
+    badges = list(api.get_badges_by_search_string(search_string, begin, limit))
+    assert len(badges) == expected_count
+
+    if len(badges) > 1:
+        assert badges[0].created_on >= badges[1].created_on
+        assert badges[0].created_on >= badges[-1].created_on
+
+
+@pytest.mark.parametrize(
+    "search_string, begin, limit, expected_count",
+    [
+        ("", None, None, 6),
         ("", 0, 3, 3),
         ("", 4, 2, 2),
         ("", 3, 3, 3),
@@ -811,17 +765,13 @@ def test_get_badges_by_search_string(
         ("", None, 0, 0),
         ("", 0, 1, 1),
         ("", "one", "two", 6),
-        ("jo", 0, 6, 2),  # tuples below test for correct filteration
-        ("ane", 0, 6, 2),
-        ("0x", 0, 6, 1),
-        (90, 0, 6, 0),
-        (0, 0, 6, 1),
-        (None, 0, 6, 0),
     ],
 )
-def test_get_persons_by_search_string(
-    api, initialize_dummy_persons, search_string, begin, limit, expected_count
-):
+def test_get_persons_by_search_string_pagination(api, search_string, begin, limit, expected_count):
+    """Test for the pagination function of get_persons_by_search_string"""
+
+    dummy_persons_for_search_string(api)
+
     persons = list(
         api.get_persons_by_search_string(search_string, begin, limit, include_opted_out=True)
     )
@@ -835,3 +785,25 @@ def test_get_persons_by_search_string(
         )
         if len(control_batch) == expected_count:
             assert persons[0].id != control_batch[0].id
+
+
+@pytest.mark.parametrize(
+    "search_string, begin, limit, expected_count",
+    [
+        ("jo", 0, 6, 2),
+        ("ane", 0, 6, 2),
+        ("0x", 0, 6, 1),
+        (90, 0, 6, 0),
+        (0, 0, 6, 1),
+        (None, 0, 6, 0),
+    ],
+)
+def test_get_persons_by_search_string_filter(api, search_string, begin, limit, expected_count):
+    """Test for the filtration function of get_persons_by_search_string"""
+
+    dummy_persons_for_search_string(api)
+
+    persons = list(
+        api.get_persons_by_search_string(search_string, begin, limit, include_opted_out=True)
+    )
+    assert len(persons) == expected_count
