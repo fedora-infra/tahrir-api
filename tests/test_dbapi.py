@@ -719,10 +719,13 @@ def test_get_all_series_empty(api):
         ("tag4", 0, 6, 3),
         ("tag0", 0, 6, 0),
         ("tag3", 0, 6, 1),
-        (None, 0, 6, 6),
+        (90, 0, 6, 0),
+        (None, 0, 6, 0),
     ],
 )
-def test_get_all_badges(api, search_string, begin, limit, expected_count, dummy_issuer_id):
+def test_get_badges_by_search_string(
+    api, search_string, begin, limit, expected_count, dummy_issuer_id
+):
     """Test get_all_badges with various begin and limit parameters."""
 
     # Seed with dummy badges
@@ -779,7 +782,7 @@ def test_get_all_badges(api, search_string, begin, limit, expected_count, dummy_
         tags="tag2, tag4",
     )
 
-    badges = list(api.get_all_badges(search_string, begin, limit))
+    badges = list(api.get_badges_by_search_string(search_string, begin, limit))
     assert len(badges) == expected_count
 
     if len(badges) > 1:
@@ -787,7 +790,9 @@ def test_get_all_badges(api, search_string, begin, limit, expected_count, dummy_
         assert badges[0].created_on >= badges[-1].created_on
 
     if begin is not None and isinstance(begin, (int)) and begin > 0 and expected_count > 0:
-        control_batch = list(api.get_all_badges(search_string, begin=0, limit=expected_count))
+        control_batch = list(
+            api.get_badges_by_search_string(search_string, begin=0, limit=expected_count)
+        )
         if len(control_batch) == expected_count:
             assert badges[0].id != control_batch[0].id
 
@@ -809,18 +814,22 @@ def test_get_all_badges(api, search_string, begin, limit, expected_count, dummy_
         ("jo", 0, 6, 2),  # tuples below test for correct filteration
         ("ane", 0, 6, 2),
         ("0x", 0, 6, 1),
-        (None, 0, 6, 6),
+        (90, 0, 6, 0),
+        (0, 0, 6, 1),
+        (None, 0, 6, 0),
     ],
 )
-def test_get_all_persons(
+def test_get_persons_by_search_string(
     api, initialize_dummy_persons, search_string, begin, limit, expected_count
 ):
-    persons = list(api.get_all_persons(search_string, begin, limit, include_opted_out=True))
+    persons = list(
+        api.get_persons_by_search_string(search_string, begin, limit, include_opted_out=True)
+    )
     assert len(persons) == expected_count
 
     if begin is not None and isinstance(begin, (int)) and begin > 0 and expected_count > 0:
         control_batch = list(
-            api.get_all_persons(
+            api.get_persons_by_search_string(
                 search_string, begin=0, limit=expected_count, include_opted_out=True
             )
         )

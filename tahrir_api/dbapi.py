@@ -377,17 +377,24 @@ class TahrirDatabase:
 
         return unique_badges
 
-    def get_all_badges(
+    def get_all_badges(self):
+        """
+        Get all badges in the db.
+        """
+
+        return self.session.query(Badge)
+
+    def get_badges_by_search_string(
         self,
-        search_string: Optional[str] = None,
+        search_string: str,
         begin: Optional[int] = None,
         limit: Optional[int] = None,
     ):
         """
-        Get all badges in the db.
+        Get all badges in the db by a search string.
 
         :type search_string: str
-        :param search_string: string to be searched for in the badges database
+        :param search_string: string to be searched for in the Badge database
 
         :type begin: int
         :param begin: Number of assertions to skip (offset for pagination, default: 0)
@@ -396,7 +403,8 @@ class TahrirDatabase:
         :param limit: Maximum number of assertions to return (default: 100)
         """
         if search_string is None:
-            search_string = ""
+            return []
+        search_string = f"{search_string}" if isinstance(search_string, (int)) else search_string
 
         begin = begin if begin is not None and isinstance(begin, (int)) else 0
         limit = limit if limit is not None and isinstance(limit, (int)) else 100
@@ -552,18 +560,28 @@ class TahrirDatabase:
         # Otherwise, return whatever value they have in the DB.
         return person.opt_out
 
-    def get_all_persons(
+    def get_all_persons(self, include_opted_out=False):
+        """
+        Gets all the persons in the db.
+        """
+
+        query = self.session.query(Person)
+        if not include_opted_out:
+            query = query.filter(not_(Person.opt_out))
+        return query
+
+    def get_persons_by_search_string(
         self,
-        search_string: Optional[str] = None,
+        search_string: str,
         begin: Optional[int] = None,
         limit: Optional[int] = None,
         include_opted_out=False,
     ):
         """
-        Gets all the persons in the db.
+        Gets all persons in the db by a search string.
 
         :type search_string: str
-        :param search_string: string to be searched for in the badges database
+        :param search_string: string to be searched for in the Person database
 
         :type begin: int
         :param begin: Number of assertions to skip (offset for pagination, default: 0)
@@ -576,7 +594,8 @@ class TahrirDatabase:
         """
 
         if search_string is None:
-            search_string = ""
+            return []
+        search_string = f"{search_string}" if isinstance(search_string, (int)) else search_string
 
         begin = begin if begin is not None and isinstance(begin, (int)) else 0
         limit = limit if limit is not None and isinstance(limit, (int)) else 100
