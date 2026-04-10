@@ -41,9 +41,15 @@ class AssertionMethod:
             return False
         return self.session.query(Assertion).filter_by(person_id=person.id).all()
 
-    def get_assertions_by_badge(self, badge_id):
+    def get_assertions_by_badge(self, badge_id: str, begin: int = 0, limit: int = 100):
         """
         Get all assertions of a particular badge.
+
+        :type begin: int
+        :param begin: Number of assertions to skip (offset for pagination)
+
+        :type limit: int
+        :param limit: Maximum number of assertions to return
 
         :type badge_id: str
         :param badge_id: Badge id to get assertions for.
@@ -53,6 +59,9 @@ class AssertionMethod:
             return (
                 self.session.query(Assertion)
                 .filter(func.lower(Assertion.badge_id) == func.lower(badge_id))
+                .order_by(Assertion.issued_on.desc())
+                .offset(begin)
+                .limit(limit)
                 .all()
             )
         else:
