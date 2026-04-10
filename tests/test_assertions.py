@@ -17,6 +17,16 @@ def initialize_list_assertions(api, dummy_person_id, dummy_issuer_id):
     return 10
 
 
+@pytest.fixture
+def multiple_assertions(api, dummy_badge_id):
+    """Add multiple assertions for the same badge to test pagination."""
+    emails = [f"user{i}@tester.com" for i in range(5)]
+    for email in emails:
+        api.add_person(email)
+        api.add_assertion(dummy_badge_id, email, None, f"link_{email}")
+    return emails
+
+
 def test_add_assertion(api, callback_calls, dummy_badge_id, dummy_person_id):
     api.add_assertion(dummy_badge_id, "test@tester.com", None, "link")
     assert api.assertion_exists(dummy_badge_id, "test@tester.com")
@@ -152,3 +162,20 @@ def test_get_all_assertions(api, initialize_list_assertions, begin, limit, expec
         first_batch = list(api.get_all_assertions(begin=0, limit=expected_count))
         if len(first_batch) == expected_count:
             assert assertions[0].id != first_batch[0].id
+
+
+@pytest.mark.parametrize(
+    "begin,limit,expected_count",
+    [
+        (0, 3, 3),  # limit only
+        (2, 5, 3),  # offset skips 2 of 5
+        (1, 2, 2),  # offset + limit together
+        (0, 5, 5),  # returns all
+    ],
+)
+def test_get_assertions_by_badge_pagination(
+    api, dummy_badge_id, multiple_assertions, begin, limit, expected_count
+):
+    """Test get_assertions_by_badge with various begin/limit combinations."""
+    result = api.get_assertions_by_badge(dummy_badge_id, begin=begin, limit=limit)
+    assert len(result) == expected_count
