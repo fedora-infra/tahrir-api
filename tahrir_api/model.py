@@ -80,7 +80,7 @@ class Badge(DeclarativeBase):
     issuer_id = Column(Integer, ForeignKey("issuers.id"), nullable=False)
     milestone = relationship("Milestone", backref="badge")
     authorizations = relationship("Authorization", backref="badge")
-    assertions = relationship("Assertion", backref="badge")
+    assertions = relationship("Assertion", backref="badge", passive_deletes=True)
     invitations = relationship("Invitation", backref="badge")
     current_values = relationship("CurrentValue", back_populates="badge")
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
@@ -301,7 +301,7 @@ def assertion_id_default(context):
 class Assertion(DeclarativeBase):
     __tablename__ = "assertions"
     id = Column(Unicode(128), primary_key=True, unique=True, default=assertion_id_default)
-    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
+    badge_id = Column(Unicode(128), ForeignKey("badges.id", ondelete="CASCADE"), nullable=False)
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
     issued_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
