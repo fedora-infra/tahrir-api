@@ -33,3 +33,25 @@ def get_models_columns_with_defaults():
 def test_safe_column_default(column):
     if getattr(column.default, "is_callable", False):
         column.default.arg(None)
+
+
+def test_badge_assertion_cascade_delete(api):
+    """
+    Verify that deleting a badge automatically removes associated assertions.
+    """
+    session = api.session
+    issuer_id = api.add_issuer("TestOrigin", "TestIssuer", "TestOrg", "TestContact")
+    api.add_person("cascade@example.com")
+    badge_id = api.add_badge(
+        "CascadeBadge", "TestImage", "Testing delete", "TestCriteria", issuer_id
+    )
+    api.add_assertion(badge_id, "cascade@example.com", None)
+    session.commit()
+
+    assert session.query(model.Assertion).filter_by(badge_id=badge_id).count() == 1
+
+    badge = api.get_badge(badge_id)
+    session.delete(badge)
+    session.commit()
+
+    assert session.query(model.Assertion).filter_by(badge_id=badge_id).count() == 0
