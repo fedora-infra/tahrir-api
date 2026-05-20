@@ -6,7 +6,7 @@ import uuid
 import arrow
 import pygments
 import simplejson
-from sqlalchemy import Column, DateTime, ForeignKey, select, Unicode, UniqueConstraint
+from sqlalchemy import Column, DateTime, false, ForeignKey, select, Unicode, UniqueConstraint
 from sqlalchemy.orm import object_session, relationship
 from sqlalchemy.types import Boolean, Integer
 from sqlalchemy_helpers import Base as DeclarativeBase
@@ -58,6 +58,7 @@ class Badge(DeclarativeBase):
     current_values = relationship("CurrentValue", back_populates="badge")
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
     tags = Column(Unicode(128))
+    legacy = Column(Boolean, default=False, nullable=False, server_default=false())
 
     def __str__(self):
         return str(self.name)
@@ -76,6 +77,7 @@ class Badge(DeclarativeBase):
             issuer=self.issuer.as_dict(),
             created_on=time.mktime(self.created_on.timetuple()),
             tags=self.tags,
+            legacy=self.legacy,
         )
 
     def authorized(self, person):
