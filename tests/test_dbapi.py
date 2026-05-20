@@ -809,3 +809,44 @@ def test_search_pagination_conditions(
     assert result["limit"] == expected_limit
     assert len(result["badges"]) == expected_count
     assert result["total"] >= expected_count
+
+
+def test_badge_legacy_default(api, dummy_badge_id):
+    """Test that a newly created badge has legacy=False by default"""
+    badge = api.get_badge(dummy_badge_id)
+    assert badge.legacy is False
+
+
+@pytest.mark.parametrize(
+    "legacy_value,expected",
+    [
+        (False, False),
+        (True, True),
+    ],
+)
+def test_badge_legacy(api, dummy_badge_id, legacy_value, expected):
+    """Test that legacy can be set and retrieved correctly"""
+    badge = api.get_badge(dummy_badge_id)
+    badge.legacy = legacy_value
+    api.session.flush()
+
+    updated_badge = api.get_badge(dummy_badge_id)
+    assert updated_badge.legacy is expected
+
+
+@pytest.mark.parametrize(
+    "legacy_value,expected",
+    [
+        (False, False),
+        (True, True),
+    ],
+)
+def test_badge_legacy_in_as_dict(api, dummy_badge_id, legacy_value, expected):
+    """Test that as_dict includes the legacy field correctly"""
+    badge = api.get_badge(dummy_badge_id)
+    badge.legacy = legacy_value
+    api.session.flush()
+
+    badge_dict = api.get_badge(dummy_badge_id).as_dict()
+    assert "legacy" in badge_dict
+    assert badge_dict["legacy"] is expected
