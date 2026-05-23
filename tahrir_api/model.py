@@ -6,7 +6,7 @@ import uuid
 import arrow
 import pygments
 import simplejson
-from sqlalchemy import Column, DateTime, ForeignKey, select, Unicode, UniqueConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, select, Table, Unicode, UniqueConstraint
 from sqlalchemy.orm import object_session, relationship
 from sqlalchemy.types import Boolean, Integer
 from sqlalchemy_helpers import Base as DeclarativeBase
@@ -42,6 +42,20 @@ def generate_default_id(context):
     return context.current_parameters["name"].lower().replace(" ", "-")
 
 
+class Tag(DeclarativeBase):
+    __tablename__ = "tags"
+    id = Column(Integer, primary_key=True)
+    name = Column(Unicode(128), nullable=False, unique=True)
+
+
+badge_tags = Table(
+    "badge_tags",
+    DeclarativeBase.metadata,
+    Column("badge_id", Unicode(128), ForeignKey("badges.id")),
+    Column("tag_id", Integer, ForeignKey("tags.id")),
+)
+
+
 class Badge(DeclarativeBase):
     __tablename__ = "badges"
     id = Column(Unicode(128), primary_key=True, default=generate_default_id)
@@ -57,7 +71,7 @@ class Badge(DeclarativeBase):
     invitations = relationship("Invitation", backref="badge")
     current_values = relationship("CurrentValue", back_populates="badge")
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
-    tags = Column(Unicode(128))
+    tags = relationship("Tag", secondary=badge_tags, backref="badges")
 
     def __str__(self):
         return str(self.name)
@@ -75,7 +89,7 @@ class Badge(DeclarativeBase):
             criteria=self.criteria,
             issuer=self.issuer.as_dict(),
             created_on=time.mktime(self.created_on.timetuple()),
-            tags=self.tags,
+            tags=[tag.name for tag in self.tags],
         )
 
     def authorized(self, person):

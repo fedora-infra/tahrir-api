@@ -19,6 +19,7 @@ from .model import (
     Milestone,
     Person,
     Series,
+    Tag,
     Team,
 )
 from .utils import autocommit, convert_name_to_id, get_db_manager_from_uri
@@ -339,6 +340,29 @@ class TahrirDatabase:
 
         return badges
 
+    def _get_or_create_tags(self, tags):
+        if tags is None:
+            return []
+        if isinstance(tags, str):
+            tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
+
+        tag_objects = []
+        for tag in tags:
+            if isinstance(tag, Tag):
+                tag_objects.append(tag)
+                continue
+
+            tag_name = str(tag).strip()
+            if not tag_name:
+                continue
+            tag_object = self.session.query(Tag).filter_by(name=tag_name).one_or_none()
+            if tag_object is None:
+                tag_object = Tag(name=tag_name)
+                self.session.add(tag_object)
+                self.session.flush()
+            tag_objects.append(tag_object)
+        return tag_objects
+
     def get_badges_from_tags(self, tags, match_all=False):
         """
         Return badges matching tags.
@@ -350,24 +374,25 @@ class TahrirDatabase:
         :param match_all: Returned badges must have all tags in list
         """
 
-        badges = list()
-
         if match_all:
-            # Return badges matching all tags
-            # ... by doing argument-expansion on a list comprehension
-            badges.extend(
-                self.session.query(Badge).filter(
-                    and_(*[func.lower(Badge.tags).contains(str(tag + ",").lower()) for tag in tags])
-                )
+            return (
+                self.session.query(Badge)
+                .join(Badge.tags)
+                .filter(func.lower(Tag.name).in_([tag.lower() for tag in tags]))
+                .group_by(Badge.id)
+                .having(func.count(func.distinct(func.lower(Tag.name))) == len(tags))
+                .all()
             )
-        else:
-            # Return badges matching any of the tags
-            for tag in tags:
-                badges.extend(
-                    self.session.query(Badge)
-                    .filter(func.lower(Badge.tags).contains(str(tag + ",").lower()))
-                    .all()
-                )
+
+        badges = list()
+        # Return badges matching any of the tags
+        for tag in tags:
+            badges.extend(
+                self.session.query(Badge)
+                .join(Badge.tags)
+                .filter(func.lower(Tag.name) == tag.lower())
+                .all()
+            )
 
         # Eliminate any duplicates.
         unique_badges = list()
@@ -417,21 +442,14 @@ class TahrirDatabase:
         :type issuer_id: int
         :param issuer_id: The ID of the issuer who issues this Badge
 
-        :type tags: str
-        :param tags: Comma-delimited list of badge tags.
+        :type tags: list
+        :param tags: List of Tag objects.
         """
 
         if not badge_id:
             badge_id = convert_name_to_id(name)
 
         if not self.badge_exists(badge_id):
-            # Make sure the tags string has a trailing
-            # comma at the end. The tags view in Tahrir
-            # depends on that comma when matching all
-            # tags.
-            if tags and not tags.endswith(","):
-                tags = tags + ","
-
             # Actually add the badge.
             new_badge = Badge(
                 id=badge_id,
@@ -440,7 +458,7 @@ class TahrirDatabase:
                 description=desc,
                 criteria=criteria,
                 issuer_id=issuer_id,
-                tags=tags,
+                tags=self._get_or_create_tags(tags),
             )
             self.session.add(new_badge)
             self.session.flush()
@@ -477,9 +495,8 @@ class TahrirDatabase:
             raise KeyError(f"Invalid fields: {invalid_fields}")
 
         for attr, value in kwargs.items():
-            # Special handling for tags
             if attr == "tags":
-                value = value + "," if value and not value.endswith(",") else value
+                value = self._get_or_create_tags(value)
             setattr(badge, attr, value)
 
         self.session.flush()
@@ -1276,7 +1293,7 @@ class TahrirDatabase:
         query = self.session.query(Badge).filter(
             func.lower(Badge.name).like(f"%{search_string.lower()}%")
             | func.lower(Badge.description).like(f"%{search_string.lower()}%")
-            | func.lower(Badge.tags).like(f"%{search_string.lower()}%")
+            | Badge.tags.any(func.lower(Tag.name).like(f"%{search_string.lower()}%"))
         )
 
         total_count = query.count()

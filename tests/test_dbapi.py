@@ -2,7 +2,19 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from tahrir_api.model import Assertion, Authorization, Badge, Milestone, Person, Series, Team
+from tahrir_api.model import Assertion, Authorization, Badge, Milestone, Person, Series, Tag, Team
+
+
+def make_tags(api, *names):
+    tags = []
+    for name in names:
+        tag = api.session.query(Tag).filter_by(name=name).one_or_none()
+        if tag is None:
+            tag = Tag(name=name)
+            api.session.add(tag)
+            api.session.flush()
+        tags.append(tag)
+    return tags
 
 
 @pytest.fixture
@@ -48,7 +60,7 @@ def search_test_badges(api, dummy_issuer_id):
         desc="Badge for Python programming excellence",
         criteria="Complete 100 Python exercises",
         issuer_id=dummy_issuer_id,
-        tags="python, programming, expert",
+        tags=make_tags(api, "python", "programming", "expert"),
     )
     api.add_badge(
         name="JavaScript Ninja",
@@ -56,7 +68,7 @@ def search_test_badges(api, dummy_issuer_id):
         desc="Master the JavaScript language and frameworks",
         criteria="Build 5 JavaScript projects",
         issuer_id=dummy_issuer_id,
-        tags="javascript, web, frontend",
+        tags=make_tags(api, "javascript", "web", "frontend"),
     )
     api.add_badge(
         name="Frontend Master",
@@ -64,7 +76,7 @@ def search_test_badges(api, dummy_issuer_id):
         desc="Expert web developer with full-stack capabilities",
         criteria="Complete web development bootcamp",
         issuer_id=dummy_issuer_id,
-        tags="web, development, fullstack",
+        tags=make_tags(api, "web", "development", "fullstack"),
     )
     api.add_badge(
         name="Doc Writer",
@@ -72,7 +84,7 @@ def search_test_badges(api, dummy_issuer_id):
         desc="Created comprehensive project documentation",
         criteria="Write 50 pages of documentation",
         issuer_id=dummy_issuer_id,
-        tags="documentation, writing, communication",
+        tags=make_tags(api, "documentation", "writing", "communication"),
     )
     api.add_badge(
         name="OSS Contributor",
@@ -80,7 +92,7 @@ def search_test_badges(api, dummy_issuer_id):
         desc="Active contributor to open source projects and python ecosystems",
         criteria="Contribute to 3 open source projects",
         issuer_id=dummy_issuer_id,
-        tags="opensource, python, community",
+        tags=make_tags(api, "opensource", "python", "community"),
     )
     return 5
 
@@ -268,7 +280,7 @@ def test_get_badges_from_tags(api, dummy_issuer_id):
         "A test badge for doing unit tests",
         "TestCriteria",
         dummy_issuer_id,
-        tags="test",
+        tags=make_tags(api, "test"),
     )
 
     # Badge tagged with "tester"
@@ -278,7 +290,7 @@ def test_get_badges_from_tags(api, dummy_issuer_id):
         "A second test badge for doing unit tests",
         "TestCriteria",
         dummy_issuer_id,
-        tags="tester",
+        tags=make_tags(api, "tester"),
     )
 
     # Badge tagged with both "test" and "tester"
@@ -288,7 +300,7 @@ def test_get_badges_from_tags(api, dummy_issuer_id):
         "A third test badge for doing unit tests",
         "TestCriteria",
         dummy_issuer_id,
-        tags="test, tester",
+        tags=make_tags(api, "test", "tester"),
     )
 
     tags = ["test", "tester"]
@@ -338,15 +350,15 @@ def test_remove_assertion_nonexistent_assertion(api, dummy_badge_id, dummy_perso
         {"image": "UpdatedImage"},
         {"description": "Updated description"},
         {"criteria": "Updated criteria"},
-        {"tags": "updated, tags"},
-        {"tags": "updated, tags,"},
+        {"tags": ["updated", "tags"]},
+        {"tags": ["updated", "tags", "extra"]},
         # Test multiple field updates
         {
             "name": "MultiUpdate",
             "image": "MultiImage",
             "description": "Multi description",
             "criteria": "Multi criteria",
-            "tags": "multi, tags",
+            "tags": ["multi", "tags"],
         },
         # Test empty update
         {},
@@ -364,14 +376,15 @@ def test_update_badge(api, dummy_badge_id, kwargs):
     expected_criteria = kwargs.get("criteria", existing_badge.criteria)
 
     # Handle
-    if "tags" in kwargs:
-        tags = kwargs["tags"]
-        expected_tags = tags + "," if tags and not tags.endswith(",") else tags
+    update_kwargs = kwargs.copy()
+    if "tags" in update_kwargs:
+        expected_tags = update_kwargs["tags"]
+        update_kwargs["tags"] = make_tags(api, *update_kwargs["tags"])
     else:
-        expected_tags = existing_badge.tags
+        expected_tags = [tag.name for tag in existing_badge.tags]
 
     # Update
-    api.update_badge(dummy_badge_id, **kwargs)
+    api.update_badge(dummy_badge_id, **update_kwargs)
 
     # Obtain
     updated_badge = api.get_badge(dummy_badge_id)
@@ -381,7 +394,7 @@ def test_update_badge(api, dummy_badge_id, kwargs):
     assert updated_badge.image == expected_image
     assert updated_badge.description == expected_description
     assert updated_badge.criteria == expected_criteria
-    assert updated_badge.tags == expected_tags
+    assert [tag.name for tag in updated_badge.tags] == expected_tags
 
 
 def test_update_badge_nonexistent(api):
@@ -809,3 +822,46 @@ def test_search_pagination_conditions(
     assert result["limit"] == expected_limit
     assert len(result["badges"]) == expected_count
     assert result["total"] >= expected_count
+
+
+@pytest.mark.parametrize("tag_name", ["python", "web", "api", "opensource"])
+def test_tag_creation(api, tag_name):
+    tag = Tag(name=tag_name)
+    api.session.add(tag)
+    api.session.flush()
+    assert tag.id is not None
+    assert tag.name == tag_name
+
+
+@pytest.mark.parametrize("tag_name", ["web", "api", "gaming"])
+def test_badge_tag_relationship(api, dummy_issuer_id, tag_name):
+    tag = Tag(name=tag_name)
+    api.session.add(tag)
+    badge_id = api.add_badge(
+        name=f"Test Badge {tag_name}",
+        image="http://example.com/image.png",
+        desc="A test badge",
+        criteria="http://example.com/criteria",
+        issuer_id=dummy_issuer_id,
+    )
+    badge = api.get_badge(badge_id)
+    badge.tags.append(tag)
+    api.session.flush()
+    assert tag in badge.tags
+
+
+@pytest.mark.parametrize("tag_name", ["web", "api", "gaming"])
+def test_tag_badge_backref(api, dummy_issuer_id, tag_name):
+    tag = Tag(name=tag_name)
+    api.session.add(tag)
+    badge_id = api.add_badge(
+        name=f"Backref Badge {tag_name}",
+        image="http://example.com/image.png",
+        desc="A test badge",
+        criteria="http://example.com/criteria",
+        issuer_id=dummy_issuer_id,
+    )
+    badge = api.get_badge(badge_id)
+    badge.tags.append(tag)
+    api.session.flush()
+    assert badge in tag.badges
