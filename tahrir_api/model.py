@@ -72,6 +72,8 @@ class Badge(DeclarativeBase):
     current_values = relationship("CurrentValue", back_populates="badge")
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
     tags = relationship("Tag", secondary=badge_tags, backref="badges")
+    tags = Column(Unicode(128))
+    legacy = Column(Boolean, default=False, nullable=False, server_default=false())
 
     def __str__(self):
         return str(self.name)
@@ -90,6 +92,8 @@ class Badge(DeclarativeBase):
             issuer=self.issuer.as_dict(),
             created_on=time.mktime(self.created_on.timetuple()),
             tags=[tag.name for tag in self.tags],
+            tags=self.tags,
+            legacy=self.legacy,
         )
 
     def authorized(self, person):
