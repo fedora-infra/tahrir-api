@@ -8,7 +8,7 @@ import pygments
 import simplejson
 from sqlalchemy import Column, DateTime, false, ForeignKey, select, Unicode, UniqueConstraint
 from sqlalchemy.orm import object_session, relationship
-from sqlalchemy.types import Boolean, Integer
+from sqlalchemy.types import Boolean, Float, Integer
 from sqlalchemy_helpers import Base as DeclarativeBase
 
 
@@ -59,6 +59,8 @@ class Badge(DeclarativeBase):
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
     tags = Column(Unicode(128))
     legacy = Column(Boolean, default=False, nullable=False, server_default=false())
+    rarity_id = Column(Integer, ForeignKey("rarities.id"), nullable=True)
+    rarity = relationship("Rarity", back_populates="badges")
 
     def __str__(self):
         return str(self.name)
@@ -78,6 +80,7 @@ class Badge(DeclarativeBase):
             created_on=time.mktime(self.created_on.timetuple()),
             tags=self.tags,
             legacy=self.legacy,
+            rarity=self.rarity.as_dict() if self.rarity else None,
         )
 
     def authorized(self, person):
@@ -312,3 +315,24 @@ class Assertion(DeclarativeBase):
             pygments.formatters.HtmlFormatter(**html_args),
         ).strip()
         return html
+
+
+class Rarity(DeclarativeBase):
+    __tablename__ = "rarities"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Unicode(8), nullable=False, unique=True)
+    lower_limit = Column(Float, nullable=False)
+    upper_limit = Column(Float, nullable=False)
+
+    badges = relationship("Badge", back_populates="rarity")
+
+    def __repr__(self):
+        return f"<Rarity: '{self.name}' ({self.lower_limit}-{self.upper_limit})>"
+
+    def as_dict(self):
+        return dict(
+            name=self.name,
+            lower_limit=self.lower_limit,
+            upper_limit=self.upper_limit,
+        )

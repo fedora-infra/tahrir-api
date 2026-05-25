@@ -61,6 +61,7 @@ scripts = [
 tahrir-sync-db = "tahrir_api.scripts.syncdb:main"
 tahrir-populate-series = "tahrir_api.scripts.populateseries:main"
 tahrir-populate-avatars = "tahrir_api.scripts.populate_avatars:main"
+tahrir-compute-rarities = "tahrir_api.scripts.compute_rarities:main"
 
 
 [build-system]
