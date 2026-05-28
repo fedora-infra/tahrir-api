@@ -5,7 +5,7 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import and_, func, not_, select, text
+from sqlalchemy import and_, func, not_, or_, select, text
 from tahrir_messages import BadgeAwardV1, PersonLoginFirstV1, PersonRankAdvanceV1
 
 from .model import (
@@ -329,12 +329,15 @@ class TahrirDatabase:
 
         return unique_milestones
 
-    def get_badges_from_team(self, team_id):
+    def get_badges_from_team(self, team_id, include_legacy=False):
         """
         Returns all the badges related to a team
 
         :type team_id: str
         :param team_id: id of the team
+
+        :type include_legacy: boolean
+        :param include_legacy: Include legacy badges in results (default: False)
         """
         if self.team_exists(team_id):
             series = self.get_series_from_team(team_id)
@@ -343,8 +346,7 @@ class TahrirDatabase:
             milestones = self.get_milestone_from_series_ids(series_ids)
             badge_ids = list(set([milestone.badge_id for milestone in milestones]))
 
-            badges = self.get_badges(badge_ids)
-            return badges
+            return self.get_badges(badge_ids, include_legacy=include_legacy)
         return None
 
     def badge_exists(self, badge_id):
@@ -374,18 +376,22 @@ class TahrirDatabase:
             )
         return None
 
-    def get_badges(self, badge_ids):
+    def get_badges(self, badge_ids, include_legacy=False):
         """
         Return the badges with the given IDs
 
         :type badge_ids: list
         :param badge_ids: The list of badge IDs
+
+        :type include_legacy: boolean
+        :param include_legacy: Include legacy badges in results (default: False)
         """
-        badges = self.session.query(Badge).filter(Badge.id.in_(badge_ids)).all()
+        query = self.session.query(Badge).filter(Badge.id.in_(badge_ids))
+        if not include_legacy:
+            query = query.filter(Badge.legacy.is_(False))
+        return query.all()
 
-        return badges
-
-    def get_badges_from_tags(self, tags, match_all=False):
+    def get_badges_from_tags(self, tags, match_all=False, include_legacy=False):
         """
         Return badges matching tags.
 
@@ -394,28 +400,49 @@ class TahrirDatabase:
 
         :type match_all: boolean
         :param match_all: Returned badges must have all tags in list
+
+        :type include_legacy: boolean
+        :param include_legacy: Include legacy badges in results (default: False)
         """
 
+        badges = []
+
         if match_all:
-            query = self.session.query(Badge)
-            for tag_name in tags:
-                query = query.filter(Badge.tags.any(func.lower(Tag.name) == func.lower(tag_name)))
-            badges = query.all()
-        else:
-            badges = (
-                self.session.query(Badge)
-                .filter(Badge.tags.any(func.lower(Tag.name).in_([func.lower(tag) for tag in tags])))
-                .all()
+            # Return badges matching all tags
+            # ... by doing argument-expansion on a list comprehension
+            query = self.session.query(Badge).filter(
+                and_(*[Badge.tags.any(func.lower(Tag.name) == func.lower(tag)) for tag in tags])
             )
+            if not include_legacy:
+                query = query.filter(Badge.legacy.is_(False))
+            badges.extend(query)
+        else:
+            # Return badges matching any of the tags (deduplicated via distinct)
+            query = (
+                self.session.query(Badge)
+                .filter(
+                    or_(*[Badge.tags.any(func.lower(Tag.name) == func.lower(tag)) for tag in tags])
+                )
+                .distinct()
+            )
+            if not include_legacy:
+                query = query.filter(Badge.legacy.is_(False))
+            badges.extend(query.all())
 
         return badges
 
-    def get_all_badges(self):
+    def get_all_badges(self, include_legacy=False):
         """
         Get all badges in the db.
+
+        :type include_legacy: boolean
+        :param include_legacy: Include legacy badges in results (default: False)
         """
 
-        return self.session.query(Badge)
+        query = self.session.query(Badge)
+        if not include_legacy:
+            query = query.filter(Badge.legacy.is_(False))
+        return query
 
     @autocommit
     def compute_badge_rarities(self):
@@ -506,10 +533,14 @@ class TahrirDatabase:
 
         :type badge_id: str
         :param badge_id: ID of the badge to delete
+
+        :raises ValueError: If the badge is marked as legacy
         """
 
         if self.badge_exists(badge_id):
             to_delete = self.session.query(Badge).filter_by(id=badge_id).one()
+            if to_delete.legacy:
+                raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be deleted")
             self.session.delete(to_delete)
             self.session.flush()
             return badge_id
@@ -570,6 +601,7 @@ class TahrirDatabase:
             - description: Badge description
             - criteria: Badge criteria
             - tags: Badge tags (list of tag name strings)
+            - legacy: Badge legacy status (boolean)
 
         :raises KeyError: If invalid field names are provided
         :returns: badge_id if successful, False if badge doesn't exist
@@ -580,7 +612,7 @@ class TahrirDatabase:
             return False
 
         # List of allowed fields to update
-        allowed_fields = ["name", "image", "description", "criteria", "tags"]
+        allowed_fields = ["name", "image", "description", "criteria", "tags", "legacy"]
 
         # Check for invalid fields
         invalid_fields = set(kwargs.keys()) - set(allowed_fields)
@@ -862,6 +894,10 @@ class TahrirDatabase:
         if not self.badge_exists(badge_id):
             raise ValueError(f"No such badge {badge_id!r}")
 
+        badge = self.get_badge(badge_id)
+        if badge.legacy:
+            raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be invited")
+
         created_on = created_on or datetime.now(timezone.utc)
         expires_on = expires_on or (created_on + timedelta(hours=1))
         if not created_by_email or not self.person_exists(email=created_by_email):
@@ -1105,6 +1141,11 @@ class TahrirDatabase:
         """
 
         if self.person_exists(email=person_email) and self.badge_exists(badge_id):
+            badge = self.get_badge(badge_id)
+
+            if badge.legacy:
+                raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be authorized")
+
             person = self.get_person(person_email)
 
             new_authz = Authorization(badge_id=badge_id, person_id=person.id)
@@ -1168,6 +1209,10 @@ class TahrirDatabase:
 
         if self.person_exists(email=person_email) and self.badge_exists(badge_id):
             badge = self.get_badge(badge_id)
+
+            if badge.legacy:
+                raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be awarded")
+
             person = self.get_person(person_email)
 
             new_assertion = Assertion(
@@ -1372,7 +1417,7 @@ class TahrirDatabase:
 
         return user_to_rank
 
-    def get_badges_by_string(self, search_string, begin=0, limit=100):
+    def get_badges_by_string(self, search_string, begin=0, limit=100, include_legacy=False):
         """
         Get badges matching a search string in their name, description or tags with pagination.
 
@@ -1382,6 +1427,9 @@ class TahrirDatabase:
         :param begin: Offset for pagination (default 0).
         :type limit: int
         :param limit: Max results per page, capped at 100 (default 100).
+
+        :type include_legacy: boolean
+        :param include_legacy: Include legacy badges in results (default: False)
         """
         safe_limit = min(limit, 100)
 
@@ -1391,9 +1439,12 @@ class TahrirDatabase:
             | Badge.tags.any(func.lower(Tag.name).like(f"%{search_string.lower()}%"))
         )
 
+        # Filter out legacy badges
+        if not include_legacy:
+            query = query.filter(Badge.legacy.is_(False))
+
         total_count = query.count()
         paginated_results = query.offset(begin).limit(safe_limit).all()
-
         return {
             "badges": paginated_results,
             "total": total_count,
