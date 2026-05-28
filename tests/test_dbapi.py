@@ -238,6 +238,16 @@ def test_add_invitation_no_created_by(api, dummy_badge_id, dummy_person_id):
         api.add_invitation(dummy_badge_id)
 
 
+def test_add_invitation_rejects_legacy_badge(api, dummy_badge_id, dummy_person_id):
+    """Test that add_invitation rejects creating an invitation for a legacy badge"""
+    badge = api.get_badge(dummy_badge_id)
+    badge.legacy = True
+    api.session.flush()
+
+    with pytest.raises(ValueError, match="legacy badge"):
+        api.add_invitation(dummy_badge_id, created_by_email="test@tester.com")
+
+
 def test_expire_invitation(api, dummy_badge_id, dummy_person_id):
     # Create
     future_time = datetime.now() + timedelta(hours=2)
@@ -301,6 +311,16 @@ def test_add_assertion(api, callback_calls, dummy_badge_id, dummy_person_id):
     assert award_message.agent_name is None
     assert award_message.usernames == ["test"]
     assert award_message.summary == "test was awarded the badge `TestBadge`"
+
+
+def test_add_assertion_rejects_legacy_badge(api, dummy_badge_id, dummy_person_id):
+    """Test that add_assertion rejects awarding a legacy badge"""
+    badge = api.get_badge(dummy_badge_id)
+    badge.legacy = True
+    api.session.flush()
+    with pytest.raises(ValueError, match="legacy badge"):
+        api.add_assertion(dummy_badge_id, "test@tester.com", None)
+    assert api.assertion_exists(dummy_badge_id, "test@tester.com") is False
 
 
 @pytest.mark.parametrize("test_email", ["test@tester.com", "Test@Tester.Com"])
@@ -495,6 +515,14 @@ def test_update_badge_invalid_fields(api, dummy_badge_id):
         api.update_badge(dummy_badge_id, invalid_field="value")
 
 
+@pytest.mark.parametrize("legacy_value", [True, False])
+def test_update_badge_legacy_field(api, dummy_badge_id, legacy_value):
+    """Test that update_badge can modify the legacy status of a badge"""
+    api.update_badge(dummy_badge_id, legacy=legacy_value)
+    badge = api.get_badge(dummy_badge_id)
+    assert badge.legacy is legacy_value
+
+
 @pytest.mark.parametrize(
     "identifier_type,update_data",
     [
@@ -668,6 +696,28 @@ def test_add_authorization(api, dummy_badge_id, dummy_person_id, badge_id, email
     else:
         assert result is False
         assert api.authorization_exists(badge_id, email) is False
+
+
+def test_add_authorization_rejects_legacy_badge(api, dummy_badge_id, dummy_person_id):
+    """Test that add_authorization rejects authorizing a legacy badge"""
+
+    badge = api.get_badge(dummy_badge_id)
+    badge.legacy = True
+    api.session.flush()
+
+    with pytest.raises(ValueError, match="legacy badge"):
+        api.add_authorization(dummy_badge_id, "test@tester.com")
+    assert api.authorization_exists(dummy_badge_id, "test@tester.com") is False
+
+
+def test_delete_badge_rejects_legacy_badge(api, dummy_badge_id):
+    """Test that delete_badge raises ValueError when the badge is marked as legacy"""
+    api.update_badge(dummy_badge_id, legacy=True)
+
+    with pytest.raises(ValueError, match="legacy badge"):
+        api.delete_badge(dummy_badge_id)
+
+    assert api.badge_exists(dummy_badge_id) is True
 
 
 def test_get_team(api):
@@ -1352,3 +1402,152 @@ def test_delete_badge_with_tags(api, dummy_issuer_id):
 
     keep_badge = api.get_badge("keepme")
     assert {tag.name for tag in keep_badge.tags} == {"common-tag"}
+
+
+@pytest.fixture
+def create_badge_with_legacy(api, dummy_issuer_id):
+    def _create_badge(name, legacy=False, desc=None, tags=None):
+        badge_id = api.add_badge(
+            name=name,
+            image=f"{name.lower().replace(' ', '_')}.png",
+            desc=desc or f"{name} description",
+            criteria=f"{name} criteria",
+            issuer_id=dummy_issuer_id,
+            tags=tags,
+        )
+        badge = api.get_badge(badge_id)
+        badge.legacy = legacy
+        api.session.flush()
+        return badge_id
+
+    return _create_badge
+
+
+@pytest.fixture
+def team_with_legacy_badges(api, create_badge_with_legacy):
+    """Create a team with both legacy and non-legacy badges"""
+    team_id = api.create_team("TestTeam")
+    series_id = api.create_series("TestSeries", "A test series", team_id, "test, series")
+
+    legacy_badge = create_badge_with_legacy("Legacy Team Badge", legacy=True)
+    active_badge = create_badge_with_legacy("Active Team Badge")
+
+    api.create_milestone(1, legacy_badge, series_id)
+    api.create_milestone(2, active_badge, series_id)
+
+    return team_id, legacy_badge, active_badge
+
+
+@pytest.fixture
+def tagged_badges(create_badge_with_legacy):
+    """Create badges with tags, both legacy and non-legacy"""
+    legacy_tagged = create_badge_with_legacy(
+        name="Legacy Python Badge",
+        legacy=True,
+        tags="python, legacy, programming",
+    )
+    active_tagged = create_badge_with_legacy(
+        name="Active Python Badge",
+        tags="python, active, programming",
+    )
+
+    return legacy_tagged, active_tagged
+
+
+@pytest.mark.parametrize("include_legacy", [False, True])
+def test_get_all_badges_legacy_filtering(api, create_badge_with_legacy, include_legacy):
+    """Test that get_all_badges respects include_legacy parameter"""
+    legacy_badge = create_badge_with_legacy("Legacy Badge", legacy=True)
+    active_badge = create_badge_with_legacy("Active Badge")
+
+    results = list(api.get_all_badges(include_legacy=include_legacy))
+    badge_ids = [b.id for b in results]
+
+    assert (legacy_badge in badge_ids) is include_legacy
+    assert active_badge in badge_ids
+
+
+@pytest.mark.parametrize("include_legacy", [False, True])
+def test_get_badges_from_tags_legacy_filtering(api, tagged_badges, include_legacy):
+    """Test that get_badges_from_tags respects include_legacy parameter"""
+    legacy_id, active_id = tagged_badges
+
+    results = api.get_badges_from_tags(["python"], include_legacy=include_legacy)
+    badge_ids = [b.id for b in results]
+
+    assert (legacy_id in badge_ids) is include_legacy
+    assert active_id in badge_ids
+
+
+@pytest.mark.parametrize("include_legacy", [False, True])
+def test_get_badges_from_tags_match_all_legacy_filtering(
+    api, create_badge_with_legacy, include_legacy
+):
+    """Test that get_badges_from_tags with match_all=True respects include_legacy"""
+    legacy_multi = create_badge_with_legacy(
+        name="Legacy Multi Tag",
+        legacy=True,
+        tags="python, web, legacy",
+    )
+    active_multi = create_badge_with_legacy(
+        name="Active Multi Tag",
+        tags="python, web, active",
+    )
+
+    results = api.get_badges_from_tags(
+        ["python", "web"], match_all=True, include_legacy=include_legacy
+    )
+    badge_ids = [b.id for b in results]
+
+    assert (legacy_multi in badge_ids) is include_legacy
+    assert active_multi in badge_ids
+
+
+@pytest.mark.parametrize("include_legacy", [False, True])
+def test_get_badges_from_team_legacy_filtering(api, team_with_legacy_badges, include_legacy):
+    """Test that get_badges_from_team respects include_legacy parameter"""
+    team_id, legacy_badge, active_badge = team_with_legacy_badges
+
+    results = api.get_badges_from_team(team_id, include_legacy=include_legacy)
+    badge_ids = [b.id for b in results]
+
+    assert (legacy_badge in badge_ids) is include_legacy
+    assert active_badge in badge_ids
+
+
+@pytest.mark.parametrize("include_legacy", [False, True])
+def test_get_badges_by_string_legacy_filtering(api, create_badge_with_legacy, include_legacy):
+    """Test that get_badges_by_string respects include_legacy parameter"""
+    legacy_search = create_badge_with_legacy(
+        "Legacy SearchBadge",
+        legacy=True,
+    )
+    active_search = create_badge_with_legacy("Active SearchBadge")
+
+    results = api.get_badges_by_string("SearchBadge", include_legacy=include_legacy)
+    badge_ids = [b.id for b in results["badges"]]
+
+    assert (legacy_search in badge_ids) is include_legacy
+    assert active_search in badge_ids
+
+
+@pytest.mark.parametrize("include_legacy", [False, True])
+def test_get_badges_by_string_description_search_legacy_filtering(
+    api, create_badge_with_legacy, include_legacy
+):
+    """Test that get_badges_by_string searches descriptions and respects include_legacy"""
+    legacy_desc = create_badge_with_legacy(
+        name="Badge One",
+        legacy=True,
+        desc="This is a legacy special description",
+    )
+    active_desc = create_badge_with_legacy(
+        name="Badge Two",
+        desc="This is an active special description",
+    )
+
+    results = api.get_badges_by_string("special description", include_legacy=include_legacy)
+    badge_ids = [b.id for b in results["badges"]]
+
+    assert (legacy_desc in badge_ids) is include_legacy
+    assert active_desc in badge_ids
