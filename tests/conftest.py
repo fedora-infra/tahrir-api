@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy_helpers import Base as DeclarativeBase
 
 from tahrir_api.dbapi import TahrirDatabase
 from tahrir_api.utils import get_db_manager_from_uri
@@ -15,7 +16,13 @@ def api(callback_calls, tmp_path):
         callback_calls.append((args, kwargs))
 
     db_uri = f"sqlite:///{tmp_path.as_posix()}/testdb.db"
-    db_api = TahrirDatabase(db_uri, notification_callback=callback)
     db_mgr = get_db_manager_from_uri(db_uri)
-    db_mgr.sync()
-    return db_api
+    # Use create_all directly to avoid Alembic multi-head issues in tests.
+    # Tests always start with a fresh DB so migration history is not needed.
+    DeclarativeBase.metadata.create_all(bind=db_mgr.engine)
+    db_api = TahrirDatabase(db_uri, notification_callback=callback)
+
+    yield db_api
+
+    db_api.session.close()
+    db_mgr.engine.dispose()
