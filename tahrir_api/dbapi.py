@@ -19,6 +19,7 @@ from .model import (
     Person,
     Rarity,
     Series,
+    Tag,
     Team,
 )
 from .utils import autocommit, convert_name_to_id, get_db_manager_from_uri
@@ -54,6 +55,50 @@ class TahrirDatabase:
             self.session = session
 
         self.notification_callback = notification_callback
+
+    def get_tag(self, tag_name):
+        """Return the tag with the given name, or None if it does not exist."""
+        return self.session.query(Tag).filter_by(name=tag_name).first()
+
+    @autocommit
+    def create_tag(self, tag_name):
+        """Create and return a new tag with the given name."""
+        tag = Tag(name=tag_name)
+        self.session.add(tag)
+        self.session.flush()
+        return tag
+
+    @autocommit
+    def cleanup_orphan_tags(self):
+        """
+        Delete tags that are not associated with any badge or series.
+
+        Intended to be run regularly (e.g. once per day) to keep the tags
+        table free of stale entries.
+
+        :returns: The number of orphan tags deleted.
+        """
+        orphans = self.session.query(Tag).filter(~Tag.badges.any()).filter(~Tag.series.any()).all()
+        for tag in orphans:
+            self.session.delete(tag)
+        self.session.flush()
+        return len(orphans)
+
+    def _normalize_tags(self, tags):
+        if isinstance(tags, str):
+            tags = tags.split(",")
+        seen = []
+        for tag_name in tags:
+            tag_name = tag_name.strip().lower()
+            if tag_name and tag_name not in seen:
+                seen.append(tag_name)
+        return [self.get_tag(name) or self.create_tag(name) for name in seen]
+
+    def _set_badge_tags(self, badge, tags):
+        badge.tags = self._normalize_tags(tags)
+
+    def _set_series_tags(self, series, tags):
+        series.tags = self._normalize_tags(tags)
 
     def team_exists(self, team_id):
         """
@@ -157,8 +202,8 @@ class TahrirDatabase:
         :type team_id: str
         :param team_id: Team Id to which this Series belongs to
 
-        :type tags: str
-        :param tags: Tags for a Series
+        :type tags: str | list[str]
+        :param tags: Tags for a Series (comma-separated string or list of names)
 
         :type series_id: str
         :param series_id: ID of the Series
@@ -168,9 +213,10 @@ class TahrirDatabase:
             series_id = convert_name_to_id(name)
 
         if not self.series_exists(series_id):
-            new_series = Series(
-                id=series_id, name=name, description=desc, tags=tags, team_id=team_id
-            )
+            new_series = Series(id=series_id, name=name, description=desc, team_id=team_id)
+
+            if tags:
+                self._set_series_tags(new_series, tags)
 
             self.session.add(new_series)
             self.session.flush()
@@ -343,39 +389,26 @@ class TahrirDatabase:
         """
         Return badges matching tags.
 
-        :type tags: list
-        :param tags: A list of string badge tags
+        :type tags: list[str]
+        :param tags: A list of badge tag names
 
         :type match_all: boolean
         :param match_all: Returned badges must have all tags in list
         """
 
-        badges = list()
-
         if match_all:
-            # Return badges matching all tags
-            # ... by doing argument-expansion on a list comprehension
-            badges.extend(
-                self.session.query(Badge).filter(
-                    and_(*[func.lower(Badge.tags).contains(str(tag + ",").lower()) for tag in tags])
-                )
-            )
+            query = self.session.query(Badge)
+            for tag_name in tags:
+                query = query.filter(Badge.tags.any(func.lower(Tag.name) == func.lower(tag_name)))
+            badges = query.all()
         else:
-            # Return badges matching any of the tags
-            for tag in tags:
-                badges.extend(
-                    self.session.query(Badge)
-                    .filter(func.lower(Badge.tags).contains(str(tag + ",").lower()))
-                    .all()
-                )
+            badges = (
+                self.session.query(Badge)
+                .filter(Badge.tags.any(func.lower(Tag.name).in_([func.lower(tag) for tag in tags])))
+                .all()
+            )
 
-        # Eliminate any duplicates.
-        unique_badges = list()
-        for badge in badges:
-            if badge not in unique_badges:
-                unique_badges.append(badge)
-
-        return unique_badges
+        return badges
 
     def get_all_badges(self):
         """
@@ -499,21 +532,14 @@ class TahrirDatabase:
         :type issuer_id: int
         :param issuer_id: The ID of the issuer who issues this Badge
 
-        :type tags: str
-        :param tags: Comma-delimited list of badge tags.
+        :type tags: list[str]
+        :param tags: List of tag names for this Badge.
         """
 
         if not badge_id:
             badge_id = convert_name_to_id(name)
 
         if not self.badge_exists(badge_id):
-            # Make sure the tags string has a trailing
-            # comma at the end. The tags view in Tahrir
-            # depends on that comma when matching all
-            # tags.
-            if tags and not tags.endswith(","):
-                tags = tags + ","
-
             # Actually add the badge.
             new_badge = Badge(
                 id=badge_id,
@@ -522,8 +548,11 @@ class TahrirDatabase:
                 description=desc,
                 criteria=criteria,
                 issuer_id=issuer_id,
-                tags=tags,
             )
+
+            if tags:
+                self._set_badge_tags(new_badge, tags)
+
             self.session.add(new_badge)
             self.session.flush()
         return badge_id
@@ -540,7 +569,7 @@ class TahrirDatabase:
             - image: Badge image URL
             - description: Badge description
             - criteria: Badge criteria
-            - tags: Badge tags (comma will be auto-appended if missing)
+            - tags: Badge tags (list of tag name strings)
 
         :raises KeyError: If invalid field names are provided
         :returns: badge_id if successful, False if badge doesn't exist
@@ -561,8 +590,9 @@ class TahrirDatabase:
         for attr, value in kwargs.items():
             # Special handling for tags
             if attr == "tags":
-                value = value + "," if value and not value.endswith(",") else value
-            setattr(badge, attr, value)
+                self._set_badge_tags(badge, value)
+            else:
+                setattr(badge, attr, value)
 
         self.session.flush()
         return badge_id
@@ -1358,7 +1388,7 @@ class TahrirDatabase:
         query = self.session.query(Badge).filter(
             func.lower(Badge.name).like(f"%{search_string.lower()}%")
             | func.lower(Badge.description).like(f"%{search_string.lower()}%")
-            | func.lower(Badge.tags).like(f"%{search_string.lower()}%")
+            | Badge.tags.any(func.lower(Tag.name).like(f"%{search_string.lower()}%"))
         )
 
         total_count = query.count()
