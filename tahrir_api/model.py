@@ -6,7 +6,16 @@ import uuid
 import arrow
 import pygments
 import simplejson
-from sqlalchemy import Column, DateTime, false, ForeignKey, select, Table, Unicode, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    DateTime,
+    false,
+    ForeignKey,
+    select,
+    Table,
+    Unicode,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import object_session, relationship
 from sqlalchemy.types import Boolean, Float, Integer
 from sqlalchemy_helpers import Base as DeclarativeBase

@@ -9,7 +9,9 @@ def _get_config_from_path(filename):
     d.__file__ = filename
     try:
         with open(filename, mode="rb") as config_file:
-            exec(compile(config_file.read(), filename, "exec"), d.__dict__)  # noqa: S102
+            exec(  # noqa: S102
+                compile(config_file.read(), filename, "exec"), d.__dict__
+            )
     except OSError as e:
         e.strerror = f"Unable to load configuration file ({e.strerror})"
         raise
