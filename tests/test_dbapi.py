@@ -1,6 +1,10 @@
+import importlib
 from datetime import datetime, timedelta
 
 import pytest
+import sqlalchemy as sa
+from alembic.migration import MigrationContext
+from alembic.operations import Operations
 
 from tahrir_api.model import (
     Assertion,
@@ -10,6 +14,7 @@ from tahrir_api.model import (
     Person,
     Rarity,
     Series,
+    Tag,
     Team,
 )
 
@@ -57,7 +62,7 @@ def search_test_badges(api, dummy_issuer_id):
         desc="Badge for Python programming excellence",
         criteria="Complete 100 Python exercises",
         issuer_id=dummy_issuer_id,
-        tags="python, programming, expert",
+        tags=["python", "programming", "expert"],
     )
     api.add_badge(
         name="JavaScript Ninja",
@@ -65,7 +70,7 @@ def search_test_badges(api, dummy_issuer_id):
         desc="Master the JavaScript language and frameworks",
         criteria="Build 5 JavaScript projects",
         issuer_id=dummy_issuer_id,
-        tags="javascript, web, frontend",
+        tags=["javascript", "web", "frontend"],
     )
     api.add_badge(
         name="Frontend Master",
@@ -73,7 +78,7 @@ def search_test_badges(api, dummy_issuer_id):
         desc="Expert web developer with full-stack capabilities",
         criteria="Complete web development bootcamp",
         issuer_id=dummy_issuer_id,
-        tags="web, development, fullstack",
+        tags=["web", "development", "fullstack"],
     )
     api.add_badge(
         name="Doc Writer",
@@ -81,7 +86,7 @@ def search_test_badges(api, dummy_issuer_id):
         desc="Created comprehensive project documentation",
         criteria="Write 50 pages of documentation",
         issuer_id=dummy_issuer_id,
-        tags="documentation, writing, communication",
+        tags=["documentation", "writing", "communication"],
     )
     api.add_badge(
         name="OSS Contributor",
@@ -89,7 +94,7 @@ def search_test_badges(api, dummy_issuer_id):
         desc="Active contributor to open source projects and python ecosystems",
         criteria="Contribute to 3 open source projects",
         issuer_id=dummy_issuer_id,
-        tags="opensource, python, community",
+        tags=["opensource", "python", "community"],
     )
     return 5
 
@@ -97,6 +102,75 @@ def search_test_badges(api, dummy_issuer_id):
 def test_add_badges(api, dummy_badge_id):
     assert api.get_badge("testbadge").__str__() == "TestBadge"
     assert api.badge_exists("testbadge") is True
+
+
+def test_add_badge_creates_tag_relationships(api, dummy_issuer_id):
+    badge_id = api.add_badge(
+        "TaggedBadge",
+        "tagged.png",
+        "A badge with normalized tags",
+        "Tag criteria",
+        dummy_issuer_id,
+        tags=["python", "testing"],
+    )
+
+    badge = api.get_badge(badge_id)
+
+    assert {tag.name for tag in badge.tags} == {"python", "testing"}
+    assert len(badge.tags) == 2
+
+
+def test_add_badge_reuses_existing_tags(api, dummy_issuer_id):
+    api.add_badge(
+        "FirstTaggedBadge",
+        "first.png",
+        "First badge with a shared tag",
+        "First criteria",
+        dummy_issuer_id,
+        tags=["shared", "first"],
+    )
+    api.add_badge(
+        "SecondTaggedBadge",
+        "second.png",
+        "Second badge with a shared tag",
+        "Second criteria",
+        dummy_issuer_id,
+        tags=["shared", "second"],
+    )
+
+    assert api.session.query(Tag).filter_by(name="shared").count() == 1
+
+
+def test_create_series_creates_tag_relationships(api):
+    team_id = api.create_team("SeriesTeam")
+
+    series_id = api.create_series(
+        "TaggedSeries",
+        "A series with normalized tags",
+        team_id,
+        tags="python, testing",
+    )
+
+    series = api.get_series(series_id)
+
+    assert {tag.name for tag in series.tags} == {"python", "testing"}
+    assert len(series.tags) == 2
+
+
+def test_create_series_deduplicates_comma_separated_tags(api):
+    team_id = api.create_team("DedupSeriesTeam")
+
+    series_id = api.create_series(
+        "DedupTaggedSeries",
+        "A series with duplicate tags",
+        team_id,
+        tags="python, testing, python,  testing  ,",
+    )
+
+    series = api.get_series(series_id)
+
+    assert {tag.name for tag in series.tags} == {"python", "testing"}
+    assert api.session.query(Tag).filter_by(name="python").count() == 1
 
 
 def test_add_team(api):
@@ -277,7 +351,7 @@ def test_get_badges_from_tags(api, dummy_issuer_id):
         "A test badge for doing unit tests",
         "TestCriteria",
         dummy_issuer_id,
-        tags="test",
+        tags=["test"],
     )
 
     # Badge tagged with "tester"
@@ -287,7 +361,7 @@ def test_get_badges_from_tags(api, dummy_issuer_id):
         "A second test badge for doing unit tests",
         "TestCriteria",
         dummy_issuer_id,
-        tags="tester",
+        tags=["tester"],
     )
 
     # Badge tagged with both "test" and "tester"
@@ -297,7 +371,7 @@ def test_get_badges_from_tags(api, dummy_issuer_id):
         "A third test badge for doing unit tests",
         "TestCriteria",
         dummy_issuer_id,
-        tags="test, tester",
+        tags=["test", "tester"],
     )
 
     tags = ["test", "tester"]
@@ -347,15 +421,15 @@ def test_remove_assertion_nonexistent_assertion(api, dummy_badge_id, dummy_perso
         {"image": "UpdatedImage"},
         {"description": "Updated description"},
         {"criteria": "Updated criteria"},
-        {"tags": "updated, tags"},
-        {"tags": "updated, tags,"},
+        {"tags": ["updated", "tags"]},
+        {"tags": ["updated", "tags"]},
         # Test multiple field updates
         {
             "name": "MultiUpdate",
             "image": "MultiImage",
             "description": "Multi description",
             "criteria": "Multi criteria",
-            "tags": "multi, tags",
+            "tags": ["multi", "tags"],
         },
         # Test empty update
         {},
@@ -374,10 +448,9 @@ def test_update_badge(api, dummy_badge_id, kwargs):
 
     # Handle
     if "tags" in kwargs:
-        tags = kwargs["tags"]
-        expected_tags = tags + "," if tags and not tags.endswith(",") else tags
+        expected_tags = set(kwargs["tags"])
     else:
-        expected_tags = existing_badge.tags
+        expected_tags = {tag.name for tag in existing_badge.tags}
 
     # Update
     api.update_badge(dummy_badge_id, **kwargs)
@@ -390,7 +463,24 @@ def test_update_badge(api, dummy_badge_id, kwargs):
     assert updated_badge.image == expected_image
     assert updated_badge.description == expected_description
     assert updated_badge.criteria == expected_criteria
-    assert updated_badge.tags == expected_tags
+    assert {tag.name for tag in updated_badge.tags} == expected_tags
+
+
+def test_update_badge_replaces_tags(api, dummy_issuer_id):
+    badge_id = api.add_badge(
+        "ReplaceTagsBadge",
+        "replace.png",
+        "A badge whose tags will be replaced",
+        "Replace criteria",
+        dummy_issuer_id,
+        tags=["old", "shared"],
+    )
+
+    api.update_badge(badge_id, tags=["new", "shared"])
+
+    updated_badge = api.get_badge(badge_id)
+    assert {tag.name for tag in updated_badge.tags} == {"new", "shared"}
+    assert api.session.query(Tag).filter_by(name="shared").count() == 1
 
 
 def test_update_badge_nonexistent(api):
@@ -609,14 +699,12 @@ def test_get_series_from_team(api):
         name="Test Series Alpha",
         description="Alpha test series",
         team_id="test-team",
-        tags="test, series",
     )
     series_b = Series(
         id="test-series-bravo",
         name="Test Series Bravo",
         description="Bravo test series",
         team_id="test-team",
-        tags="test, series",
     )
     api.session.add(series_a)
     api.session.add(series_b)
@@ -647,7 +735,6 @@ def test_get_badges_from_team(api, dummy_issuer_id):
         name="Test Series",
         description="Test series",
         team_id="test-team",
-        tags="test, series",
     )
     api.session.add(series)
     api.session.flush()
@@ -702,7 +789,6 @@ def test_get_series_existing(api):
         id="test-series",
         name="Test Series",
         description="A test series for unit testing",
-        tags="test, series",
         team_id="test-team",
     )
     api.session.add(series)
@@ -713,7 +799,7 @@ def test_get_series_existing(api):
     assert retrieved_series.id == "test-series"
     assert retrieved_series.name == "Test Series"
     assert retrieved_series.description == "A test series for unit testing"
-    assert retrieved_series.tags == "test, series"
+    assert retrieved_series.tags == []
 
 
 def test_get_series_nonexistent(api):
@@ -989,3 +1075,280 @@ def test_compute_badge_rarities_badge_with_zero_assertions(api, dummy_issuer_id)
     zero_badge = next(b for b in badges if b.name == "ZeroBadge_5")
     x_tier = api.session.query(Rarity).filter(Rarity.name == "X").first()
     assert zero_badge.rarity_id == x_tier.id
+
+
+def test_badge_as_dict_includes_tag_names(api, dummy_issuer_id):
+    badge_id = api.add_badge(
+        "DictTagsBadge",
+        "dict-tags.png",
+        "A badge whose dict includes tag names",
+        "Dict criteria",
+        dummy_issuer_id,
+        tags=["dict", "tags"],
+    )
+
+    badge_dict = api.get_badge(badge_id).as_dict()
+
+    assert badge_dict["tags"] == ["dict", "tags"]
+
+
+def test_series_as_dict_includes_tag_names(api):
+    team_id = api.create_team("DictSeriesTeam")
+    series_id = api.create_series(
+        "DictTagsSeries",
+        "A series whose dict includes tag names",
+        team_id,
+        tags="dict, tags",
+    )
+
+    series_dict = api.get_series(series_id).as_dict()
+
+    assert series_dict["tags"] == ["dict", "tags"]
+
+
+series_tags_migration = importlib.import_module(
+    "tahrir_api.migrations.versions.196a305a2e0c_normalize_series_tags"
+)
+
+
+def run_series_tags_migration(connection, migration_func):
+    context = MigrationContext.configure(connection)
+    operations = Operations(context)
+
+    original_op = series_tags_migration.op
+    series_tags_migration.op = operations
+    try:
+        migration_func()
+    finally:
+        series_tags_migration.op = original_op
+
+
+def create_series_tags_old_schema(connection):
+    metadata = sa.MetaData()
+    sa.Table(
+        "series",
+        metadata,
+        sa.Column("id", sa.Unicode(length=128), primary_key=True),
+        sa.Column("tags", sa.Unicode(length=128), nullable=True),
+    )
+    sa.Table(
+        "tags",
+        metadata,
+        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
+        sa.Column("name", sa.Unicode(length=128), nullable=False, unique=True),
+    )
+    metadata.create_all(connection)
+
+
+def test_series_tags_upgrade_preserves_existing_tags():
+    engine = sa.create_engine("sqlite:///:memory:")
+
+    with engine.begin() as connection:
+        create_series_tags_old_schema(connection)
+        connection.execute(
+            sa.text(
+                """
+                INSERT INTO series (id, tags)
+                VALUES
+                    ('series-a', 'python, testing, python'),
+                    ('series-b', ' docs , writing ')
+                """
+            )
+        )
+
+        run_series_tags_migration(connection, series_tags_migration.upgrade)
+
+        series_columns = [column["name"] for column in sa.inspect(connection).get_columns("series")]
+        tag_rows = connection.execute(sa.text("SELECT name FROM tags ORDER BY name")).fetchall()
+        series_tag_rows = connection.execute(
+            sa.text(
+                """
+                SELECT series_tags.series_id, tags.name
+                FROM series_tags
+                JOIN tags ON tags.id = series_tags.tag_id
+                ORDER BY series_tags.series_id, tags.name
+                """
+            )
+        ).fetchall()
+
+    assert "tags" not in series_columns
+    assert [row[0] for row in tag_rows] == ["docs", "python", "testing", "writing"]
+    assert series_tag_rows == [
+        ("series-a", "python"),
+        ("series-a", "testing"),
+        ("series-b", "docs"),
+        ("series-b", "writing"),
+    ]
+
+
+def test_series_tags_downgrade_restores_comma_separated_tags():
+    engine = sa.create_engine("sqlite:///:memory:")
+
+    with engine.begin() as connection:
+        create_series_tags_old_schema(connection)
+        connection.execute(
+            sa.text("INSERT INTO series (id, tags) VALUES ('series-a', 'python, testing')")
+        )
+        run_series_tags_migration(connection, series_tags_migration.upgrade)
+
+        run_series_tags_migration(connection, series_tags_migration.downgrade)
+
+        series_columns = [column["name"] for column in sa.inspect(connection).get_columns("series")]
+        restored_tags = connection.execute(
+            sa.text("SELECT tags FROM series WHERE id = 'series-a'")
+        ).scalar()
+        tables = sa.inspect(connection).get_table_names()
+
+    assert "tags" in series_columns
+    assert restored_tags == "python, testing"
+    assert "series_tags" not in tables
+
+
+badge_tags_migration = importlib.import_module(
+    "tahrir_api.migrations.versions.1013e1694fa2_normalize_badge_tags"
+)
+
+
+def run_badge_tags_migration(connection, migration_func):
+    context = MigrationContext.configure(connection)
+    operations = Operations(context)
+
+    original_op = badge_tags_migration.op
+    badge_tags_migration.op = operations
+    try:
+        migration_func()
+    finally:
+        badge_tags_migration.op = original_op
+
+
+def create_badge_tags_old_schema(connection):
+    metadata = sa.MetaData()
+    sa.Table(
+        "badges",
+        metadata,
+        sa.Column("id", sa.Unicode(length=128), primary_key=True),
+        sa.Column("tags", sa.Unicode(length=128), nullable=True),
+    )
+    metadata.create_all(connection)
+
+
+def test_badge_tags_upgrade_preserves_existing_tags():
+    engine = sa.create_engine("sqlite:///:memory:")
+
+    with engine.begin() as connection:
+        create_badge_tags_old_schema(connection)
+        connection.execute(
+            sa.text(
+                """
+                INSERT INTO badges (id, tags)
+                VALUES
+                    ('badge-a', 'python, testing, python'),
+                    ('badge-b', ' docs , writing ')
+                """
+            )
+        )
+
+        run_badge_tags_migration(connection, badge_tags_migration.upgrade)
+
+        badge_columns = [column["name"] for column in sa.inspect(connection).get_columns("badges")]
+        tag_rows = connection.execute(sa.text("SELECT name FROM tags ORDER BY name")).fetchall()
+        badge_tag_rows = connection.execute(
+            sa.text(
+                """
+                SELECT badge_tags.badge_id, tags.name
+                FROM badge_tags
+                JOIN tags ON tags.id = badge_tags.tag_id
+                ORDER BY badge_tags.badge_id, tags.name
+                """
+            )
+        ).fetchall()
+
+    assert "tags" not in badge_columns
+    assert [row[0] for row in tag_rows] == ["docs", "python", "testing", "writing"]
+    assert badge_tag_rows == [
+        ("badge-a", "python"),
+        ("badge-a", "testing"),
+        ("badge-b", "docs"),
+        ("badge-b", "writing"),
+    ]
+
+
+def test_badge_tags_downgrade_restores_comma_separated_tags():
+    engine = sa.create_engine("sqlite:///:memory:")
+
+    with engine.begin() as connection:
+        create_badge_tags_old_schema(connection)
+        connection.execute(
+            sa.text("INSERT INTO badges (id, tags) VALUES ('badge-a', 'python, testing')")
+        )
+        run_badge_tags_migration(connection, badge_tags_migration.upgrade)
+
+        run_badge_tags_migration(connection, badge_tags_migration.downgrade)
+
+        badge_columns = [column["name"] for column in sa.inspect(connection).get_columns("badges")]
+        restored_tags = connection.execute(
+            sa.text("SELECT tags FROM badges WHERE id = 'badge-a'")
+        ).scalar()
+        tables = sa.inspect(connection).get_table_names()
+
+    assert "tags" in badge_columns
+    assert restored_tags == "python, testing"
+    assert "badge_tags" not in tables
+    assert "tags" not in tables
+
+
+def test_cleanup_orphan_tags(api, dummy_issuer_id):
+    api.add_badge(
+        "OrphanBadge",
+        "orphan.png",
+        "A badge whose tags may become orphans",
+        "Orphan criteria",
+        dummy_issuer_id,
+        tags=["unique-tag", "shared-tag"],
+    )
+    api.add_badge(
+        "KeeperBadge",
+        "keeper.png",
+        "A badge that keeps shared-tag alive",
+        "Keeper criteria",
+        dummy_issuer_id,
+        tags=["shared-tag", "keeper-tag"],
+    )
+
+    assert api.session.query(Tag).count() == 3
+
+    api.delete_badge("orphanbadge")
+    deleted = api.cleanup_orphan_tags()
+
+    assert deleted == 1
+    remaining = {t.name for t in api.session.query(Tag).all()}
+    assert "unique-tag" not in remaining
+    assert "shared-tag" in remaining
+    assert "keeper-tag" in remaining
+
+
+def test_delete_badge_with_tags(api, dummy_issuer_id):
+    api.add_badge(
+        "DeleteMe",
+        "delete.png",
+        "A badge to be deleted",
+        "Delete criteria",
+        dummy_issuer_id,
+        tags=["delete-tag", "common-tag"],
+    )
+    api.add_badge(
+        "KeepMe",
+        "keep.png",
+        "A badge to keep",
+        "Keep criteria",
+        dummy_issuer_id,
+        tags=["common-tag"],
+    )
+
+    result = api.delete_badge("deleteme")
+    assert result == "deleteme"
+    assert api.badge_exists("deleteme") is False
+    assert api.badge_exists("keepme") is True
+
+    keep_badge = api.get_badge("keepme")
+    assert {tag.name for tag in keep_badge.tags} == {"common-tag"}
