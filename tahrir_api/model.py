@@ -6,7 +6,7 @@ import uuid
 import arrow
 import pygments
 import simplejson
-from sqlalchemy import Column, DateTime, false, ForeignKey, select, Unicode, UniqueConstraint
+from sqlalchemy import Column, DateTime, false, ForeignKey, select, Table, Unicode, UniqueConstraint
 from sqlalchemy.orm import object_session, relationship
 from sqlalchemy.types import Boolean, Float, Integer
 from sqlalchemy_helpers import Base as DeclarativeBase
@@ -42,6 +42,33 @@ def generate_default_id(context):
     return context.current_parameters["name"].lower().replace(" ", "-")
 
 
+badge_tags = Table(
+    "badge_tags",
+    DeclarativeBase.metadata,
+    Column("badge_id", Unicode(128), ForeignKey("badges.id"), primary_key=True),
+    Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
+)
+
+series_tags = Table(
+    "series_tags",
+    DeclarativeBase.metadata,
+    Column("series_id", Unicode(128), ForeignKey("series.id"), primary_key=True),
+    Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
+)
+
+
+class Tag(DeclarativeBase):
+    __tablename__ = "tags"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(Unicode(128), nullable=False, unique=True)
+
+    def __str__(self):
+        return str(self.name)
+
+    def as_dict(self):
+        return dict(name=self.name)
+
+
 class Badge(DeclarativeBase):
     __tablename__ = "badges"
     id = Column(Unicode(128), primary_key=True, default=generate_default_id)
@@ -57,7 +84,7 @@ class Badge(DeclarativeBase):
     invitations = relationship("Invitation", backref="badge")
     current_values = relationship("CurrentValue", back_populates="badge")
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
-    tags = Column(Unicode(128))
+    tags = relationship("Tag", secondary=badge_tags, backref="badges")
     legacy = Column(Boolean, default=False, nullable=False, server_default=false())
     rarity_id = Column(Integer, ForeignKey("rarities.id"), nullable=True)
     rarity = relationship("Rarity", back_populates="badges")
@@ -78,7 +105,7 @@ class Badge(DeclarativeBase):
             criteria=self.criteria,
             issuer=self.issuer.as_dict(),
             created_on=time.mktime(self.created_on.timetuple()),
-            tags=self.tags,
+            tags=[tag.name for tag in self.tags],
             legacy=self.legacy,
             rarity=self.rarity.as_dict() if self.rarity else None,
         )
@@ -115,7 +142,7 @@ class Series(DeclarativeBase):
         default=datetime.datetime.now,
         onupdate=datetime.datetime.now,
     )
-    tags = Column(Unicode(128))
+    tags = relationship("Tag", secondary=series_tags, backref="series")
     milestone = relationship("Milestone", backref="series")
     team_id = Column(Unicode(128), ForeignKey("team.id"), nullable=False)
 
@@ -126,6 +153,7 @@ class Series(DeclarativeBase):
             created_on=str(self.created_on),
             last_updated=str(self.last_updated),
             team=self.team.as_dict(),
+            tags=[tag.name for tag in self.tags],
         )
 
 
