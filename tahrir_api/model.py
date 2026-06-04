@@ -45,7 +45,7 @@ def generate_default_id(context):
 badge_tags = Table(
     "badge_tags",
     DeclarativeBase.metadata,
-    Column("badge_id", Unicode(128), ForeignKey("badges.id"), primary_key=True),
+    Column("badge_id", Unicode(128), ForeignKey("badges.id", ondelete="CASCADE"), primary_key=True),
     Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
 )
 
@@ -78,13 +78,13 @@ class Badge(DeclarativeBase):
     description = Column(Unicode(128), nullable=False)
     criteria = Column(Unicode(128), nullable=False)
     issuer_id = Column(Integer, ForeignKey("issuers.id"), nullable=False)
-    milestone = relationship("Milestone", backref="badge")
-    authorizations = relationship("Authorization", backref="badge")
-    assertions = relationship("Assertion", backref="badge")
-    invitations = relationship("Invitation", backref="badge")
-    current_values = relationship("CurrentValue", back_populates="badge")
+    milestone = relationship("Milestone", backref="badge", passive_deletes=True)
+    authorizations = relationship("Authorization", backref="badge", passive_deletes=True)
+    assertions = relationship("Assertion", backref="badge", passive_deletes=True)
+    invitations = relationship("Invitation", backref="badge", passive_deletes=True)
+    current_values = relationship("CurrentValue", back_populates="badge", passive_deletes=True)
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
-    tags = relationship("Tag", secondary=badge_tags, backref="badges")
+    tags = relationship("Tag", secondary=badge_tags, backref="badges", passive_deletes=True)
     legacy = Column(Boolean, default=False, nullable=False, server_default=false())
     rarity_id = Column(Integer, ForeignKey("rarities.id"), nullable=True)
     rarity = relationship("Rarity", back_populates="badges")
@@ -162,7 +162,7 @@ class Milestone(DeclarativeBase):
     __table_args__ = (UniqueConstraint("position", "badge_id", "series_id"),)
     id = Column(Integer, unique=True, primary_key=True)
     position = Column(Integer, default=None)
-    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
+    badge_id = Column(Unicode(128), ForeignKey("badges.id", ondelete="CASCADE"), nullable=False)
     series_id = Column(Unicode(128), ForeignKey("series.id"), nullable=False)
 
     def as_dict(self):
@@ -236,7 +236,7 @@ class Invitation(DeclarativeBase):
     id = Column(Unicode(32), primary_key=True, unique=True, default=invitation_id_default)
     created_on = Column(DateTime, nullable=False)
     expires_on = Column(DateTime, nullable=False)
-    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
+    badge_id = Column(Unicode(128), ForeignKey("badges.id", ondelete="CASCADE"), nullable=False)
     created_by = Column(Integer, ForeignKey("persons.id"), nullable=False)
 
     @property
@@ -251,7 +251,7 @@ class Invitation(DeclarativeBase):
 class Authorization(DeclarativeBase):
     __tablename__ = "authorizations"
     id = Column(Integer, primary_key=True)
-    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
+    badge_id = Column(Unicode(128), ForeignKey("badges.id", ondelete="CASCADE"), nullable=False)
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
 
 
@@ -262,7 +262,9 @@ class CurrentValue(DeclarativeBase):
     """
 
     __tablename__ = "current_values"
-    badge_id = Column(Unicode(128), ForeignKey("badges.id"), primary_key=True, nullable=False)
+    badge_id = Column(
+        Unicode(128), ForeignKey("badges.id", ondelete="CASCADE"), primary_key=True, nullable=False
+    )
     person_id = Column(Integer, ForeignKey("persons.id"), primary_key=True, nullable=False)
     value = Column(Integer, nullable=False)
     last_update = Column(DateTime, nullable=False)
@@ -301,7 +303,7 @@ def assertion_id_default(context):
 class Assertion(DeclarativeBase):
     __tablename__ = "assertions"
     id = Column(Unicode(128), primary_key=True, unique=True, default=assertion_id_default)
-    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
+    badge_id = Column(Unicode(128), ForeignKey("badges.id", ondelete="CASCADE"), nullable=False)
     person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
     issued_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
