@@ -1551,3 +1551,15 @@ def test_get_badges_by_string_description_search_legacy_filtering(
 
     assert (legacy_desc in badge_ids) is include_legacy
     assert active_desc in badge_ids
+
+
+def test_delete_badge_cascades_assertions(api, dummy_badge_id, dummy_person_id):
+    # create an assertion linking the badge to the person
+    api.add_assertion(dummy_badge_id, "test@tester.com", None)
+
+    # delete the badge
+    api.delete_badge(dummy_badge_id)
+
+    # assert the assertion was also deleted
+    result = api.session.query(Assertion).filter_by(badge_id=dummy_badge_id).all()
+    assert result == []
