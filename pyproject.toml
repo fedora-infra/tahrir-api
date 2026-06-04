@@ -75,7 +75,6 @@ select = ["E", "F", "W", "I", "UP", "S", "B", "RUF"]
 ignore = ["S324"]  # Allow use of md5 & sha1
 
 [tool.ruff.lint.isort]
-lines-after-imports = 2
 order-by-type = false
 
 [tool.ruff.lint.per-file-ignores]

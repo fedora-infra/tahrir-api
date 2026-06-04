@@ -8,10 +8,9 @@ Create Date: 2026-05-21 16:57:28.719850
 import sqlalchemy as sa
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision = "5b1e956d70b5"
-down_revision = "caeca369a786"
+down_revision = "196a305a2e0c"
 branch_labels = None
 depends_on = None
 
@@ -28,7 +27,9 @@ def upgrade():
     )
     op.add_column(
         "badges",
-        sa.Column("rarity_id", sa.Integer(), sa.ForeignKey("rarities.id"), nullable=True),
+        sa.Column(
+            "rarity_id", sa.Integer(), sa.ForeignKey("rarities.id"), nullable=True
+        ),
     )
     op.create_index("ix_badges_rarity_id", "badges", ["rarity_id"])
 
