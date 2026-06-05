@@ -22,7 +22,7 @@ Before getting started, ensure your system meets the following requirements:
 **Software Requirements**
 
 - **Python**: 3.9 or higher 
-- **Poetry**: Latest version for dependency management
+- **uv**: Latest version for dependency management
 - **Database**: PostgreSQL 9.6+ (recommended) or SQLite (basic development)
 - **Git**: For version control
 
@@ -38,7 +38,7 @@ Project Setup
 
 .. code-block:: bash
 
-    $ sudo dnf install -y python3 python3-pip python3-devel poetry gcc krb5-devel git
+    $ sudo dnf install -y python3 python3-pip python3-devel uv gcc krb5-devel git
 
 2. Clone your fork to the local storage and make it your current working directory:
 
@@ -58,8 +58,8 @@ Project Setup
 
 .. code-block:: bash
 
-    (venv) $ poetry check
-    (venv) $ poetry install
+    (venv) $ uv check
+    (venv) $ uv install
 
 
 Database Setup
