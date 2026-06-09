@@ -27,9 +27,7 @@ def upgrade():
     )
     op.add_column(
         "badges",
-        sa.Column(
-            "rarity_id", sa.Integer(), sa.ForeignKey("rarities.id"), nullable=True
-        ),
+        sa.Column("rarity_id", sa.Integer(), sa.ForeignKey("rarities.id"), nullable=True),
     )
     op.create_index("ix_badges_rarity_id", "badges", ["rarity_id"])
 

@@ -4,7 +4,6 @@ import pytest
 
 from tahrir_api.model import Assertion
 
-
 now = datetime.datetime.now()
 yesterday = now - datetime.timedelta(days=1)
 one_week_ago = now - datetime.timedelta(days=7)

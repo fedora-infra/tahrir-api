@@ -8,7 +8,6 @@ Create Date: 2024-07-23 15:27:48.303528
 import sqlalchemy as sa
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision = "51261da641fb"
 down_revision = "3d3fb9e59e7b"
@@ -27,7 +26,9 @@ def upgrade():
             ["badge_id"], ["badges.id"], name=op.f("fk_current_values_badge_id_badges")
         ),
         sa.ForeignKeyConstraint(
-            ["person_id"], ["persons.id"], name=op.f("fk_current_values_person_id_persons")
+            ["person_id"],
+            ["persons.id"],
+            name=op.f("fk_current_values_person_id_persons"),
         ),
         sa.PrimaryKeyConstraint("badge_id", "person_id", name=op.f("pk_current_values")),
     )
