@@ -5,7 +5,7 @@ import importlib.resources
 from sqlalchemy_helpers import DatabaseManager
 
 
-def autocommit(func):
+def autocommit(func: callable) -> callable:
     """A decorator that autocommits after API calls unless
     configured otherwise.
     """
@@ -22,7 +22,7 @@ def autocommit(func):
     return _wrapper
 
 
-def convert_name_to_id(name):
+def convert_name_to_id(name: str) -> str:
     """
     Convert a badge name into a valid badge ID.
 
@@ -39,7 +39,7 @@ def convert_name_to_id(name):
     return badge_id
 
 
-def get_db_manager_from_uri(uri):
+def get_db_manager_from_uri(uri: str) -> DatabaseManager:
     from .model import DeclarativeBase  # noqa: F401
 
     with importlib.resources.as_file(
