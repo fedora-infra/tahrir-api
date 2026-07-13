@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 1.5.1
+
+- Resolve branching database migration revisions ([3930aa6](https://github.com/fedora-infra/tahrir-api/commit/3930aa6))
+
+
 ## Version 1.5.0
 
 - Add badge search functionality ([659fb5e](https://github.com/fedora-infra/tahrir-api/commit/659fb5e))
