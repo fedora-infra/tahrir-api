@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 1.5.0
+
+- Add badge search functionality ([659fb5e](https://github.com/fedora-infra/tahrir-api/commit/659fb5e))
+- Add paginated `get_persons_by_nickname` method ([498e061](https://github.com/fedora-infra/tahrir-api/commit/498e061))
+- Add legacy boolean column to badges ([ccebaf6](https://github.com/fedora-infra/tahrir-api/commit/ccebaf6))
+- Filter and guard by legacy status ([d3b14d3](https://github.com/fedora-infra/tahrir-api/commit/d3b14d3))
+- Normalize tags into separate tables ([f385660](https://github.com/fedora-infra/tahrir-api/commit/f385660))
+- Add badge rarity calculation ([5f88253](https://github.com/fedora-infra/tahrir-api/commit/5f88253))
+- Add cascade delete to badge assertions ([207cc89](https://github.com/fedora-infra/tahrir-api/commit/207cc89))
+- Modularise dbapi into db package ([a3a0474](https://github.com/fedora-infra/tahrir-api/commit/a3a0474))
+- Replace `py39` with `py313` and `py314` in test matrix ([793f35b](https://github.com/fedora-infra/tahrir-api/commit/793f35b))
+- Purge `black` in favour of `ruff` ([0bad347](https://github.com/fedora-infra/tahrir-api/commit/0bad347))
+- Include automated dependency updates
+
+
 ## Version 1.4.3
 
 - Add missing autocommit decorator on `expire_invitation` ([0e304f5](https://github.com/fedora-infra/tahrir-api/commit/0e304f59c174142513834821cfc25ac7b74e1272))
