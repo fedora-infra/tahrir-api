@@ -16,13 +16,13 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table("assertions", schema=None) as batch_op:
-        batch_op.drop_constraint("fk_assertions_badge_id_badges", type_="foreignkey")
+        batch_op.drop_constraint("assertions_badge_id_fkey", type_="foreignkey")
         batch_op.create_foreign_key(
-            "fk_assertions_badge_id_badges", "badges", ["badge_id"], ["id"], ondelete="CASCADE"
+            "assertions_badge_id_fkey", "badges", ["badge_id"], ["id"], ondelete="CASCADE"
         )
 
 
 def downgrade():
     with op.batch_alter_table("assertions", schema=None) as batch_op:
-        batch_op.drop_constraint("fk_assertions_badge_id_badges", type_="foreignkey")
-        batch_op.create_foreign_key("fk_assertions_badge_id_badges", "badges", ["badge_id"], ["id"])
+        batch_op.drop_constraint("assertions_badge_id_fkey", type_="foreignkey")
+        batch_op.create_foreign_key("assertions_badge_id_fkey", "badges", ["badge_id"], ["id"])
