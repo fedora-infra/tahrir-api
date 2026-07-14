@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 1.5.2
+
+- Use actual FK constraint name in cascade migration ([d8f81fe](https://github.com/fedora-infra/tahrir-api/commit/d8f81fe))
+
+
 ## Version 1.5.1
 
 - Resolve branching database migration revisions ([3930aa6](https://github.com/fedora-infra/tahrir-api/commit/3930aa6))
