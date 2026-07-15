@@ -55,12 +55,14 @@ def test_compute_badge_rarities_standard_case(api, dummy_badges_with_assertions)
     assert any("RarityBadge_0" in b.name for b in d_badges)
 
 
-def test_compute_badge_rarities_no_users_returns_early(api, dummy_issuer_id):
-    """With no users in the DB, compute should return without error."""
+def test_compute_badge_rarities_no_users_assigns_d(api, dummy_issuer_id):
+    """With no users in the database, compute should assign all badges to D tier."""
     api.add_badge("EmptyBadge", "img", "desc", "crit", dummy_issuer_id)
-    api.compute_badge_rarities()  # should not raise
+    api.compute_badge_rarities()
     badges = api.get_all_badges().all()
-    assert all(badge.rarity_id is None for badge in badges)
+    d_tier = api.session.query(Rarity).filter(Rarity.name == "D").first()
+    assert d_tier is not None
+    assert all(badge.rarity_id == d_tier.id for badge in badges)
 
 
 def test_compute_badge_rarities_idempotent(api, dummy_badges_with_assertions):
@@ -111,6 +113,20 @@ def test_compute_badge_rarities_uneven_badge_count(api, dummy_issuer_id):
     assert sum(tier_counts.values()) == 7
     # One tier gets the extra badge from remainder
     assert max(tier_counts.values()) == 2
+
+
+def test_compute_badge_rarities_no_assertions_assigns_d(api, dummy_issuer_id):
+    """With users but no assertions, compute should assign all badges to D tier."""
+    for i in range(3):
+        api.add_person(f"noassert{i}@test.com")
+    for i in range(6):
+        api.add_badge(f"NoAssertBadge_{i}", f"img_{i}", f"desc_{i}", f"crit_{i}", dummy_issuer_id)
+
+    api.compute_badge_rarities()
+    badges = api.get_all_badges().all()
+    d_tier = api.session.query(Rarity).filter(Rarity.name == "D").first()
+    assert d_tier is not None
+    assert all(b.rarity_id == d_tier.id for b in badges)
 
 
 def test_compute_badge_rarities_badge_with_zero_assertions(api, dummy_issuer_id):

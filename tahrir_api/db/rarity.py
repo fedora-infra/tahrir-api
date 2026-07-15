@@ -32,15 +32,25 @@ class RarityMethod:
 
         userpoll = self.session.query(Person).count()
 
-        if userpoll == 0:
+        all_badges = self.session.query(Badge).all()
+        if not all_badges:
+            return
+
+        count_map = {row.badge_id: row.count for row in counts}
+        item_dict = {b.id: b for b in all_badges}
+
+        if userpoll == 0 or not count_map:
+            rarity_row = self.session.query(Rarity).filter(Rarity.name == "D").first()
+            if not rarity_row:
+                rarity_row = Rarity(name="D", lower_limit=0, upper_limit=0)
+                self.session.add(rarity_row)
+                self.session.flush()
+            for badge in all_badges:
+                badge.rarity_id = rarity_row.id
             return
 
         # build the same accodict structure as the frontend script
         accodict = {}
-        count_map = {row.badge_id: row.count for row in counts}
-
-        all_badges = self.session.query(Badge).all()
-        item_dict = {b.id: b for b in all_badges}
         for badge in all_badges:
             poll = count_map.get(badge.id, 0)
             accodict[badge.id] = {
