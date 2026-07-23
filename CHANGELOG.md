@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 1.5.3
+
+- All badges go to D tier when no assertions or users exist ([a0748d0](https://github.com/fedora-infra/tahrir-api/commit/a0748d0))
+- Paginate `get_assertions_by_badge` at DB level ([2545c79](https://github.com/fedora-infra/tahrir-api/commit/2545c79))
+- Add tests for `get_assertions_by_badge` ([8a1a508](https://github.com/fedora-infra/tahrir-api/commit/8a1a508))
+
+
 ## Version 1.5.2
 
 - Use actual FK constraint name in cascade migration ([d8f81fe](https://github.com/fedora-infra/tahrir-api/commit/d8f81fe))
