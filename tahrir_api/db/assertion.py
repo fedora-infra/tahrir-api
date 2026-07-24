@@ -67,6 +67,56 @@ class AssertionMethod:
         else:
             return False
 
+    def get_assertions_count_by_badge(self, badge_id: str):
+        """
+        Get the assertions count for a particular badge using SQL COUNT.
+
+        :type badge_id: str
+        :param badge_id: Badge id to count assertions for.
+        """
+
+        if self.badge_exists(badge_id):
+            return (
+                self.session.query(func.count(Assertion.id))
+                .filter(func.lower(Assertion.badge_id) == func.lower(badge_id))
+                .scalar()
+            )
+        return 0
+
+    def get_origin_assertion_by_badge(self, badge_id: str):
+        """
+        Get the origin assertion for a particular badge.
+
+        :type badge_id: str
+        :param badge_id: Badge id to get the first assertion for.
+        """
+
+        if self.badge_exists(badge_id):
+            return (
+                self.session.query(Assertion)
+                .filter(func.lower(Assertion.badge_id) == func.lower(badge_id))
+                .order_by(Assertion.issued_on.asc())
+                .first()
+            )
+        return False
+
+    def get_recent_assertion_by_badge(self, badge_id: str):
+        """
+        Get the recent assertion for a particular badge.
+
+        :type badge_id: str
+        :param badge_id: Badge id to get the last assertion for.
+        """
+
+        if self.badge_exists(badge_id):
+            return (
+                self.session.query(Assertion)
+                .filter(func.lower(Assertion.badge_id) == func.lower(badge_id))
+                .order_by(Assertion.issued_on.desc())
+                .first()
+            )
+        return False
+
     def assertion_exists(self, badge_id, email):
         """
         Check if an assertion exists in the database
