@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 1.5.4
+
+- Add targeted query methods for assertions ([e341dff](https://github.com/fedora-infra/tahrir-api/commit/e341dff))
+
+
 ## Version 1.5.3
 
 - All badges go to D tier when no assertions or users exist ([a0748d0](https://github.com/fedora-infra/tahrir-api/commit/a0748d0))
