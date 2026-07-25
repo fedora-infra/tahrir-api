@@ -22,10 +22,7 @@ class IssuerMethod:
         :type issuer_id: int
         :param issuer_id: ID of the issuer to return
         """
-        query = self.session.query(Issuer).filter_by(id=issuer_id)
-        if query.count() > 0:
-            return query.one()
-        return None
+        return self.session.query(Issuer).filter_by(id=issuer_id).first()
 
     @autocommit
     def delete_issuer(self, issuer_id):
@@ -36,13 +33,12 @@ class IssuerMethod:
         :param issuer_id: ID of the issuer to be delete
         """
 
-        query = self.session.query(Issuer).filter_by(id=issuer_id)
-        if query.count() > 0:
-            to_delete = query.one()
-            self.session.delete(to_delete)
-            self.session.flush()
-            return issuer_id
-        return False
+        issuer = self.session.query(Issuer).filter_by(id=issuer_id).first()
+        if not issuer:
+            return False
+        self.session.delete(issuer)
+        self.session.flush()
+        return issuer_id
 
     @autocommit
     def add_issuer(self, origin, name, org, contact):
@@ -62,13 +58,14 @@ class IssuerMethod:
         :param contact: The Contact email for this issuer
         """
 
-        if not self.issuer_exists(origin, name):
-            new_issuer = Issuer(origin=origin, name=name, org=org, contact=contact)
-            self.session.add(new_issuer)
-            self.session.flush()
-            return new_issuer.id
+        issuer = self.session.query(Issuer).filter_by(origin=origin, name=name).first()
+        if issuer:
+            return issuer.id
 
-        return self.session.query(Issuer).filter_by(name=name, origin=origin).one().id
+        new_issuer = Issuer(origin=origin, name=name, org=org, contact=contact)
+        self.session.add(new_issuer)
+        self.session.flush()
+        return new_issuer.id
 
     def get_all_issuers(self):
         """

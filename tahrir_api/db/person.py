@@ -101,13 +101,9 @@ class PersonMethod:
         :param person_id: The email of a Person in the database.
         """
 
-        if self.person_exists(id=person_id):
-            return (
-                self.session.query(Person)
-                .filter(func.lower(Person.id) == func.lower(person_id))
-                .one()
-                .email
-            )
+        person = self.session.query(Person).filter_by(id=person_id).first()
+        if person:
+            return person.email
         return None
 
     def get_person(self, person_email=None, id=None, nickname=None):
@@ -127,14 +123,13 @@ class PersonMethod:
 
         query = self.session.query(Person)
 
-        if person_email and self.person_exists(email=person_email):
-            return query.filter(func.lower(Person.email) == func.lower(person_email)).one()
-        elif id and self.person_exists(id=id):
-            return query.filter_by(id=id).one()
-        elif nickname and self.person_exists(nickname=nickname):
-            return query.filter(func.lower(Person.nickname) == func.lower(nickname)).one()
-        else:
-            return None
+        if person_email:
+            return query.filter(func.lower(Person.email) == func.lower(person_email)).first()
+        elif id:
+            return query.filter_by(id=id).first()
+        elif nickname:
+            return query.filter(func.lower(Person.nickname) == func.lower(nickname)).first()
+        return None
 
     @autocommit
     def delete_person(self, person_email):
@@ -145,11 +140,12 @@ class PersonMethod:
         :param person_email: Email of the person to delete
         """
 
-        if self.person_exists(email=person_email):
-            self.session.delete(self.get_person(person_email))
-            self.session.flush()
-            return person_email
-        return False
+        person = self.get_person(person_email)
+        if not person:
+            return False
+        self.session.delete(person)
+        self.session.flush()
+        return person_email
 
     @autocommit
     def add_person(self, email, nickname=None, website=None, bio=None, avatar=None):

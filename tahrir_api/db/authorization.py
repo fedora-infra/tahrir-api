@@ -40,21 +40,20 @@ class AuthorizationMethod:
         :param person_email: Email of the Person grant rights to
         """
 
-        if self.person_exists(email=person_email) and self.badge_exists(badge_id):
-            badge = self.get_badge(badge_id)
+        badge = self.get_badge(badge_id)
+        person = self.get_person(person_email)
 
-            if badge.legacy:
-                raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be authorized")
+        if not badge or not person:
+            return False
 
-            person = self.get_person(person_email)
+        if badge.legacy:
+            raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be authorized")
 
-            new_authz = Authorization(badge_id=badge_id, person_id=person.id)
-            self.session.add(new_authz)
-            self.session.flush()
+        new_authz = Authorization(badge_id=badge_id, person_id=person.id)
+        self.session.add(new_authz)
+        self.session.flush()
 
-            return (person_email, badge_id)
-
-        return False
+        return (person_email, badge_id)
 
     @autocommit
     def delete_authorization(self, badge_id, person_email):

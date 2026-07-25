@@ -140,7 +140,7 @@ def test_get_series_from_team(api):
     assert "Test Series Bravo" in series_names
 
     absented_series = api.get_series_from_team("absented-team")
-    assert absented_series is None
+    assert absented_series == []
 
 
 def test_get_badges_from_team(api, dummy_issuer_id):
@@ -199,7 +199,7 @@ def test_get_badges_from_team(api, dummy_issuer_id):
     assert "Test Badge Bravo" in badge_names
 
     absented_badges = api.get_badges_from_team("absented-team")
-    assert absented_badges is None
+    assert absented_badges == []
 
 
 def test_get_series_existing(api):

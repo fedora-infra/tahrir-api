@@ -160,38 +160,37 @@ class AssertionMethod:
         if issued_on is None:
             issued_on = datetime.now(timezone.utc)
 
-        if self.person_exists(email=person_email) and self.badge_exists(badge_id):
-            badge = self.get_badge(badge_id)
+        badge = self.get_badge(badge_id)
+        person = self.get_person(person_email)
 
-            if badge.legacy:
-                raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be awarded")
+        if not badge or not person:
+            return False
 
-            person = self.get_person(person_email)
+        if badge.legacy:
+            raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be awarded")
 
-            new_assertion = Assertion(
-                badge_id=badge_id,
-                person_id=person.id,
-                issued_on=issued_on,
-                issued_for=issued_for,
+        new_assertion = Assertion(
+            badge_id=badge_id,
+            person_id=person.id,
+            issued_on=issued_on,
+            issued_for=issued_for,
+        )
+        self.session.add(new_assertion)
+        self.session.flush()
+
+        if self.notification_callback:
+            body = dict(
+                badge=dict(
+                    name=badge.name,
+                    description=badge.description,
+                    image_url=badge.image,
+                    badge_id=badge_id,
+                ),
+                user=dict(username=person.nickname, badges_user_id=person.id),
             )
-            self.session.add(new_assertion)
-            self.session.flush()
+            self.notification_callback(BadgeAwardV1(body=body))
 
-            if self.notification_callback:
-                body = dict(
-                    badge=dict(
-                        name=badge.name,
-                        description=badge.description,
-                        image_url=badge.image,
-                        badge_id=badge_id,
-                    ),
-                    user=dict(username=person.nickname, badges_user_id=person.id),
-                )
-                self.notification_callback(BadgeAwardV1(body=body))
-
-            return person_email, badge_id
-
-        return False
+        return person_email, badge_id
 
     @autocommit
     def remove_assertion(self, badge_id, person_email):
@@ -207,10 +206,9 @@ class AssertionMethod:
         :returns: True if successful, False otherwise
         """
 
-        if not self.person_exists(email=person_email):
-            return False
-
         person = self.get_person(person_email)
+        if not person:
+            return False
 
         assertion = (
             self.session.query(Assertion).filter_by(person_id=person.id, badge_id=badge_id).first()

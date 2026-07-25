@@ -26,18 +26,18 @@ class InvitationMethod:
 
         """
 
-        if not self.badge_exists(badge_id):
-            raise ValueError(f"No such badge {badge_id!r}")
-
         badge = self.get_badge(badge_id)
+        if not badge:
+            raise ValueError(f"No such badge {badge_id!r}")
         if badge.legacy:
             raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be invited")
 
         created_on = created_on or datetime.now(timezone.utc)
         expires_on = expires_on or (created_on + timedelta(hours=1))
-        if not created_by_email or not self.person_exists(email=created_by_email):
+        creator = self.get_person(created_by_email) if created_by_email else None
+        if not creator:
             raise ValueError(f"No user with email {created_by_email!r}. Ask them to login first.")
-        created_by = self.get_person(created_by_email).id
+        created_by = creator.id
 
         invitation = Invitation(
             created_on=created_on,
@@ -74,10 +74,10 @@ class InvitationMethod:
         :param invitation_id: The unique ID of this invitation
         """
 
-        if self.invitation_exists(invitation_id):
-            return self.session.query(Invitation).filter_by(id=invitation_id).one()
-        else:
-            return False
+        invitation = self.session.query(Invitation).filter_by(id=invitation_id).first()
+        if invitation:
+            return invitation
+        return False
 
     def get_invitations(self, person_id):
         """
@@ -101,10 +101,9 @@ class InvitationMethod:
         :returns: True if invitation was expired, False if not found
         :rtype: bool
         """
-        if not self.invitation_exists(invitation_id):
+        invitation = self.session.query(Invitation).filter_by(id=invitation_id).first()
+        if not invitation:
             return False
-
-        invitation = self.session.query(Invitation).filter_by(id=invitation_id).one()
         invitation.expires_on = datetime.now()
         self.session.flush()
         return True
