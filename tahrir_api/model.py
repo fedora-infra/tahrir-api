@@ -86,7 +86,7 @@ class Badge(DeclarativeBase):
     stl = Column(Unicode(128))
     description = Column(Unicode(128), nullable=False)
     criteria = Column(Unicode(128), nullable=False)
-    issuer_id = Column(Integer, ForeignKey("issuers.id"), nullable=False)
+    issuer_id = Column(Integer, ForeignKey("issuers.id"), nullable=False, index=True)
     milestone = relationship("Milestone", backref="badge")
     authorizations = relationship("Authorization", backref="badge")
     assertions = relationship("Assertion", backref="badge", passive_deletes=True)
@@ -153,7 +153,7 @@ class Series(DeclarativeBase):
     )
     tags = relationship("Tag", secondary=series_tags, backref="series")
     milestone = relationship("Milestone", backref="series")
-    team_id = Column(Unicode(128), ForeignKey("team.id"), nullable=False)
+    team_id = Column(Unicode(128), ForeignKey("team.id"), nullable=False, index=True)
 
     def as_dict(self):
         return dict(
@@ -171,8 +171,8 @@ class Milestone(DeclarativeBase):
     __table_args__ = (UniqueConstraint("position", "badge_id", "series_id"),)
     id = Column(Integer, unique=True, primary_key=True)
     position = Column(Integer, default=None)
-    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
-    series_id = Column(Unicode(128), ForeignKey("series.id"), nullable=False)
+    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False, index=True)
+    series_id = Column(Unicode(128), ForeignKey("series.id"), nullable=False, index=True)
 
     def as_dict(self):
         return dict(
@@ -245,8 +245,8 @@ class Invitation(DeclarativeBase):
     id = Column(Unicode(32), primary_key=True, unique=True, default=invitation_id_default)
     created_on = Column(DateTime, nullable=False)
     expires_on = Column(DateTime, nullable=False)
-    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
-    created_by = Column(Integer, ForeignKey("persons.id"), nullable=False)
+    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False, index=True)
+    created_by = Column(Integer, ForeignKey("persons.id"), nullable=False, index=True)
 
     @property
     def expired(self):
@@ -260,8 +260,8 @@ class Invitation(DeclarativeBase):
 class Authorization(DeclarativeBase):
     __tablename__ = "authorizations"
     id = Column(Integer, primary_key=True)
-    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False)
-    person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
+    badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False, index=True)
+    person_id = Column(Integer, ForeignKey("persons.id"), nullable=False, index=True)
 
 
 class CurrentValue(DeclarativeBase):
@@ -310,8 +310,10 @@ def assertion_id_default(context):
 class Assertion(DeclarativeBase):
     __tablename__ = "assertions"
     id = Column(Unicode(128), primary_key=True, unique=True, default=assertion_id_default)
-    badge_id = Column(Unicode(128), ForeignKey("badges.id", ondelete="CASCADE"), nullable=False)
-    person_id = Column(Integer, ForeignKey("persons.id"), nullable=False)
+    badge_id = Column(
+        Unicode(128), ForeignKey("badges.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    person_id = Column(Integer, ForeignKey("persons.id"), nullable=False, index=True)
     salt = Column(Unicode(128), nullable=False, default=salt_default)
     issued_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
