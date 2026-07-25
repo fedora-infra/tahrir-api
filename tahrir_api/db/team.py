@@ -27,11 +27,7 @@ class TeamMethod:
         :param team_id: The ID of the team to return
         """
 
-        if self.team_exists(team_id):
-            return (
-                self.session.query(Team).filter(func.lower(Team.id) == func.lower(team_id)).first()
-            )
-        return None
+        return self.session.query(Team).filter(func.lower(Team.id) == func.lower(team_id)).first()
 
     @autocommit
     def create_team(self, name, team_id=None):

@@ -30,13 +30,11 @@ class SeriesMethod:
         :param series_id: The ID of the series to return
         """
 
-        if self.series_exists(series_id):
-            return (
-                self.session.query(Series)
-                .filter(func.lower(Series.id) == func.lower(series_id))
-                .one()
-            )
-        return None
+        return (
+            self.session.query(Series)
+            .filter(func.lower(Series.id) == func.lower(series_id))
+            .first()
+        )
 
     def get_series_from_team(self, team_id):
         """
@@ -45,8 +43,7 @@ class SeriesMethod:
         :type team_id: str
         :param team_id: The ID of the team
         """
-        if self.team_exists(team_id):
-            return self.session.query(Series).filter(Series.team_id == team_id).all()
+        return self.session.query(Series).filter(Series.team_id == team_id).all()
 
     @autocommit
     def create_series(self, name, desc, team_id, tags=None, series_id=None):

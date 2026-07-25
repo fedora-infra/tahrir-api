@@ -17,15 +17,15 @@ class BadgeMethod:
         :type include_legacy: boolean
         :param include_legacy: Include legacy badges in results (default: False)
         """
-        if self.team_exists(team_id):
-            series = self.get_series_from_team(team_id)
-            series_ids = [elem.id for elem in series]
+        series = self.get_series_from_team(team_id)
+        if not series:
+            return []
 
-            milestones = self.get_milestone_from_series_ids(series_ids)
-            badge_ids = list(set([milestone.badge_id for milestone in milestones]))
+        series_ids = [elem.id for elem in series]
+        milestones = self.get_milestone_from_series_ids(series_ids)
+        badge_ids = list(set([milestone.badge_id for milestone in milestones]))
 
-            return self.get_badges(badge_ids, include_legacy=include_legacy)
-        return None
+        return self.get_badges(badge_ids, include_legacy=include_legacy)
 
     def badge_exists(self, badge_id):
         """
@@ -48,11 +48,9 @@ class BadgeMethod:
         :param badge_id: The ID of the badge to return
         """
 
-        if self.badge_exists(badge_id):
-            return (
-                self.session.query(Badge).filter(func.lower(Badge.id) == func.lower(badge_id)).one()
-            )
-        return None
+        return (
+            self.session.query(Badge).filter(func.lower(Badge.id) == func.lower(badge_id)).first()
+        )
 
     def get_badges(self, badge_ids, include_legacy=False):
         """
@@ -133,14 +131,14 @@ class BadgeMethod:
         :raises ValueError: If the badge is marked as legacy
         """
 
-        if self.badge_exists(badge_id):
-            to_delete = self.session.query(Badge).filter_by(id=badge_id).one()
-            if to_delete.legacy:
-                raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be deleted")
-            self.session.delete(to_delete)
-            self.session.flush()
-            return badge_id
-        return False
+        badge = self.session.query(Badge).filter_by(id=badge_id).first()
+        if not badge:
+            return False
+        if badge.legacy:
+            raise ValueError(f"Badge {badge_id!r} is a legacy badge and cannot be deleted")
+        self.session.delete(badge)
+        self.session.flush()
+        return badge_id
 
     @autocommit
     def add_badge(self, name, image, desc, criteria, issuer_id, tags=None, badge_id=None):
