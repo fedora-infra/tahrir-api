@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import datetime
 import hashlib
 import time
 import uuid
+from collections.abc import Callable
+from typing import Any
 
 import arrow
 import pygments
@@ -16,6 +20,7 @@ from sqlalchemy import (
     Unicode,
     UniqueConstraint,
 )
+from sqlalchemy.engine import ExecutionContext
 from sqlalchemy.orm import object_session, relationship
 from sqlalchemy.types import Boolean, Float, Integer
 from sqlalchemy_helpers import Base as DeclarativeBase
@@ -31,10 +36,10 @@ class Issuer(DeclarativeBase):
     badges = relationship("Badge", backref="issuer")
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.name)
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         return dict(
             origin=self.origin,
             name=self.name,
@@ -44,7 +49,7 @@ class Issuer(DeclarativeBase):
         )
 
 
-def generate_default_id(context):
+def generate_default_id(context: ExecutionContext | None) -> str | None:
     # Allow flask_admin to peek without crashing.
     if not context:
         return None
@@ -71,10 +76,10 @@ class Tag(DeclarativeBase):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(Unicode(128), nullable=False, unique=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.name)
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         return dict(name=self.name)
 
 
@@ -98,10 +103,10 @@ class Badge(DeclarativeBase):
     rarity_id = Column(Integer, ForeignKey("rarities.id"), nullable=True)
     rarity = relationship("Rarity", back_populates="badges")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.name)
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         if self.image.startswith("http"):
             image = self.image
         else:
@@ -119,7 +124,7 @@ class Badge(DeclarativeBase):
             rarity=self.rarity.as_dict() if self.rarity else None,
         )
 
-    def authorized(self, person):
+    def authorized(self, person: Person) -> bool:
         """Return true if a given person is authorized to admin a badge"""
         for authz in self.authorizations:
             if authz.person == person:
@@ -135,7 +140,7 @@ class Team(DeclarativeBase):
     series = relationship("Series", backref="team")
     created_on = Column(DateTime, nullable=False, default=datetime.datetime.now)
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         return dict(id=self.id, name=self.name, created_on=str(self.created_on))
 
 
@@ -155,7 +160,7 @@ class Series(DeclarativeBase):
     milestone = relationship("Milestone", backref="series")
     team_id = Column(Unicode(128), ForeignKey("team.id"), nullable=False, index=True)
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         return dict(
             id=self.id,
             name=self.name,
@@ -174,7 +179,7 @@ class Milestone(DeclarativeBase):
     badge_id = Column(Unicode(128), ForeignKey("badges.id"), nullable=False, index=True)
     series_id = Column(Unicode(128), ForeignKey("series.id"), nullable=False, index=True)
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         return dict(
             position=self.position,
             badge=self.badge.as_dict(),
@@ -202,21 +207,21 @@ class Person(DeclarativeBase):
     # indicates that they have not been ranked yet at all.
     rank = Column(Integer, default=None)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Person: '{self.nickname} <{self.email}>'"
 
     @property
-    def email_sha1(self):
+    def email_sha1(self) -> str:
         return hashlib.sha1(self.email.encode("utf-8")).hexdigest()
 
     @property
-    def avatar(self):
+    def avatar(self) -> str:
         return self._avatar or self.email
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.email)
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         return dict(
             email=self.email,
             id=self.id,
@@ -227,7 +232,7 @@ class Person(DeclarativeBase):
         )
 
 
-def invitation_id_default():
+def invitation_id_default() -> str:
     return hashlib.md5(salt_default().encode("utf-8")).hexdigest()
 
 
@@ -249,11 +254,11 @@ class Invitation(DeclarativeBase):
     created_by = Column(Integer, ForeignKey("persons.id"), nullable=False, index=True)
 
     @property
-    def expired(self):
+    def expired(self) -> bool:
         return datetime.datetime.now() > self.expires_on
 
     @property
-    def expires_on_relative(self):
+    def expires_on_relative(self) -> str:
         return arrow.get(self.expires_on).humanize()
 
 
@@ -280,7 +285,7 @@ class CurrentValue(DeclarativeBase):
     person = relationship("Person", back_populates="current_values")
 
 
-def recipient_default(context):
+def recipient_default(context: ExecutionContext | None) -> str | None:
     # Allow flask_admin to peek without crashing.
     if not context:
         return None
@@ -290,15 +295,15 @@ def recipient_default(context):
     return get_assertion_recipient(person_email, salt)
 
 
-def get_assertion_recipient(email, salt):
+def get_assertion_recipient(email: str, salt: str) -> str:
     return hashlib.sha256((email + salt).encode("utf-8")).hexdigest()
 
 
-def salt_default():
+def salt_default() -> str:
     return str(uuid.uuid4())
 
 
-def assertion_id_default(context):
+def assertion_id_default(context: ExecutionContext | None) -> str | None:
     # Allow flask_admin to peek without crashing.
     if not context:
         return None
@@ -322,30 +327,30 @@ class Assertion(DeclarativeBase):
 
     recipient = Column(Unicode(256), nullable=False, default=recipient_default)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.badge) + "<->" + str(self.person)
 
     @property
-    def _recipient(self):
+    def _recipient(self) -> str:
         return f"sha256${self.recipient}"
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         result = dict(recipient=self._recipient, salt=self.salt, badge=self.badge.as_dict())
         # Eliminate this check since I made issued_on not nullable?
         if self.issued_on:
             result["issued_on"] = self.issued_on.strftime("%Y-%m-%d")
         return result
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Callable[[], Any]:
         if key not in ("pygments", "delete"):
             raise KeyError
         return getattr(self, f"__{key}__")()
 
-    def __delete__(self):
+    def __delete__(self) -> Callable[[], None]:
         session = object_session(self)
         return lambda: session.delete(self)
 
-    def __pygments__(self):
+    def __pygments__(self) -> str:
         html_args = {"full": False}
         pretty_encoder = simplejson.encoder.JSONEncoder(indent=2)
         html = pygments.highlight(
@@ -366,10 +371,10 @@ class Rarity(DeclarativeBase):
 
     badges = relationship("Badge", back_populates="rarity")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Rarity: '{self.name}' ({self.lower_limit}-{self.upper_limit})>"
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, Any]:
         return dict(
             name=self.name,
             lower_limit=self.lower_limit,

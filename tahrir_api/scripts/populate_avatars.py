@@ -10,7 +10,7 @@ from .utils import get_db_manager_from_config
 @click.command()
 @click.argument("config", type=click.Path(exists=True))
 @click.argument("fasjson-url", required=True)
-def main(config, fasjson_url):
+def main(config: str, fasjson_url: str) -> None:
     fasjson = FasjsonClient(url=fasjson_url)
 
     db_mgr = get_db_manager_from_config(config)
@@ -41,5 +41,4 @@ def main(config, fasjson_url):
                     else:
                         raise
                 person._avatar = fas_user["emails"][0]
-                # print(f"Setting {person.nickname}'s avatar to {person._avatar}")
                 session.commit()

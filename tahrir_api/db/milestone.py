@@ -1,4 +1,5 @@
 from sqlalchemy import and_, func
+from sqlalchemy.orm import Query
 
 from ..model import Milestone
 from ..utils import autocommit
@@ -7,7 +8,7 @@ from ..utils import autocommit
 class MilestoneMethod:
     """Milestone CRUD operations."""
 
-    def milestone_exists(self, milestone_id):
+    def milestone_exists(self, milestone_id: int) -> bool:
         """
         Check to see if this milestone already exists in the database
 
@@ -16,7 +17,7 @@ class MilestoneMethod:
         """
         return self.session.query(Milestone).filter(Milestone.id == milestone_id).count() != 0
 
-    def milestone_exists_for_badge_series(self, badge_id, series_id):
+    def milestone_exists_for_badge_series(self, badge_id: str, series_id: str) -> bool:
         """
         Check if the milestone with the given series and badge id exists
 
@@ -28,7 +29,7 @@ class MilestoneMethod:
         """
         return self.get_milestone_from_badge_series(badge_id, series_id).count() != 0
 
-    def get_milestone_from_badge_series(self, badge_id, series_id):
+    def get_milestone_from_badge_series(self, badge_id: str, series_id: str) -> Query[Milestone]:
         """
         Return the milestone with the given series and badge id
 
@@ -45,7 +46,7 @@ class MilestoneMethod:
             )
         )
 
-    def get_milestone(self, milestone_id):
+    def get_milestone(self, milestone_id: int) -> Query[Milestone]:
         """
         Return the matching milestone from the database
 
@@ -54,7 +55,7 @@ class MilestoneMethod:
         """
         return self.session.query(Milestone).filter(Milestone.id == milestone_id)
 
-    def get_all_milestones(self, series_id):
+    def get_all_milestones(self, series_id: str) -> list[Milestone]:
         """
         Returns all the milestones for the series
 
@@ -64,7 +65,7 @@ class MilestoneMethod:
         return self.session.query(Milestone).filter(Milestone.series_id == series_id).all()
 
     @autocommit
-    def create_milestone(self, position, badge_id, series_id):
+    def create_milestone(self, position: int, badge_id: str, series_id: str) -> int:
         """
         Adds a new milestone to the database
 
@@ -87,7 +88,7 @@ class MilestoneMethod:
 
         return milestone_id
 
-    def get_milestone_from_series_ids(self, series_ids):
+    def get_milestone_from_series_ids(self, series_ids: list[str]) -> list[Milestone]:
         """
         Return list of milestones for the list of series ids
 
@@ -96,8 +97,8 @@ class MilestoneMethod:
         """
         milestones = self.session.query(Milestone).filter(Milestone.series_id.in_(series_ids)).all()
 
-        seen = set()
-        unique_milestones = []
+        seen: set[tuple[str, int]] = set()
+        unique_milestones: list[Milestone] = []
 
         for milestone in milestones:
             milestone_meta = (milestone.series_id, milestone.id)

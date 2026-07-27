@@ -1,28 +1,29 @@
 """Module to keep random utils."""
 
 import importlib.resources
+from collections.abc import Callable
+from functools import wraps
+from typing import Any
 
 from sqlalchemy_helpers import DatabaseManager
 
 
-def autocommit(func):
+def autocommit(func: Callable[..., Any]) -> Callable[..., Any]:
     """A decorator that autocommits after API calls unless
     configured otherwise.
     """
 
-    def _wrapper(self, *args, **kwargs):
+    @wraps(func)
+    def _wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
         result = func(self, *args, **kwargs)
         if self.autocommit:
             self.session.commit()
         return result
 
-    _wrapper.__name__ = func.__name__
-    _wrapper.__doc__ = func.__doc__
-
     return _wrapper
 
 
-def convert_name_to_id(name):
+def convert_name_to_id(name: str) -> str:
     """
     Convert a badge name into a valid badge ID.
 
@@ -39,7 +40,7 @@ def convert_name_to_id(name):
     return badge_id
 
 
-def get_db_manager_from_uri(uri):
+def get_db_manager_from_uri(uri: str) -> DatabaseManager:
     from .model import DeclarativeBase  # noqa: F401
 
     with importlib.resources.as_file(

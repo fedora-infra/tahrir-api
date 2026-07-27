@@ -1,9 +1,12 @@
 import types
+from typing import Any
+
+from sqlalchemy_helpers import DatabaseManager
 
 from ..utils import get_db_manager_from_uri
 
 
-def _get_config_from_path(filename):
+def _get_config_from_path(filename: str) -> dict[str, Any]:
     # See flask.config.Config.from_pyfile()
     d = types.ModuleType("config")
     d.__file__ = filename
@@ -22,7 +25,7 @@ def _get_config_from_path(filename):
     return config
 
 
-def get_db_manager_from_config(filename):
+def get_db_manager_from_config(filename: str) -> DatabaseManager:
     config = _get_config_from_path(filename)
     dburi = config["SQLALCHEMY_DATABASE_URI"]
     return get_db_manager_from_uri(dburi)

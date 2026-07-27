@@ -5,7 +5,7 @@ from ..utils import autocommit
 class AuthorizationMethod:
     """Authorization (badge admin rights) operations."""
 
-    def authorization_exists(self, badge_id, email):
+    def authorization_exists(self, badge_id: str, email: str) -> bool:
         """
         Check if an authorization exists in the database
 
@@ -29,7 +29,7 @@ class AuthorizationMethod:
         )
 
     @autocommit
-    def add_authorization(self, badge_id, person_email):
+    def add_authorization(self, badge_id: str, person_email: str) -> tuple[str, str] | bool:
         """
         Add an authorization (allow someone to admin a certain badge)
 
@@ -56,7 +56,7 @@ class AuthorizationMethod:
         return (person_email, badge_id)
 
     @autocommit
-    def delete_authorization(self, badge_id, person_email):
+    def delete_authorization(self, badge_id: str, person_email: str) -> tuple[str, str] | bool:
         """
         Delete an authorization (remove someone's admin rights for a certain badge)
 

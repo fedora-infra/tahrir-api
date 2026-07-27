@@ -8,7 +8,7 @@ class RarityMethod:
     """Rarity operations."""
 
     @autocommit
-    def compute_badge_rarities(self):
+    def compute_badge_rarities(self) -> None:
         """
         Compute and store the rarity of all badges using equal-pile ranking.
 

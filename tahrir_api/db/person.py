@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
+from typing import Any
 
 from sqlalchemy import func, not_
+from sqlalchemy.orm import Query
 from tahrir_messages import PersonLoginFirstV1
 
 from ..model import Person
@@ -10,7 +12,12 @@ from ..utils import autocommit
 class PersonMethod:
     """Person CRUD and profile operations."""
 
-    def person_exists(self, email=None, id=None, nickname=None):
+    def person_exists(
+        self,
+        email: str | None = None,
+        id: int | None = None,
+        nickname: str | None = None,
+    ) -> bool:
         """
         Check if a Person with this email is stored in the database
 
@@ -34,7 +41,12 @@ class PersonMethod:
         else:
             return False
 
-    def person_opted_out(self, email=None, id=None, nickname=None):
+    def person_opted_out(
+        self,
+        email: str | None = None,
+        id: int | None = None,
+        nickname: str | None = None,
+    ) -> bool:
         """Returns true if a given person has opted out of tahrir."""
 
         person = self.get_person(email, id, nickname)
@@ -46,7 +58,7 @@ class PersonMethod:
         # Otherwise, return whatever value they have in the DB.
         return person.opt_out
 
-    def get_all_persons(self, include_opted_out=False):
+    def get_all_persons(self, include_opted_out: bool = False) -> Query[Person]:
         """
         Gets all the persons in the db.
         """
@@ -56,7 +68,9 @@ class PersonMethod:
             query = query.filter(not_(Person.opt_out))
         return query
 
-    def get_persons_by_nickname(self, search_string: str, begin: int = 0, limit: int = 100):
+    def get_persons_by_nickname(
+        self, search_string: str, begin: int = 0, limit: int = 100
+    ) -> dict[str, Any]:
         """
         Search for persons by nickname with pagination.
 
@@ -83,7 +97,7 @@ class PersonMethod:
             "limit": safe_limit,
         }
 
-    def get_person_email(self, person_id):
+    def get_person_email(self, person_id: int) -> str | None:
         """
         Convience function to retrieve a person email from an id.
 
@@ -106,7 +120,12 @@ class PersonMethod:
             return person.email
         return None
 
-    def get_person(self, person_email=None, id=None, nickname=None):
+    def get_person(
+        self,
+        person_email: str | None = None,
+        id: int | None = None,
+        nickname: str | None = None,
+    ) -> Person | None:
         """
         Convenience function to retrieve a person object from an email,
         id, or nickname.
@@ -132,7 +151,7 @@ class PersonMethod:
         return None
 
     @autocommit
-    def delete_person(self, person_email):
+    def delete_person(self, person_email: str) -> str | bool:
         """
         Delete a person with the given email
 
@@ -148,7 +167,14 @@ class PersonMethod:
         return person_email
 
     @autocommit
-    def add_person(self, email, nickname=None, website=None, bio=None, avatar=None):
+    def add_person(
+        self,
+        email: str,
+        nickname: str | None = None,
+        website: str | None = None,
+        bio: str | None = None,
+        avatar: str | None = None,
+    ) -> str | bool:
         """
         Add a new Person to the database
 
@@ -186,13 +212,13 @@ class PersonMethod:
     @autocommit
     def update_person(
         self,
-        person_email=None,
-        id=None,
-        nickname=None,
-        website=None,
-        bio=None,
-        avatar=None,
-    ):
+        person_email: str | None = None,
+        id: int | None = None,
+        nickname: str | None = None,
+        website: str | None = None,
+        bio: str | None = None,
+        avatar: str | None = None,
+    ) -> Person | bool:
         """
         Update an existing Person's profile fields in the database
 
@@ -231,7 +257,12 @@ class PersonMethod:
         return person
 
     @autocommit
-    def note_login(self, person_email=None, id=None, nickname=None):
+    def note_login(
+        self,
+        person_email: str | None = None,
+        id: int | None = None,
+        nickname: str | None = None,
+    ) -> None:
         """Make a note that a person has logged in."""
 
         person = self.get_person(person_email, id, nickname)
