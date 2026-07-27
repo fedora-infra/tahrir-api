@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Query
+
 from ..model import Issuer
 from ..utils import autocommit
 
@@ -5,7 +7,7 @@ from ..utils import autocommit
 class IssuerMethod:
     """Issuer CRUD operations."""
 
-    def issuer_exists(self, origin, name):
+    def issuer_exists(self, origin: str, name: str) -> bool:
         """
         Check to see if an issuer with this ID is in the database
 
@@ -15,7 +17,7 @@ class IssuerMethod:
 
         return self.session.query(Issuer).filter_by(origin=origin, name=name).count() != 0
 
-    def get_issuer(self, issuer_id):
+    def get_issuer(self, issuer_id: int) -> Issuer | None:
         """
         Return the issuer with the given ID
 
@@ -25,7 +27,7 @@ class IssuerMethod:
         return self.session.query(Issuer).filter_by(id=issuer_id).first()
 
     @autocommit
-    def delete_issuer(self, issuer_id):
+    def delete_issuer(self, issuer_id: int) -> int | bool:
         """
         Delete an issuer with the given ID
 
@@ -41,7 +43,7 @@ class IssuerMethod:
         return issuer_id
 
     @autocommit
-    def add_issuer(self, origin, name, org, contact):
+    def add_issuer(self, origin: str, name: str, org: str, contact: str) -> int:
         """
         Add a new issuer to the Database
 
@@ -67,7 +69,7 @@ class IssuerMethod:
         self.session.flush()
         return new_issuer.id
 
-    def get_all_issuers(self):
+    def get_all_issuers(self) -> Query[Issuer]:
         """
         Get all issuers in the db.
         """

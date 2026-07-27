@@ -22,13 +22,13 @@ _REPLACEMENTS = [
 _SERIES_NAME_RE = re.compile(r".+ \((?P<name>.+) (?P<ord>[0-9IXVL]+)\)")
 
 
-def _convert(mapping, x):
+def _convert(mapping: list[tuple[str, str]], x: str) -> str:
     for prefix, replacement in mapping:
         x = x.replace(prefix, replacement)
     return x
 
 
-def _to_number(x):
+def _to_number(x: str) -> int:
     """Convert a string with Roman numerals into an integer."""
     total = 0
     for c in _convert(_REPLACEMENTS, x):
@@ -36,7 +36,7 @@ def _to_number(x):
     return total
 
 
-def get_series_name(name):
+def get_series_name(name: str) -> tuple[str | None, int | None]:
     """Given a badge name, return a tuple of series name and ordinal number of
     this badge in the series.
 
@@ -58,7 +58,7 @@ def get_series_name(name):
 
 @click.command()
 @click.argument("config", type=click.Path(exists=True))
-def main(config):
+def main(config: str) -> None:
     db_mgr = get_db_manager_from_config(config)
     with db_mgr.Session() as session:
         for badge in session.query(Badge).all():

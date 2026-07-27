@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy.orm import Query
+
 from ..model import Invitation
 from ..utils import autocommit
 
@@ -8,7 +10,13 @@ class InvitationMethod:
     """Invitation CRUD operations."""
 
     @autocommit
-    def add_invitation(self, badge_id, created_on=None, expires_on=None, created_by_email=None):
+    def add_invitation(
+        self,
+        badge_id: str,
+        created_on: datetime | None = None,
+        expires_on: datetime | None = None,
+        created_by_email: str | None = None,
+    ) -> str:
         """
         Add a new invitation to the database
 
@@ -49,7 +57,7 @@ class InvitationMethod:
         self.session.flush()
         return invitation.id
 
-    def invitation_exists(self, invitation_id):
+    def invitation_exists(self, invitation_id: str) -> bool:
         """
         Check to see if an invitation exists with this ID.
 
@@ -59,14 +67,14 @@ class InvitationMethod:
 
         return self.session.query(Invitation).filter_by(id=invitation_id).count() != 0
 
-    def get_all_invitations(self):
+    def get_all_invitations(self) -> Query[Invitation]:
         """
         Get all invitations in the db.
         """
 
         return self.session.query(Invitation)
 
-    def get_invitation(self, invitation_id):
+    def get_invitation(self, invitation_id: str) -> Invitation | bool:
         """
         Get invitation by an invitation id.
 
@@ -79,7 +87,7 @@ class InvitationMethod:
             return invitation
         return False
 
-    def get_invitations(self, person_id):
+    def get_invitations(self, person_id: int) -> list[Invitation]:
         """
         Get invitations created by a particular person.
 
@@ -91,7 +99,7 @@ class InvitationMethod:
         return self.session.query(Invitation).filter_by(created_by=person_id).all()
 
     @autocommit
-    def expire_invitation(self, invitation_id):
+    def expire_invitation(self, invitation_id: str) -> bool:
         """
         Soft-delete an invitation by setting its expiry date to the current time.
 

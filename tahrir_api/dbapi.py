@@ -2,6 +2,11 @@
 #          Remy D <remyd@civx.us>
 # Description: API For interacting with the Tahrir database
 
+from collections.abc import Callable
+
+from fedora_messaging.message import Message
+from sqlalchemy.orm import Session
+
 from .db import (
     AssertionMethod,
     AuthorizationMethod,
@@ -46,7 +51,13 @@ class TahrirDatabase(
     :param session: an already configured session object.
     """
 
-    def __init__(self, dburi=None, session=None, autocommit=True, notification_callback=None):
+    def __init__(
+        self,
+        dburi: str | None = None,
+        session: Session | None = None,
+        autocommit: bool = True,
+        notification_callback: Callable[[Message], object] | None = None,
+    ) -> None:
         if not dburi and not session:
             raise ValueError("You must provide either 'dburi' or 'session'")
 

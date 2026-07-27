@@ -11,7 +11,7 @@ from ..utils import autocommit
 class LeaderboardMethod:
     """leaderboard, rank, and current-value operations."""
 
-    def get_current_value(self, badge_id, person_email):
+    def get_current_value(self, badge_id: str, person_email: str) -> int | None:
         """
         Return the current value for the given badge and the given person's email
 
@@ -34,7 +34,7 @@ class LeaderboardMethod:
         return self.session.scalar(query)
 
     @autocommit
-    def set_current_value(self, badge_id, person_email, value):
+    def set_current_value(self, badge_id: str, person_email: str, value: int) -> None:
         """Set the current value for the given badge and the given person's email
 
         :type badge_id: str
@@ -67,7 +67,7 @@ class LeaderboardMethod:
             current_value.last_update = now
 
     @autocommit
-    def adjust_ranks(self, person):
+    def adjust_ranks(self, person: Person) -> None:
         """Given a person model object, adjust the ranks of all persons between the 'old' rank and
         the present rank of the given person.
 
@@ -96,7 +96,9 @@ class LeaderboardMethod:
         if self.notification_callback:
             self.notification_callback(PersonRankAdvanceV1(body=body))
 
-    def make_leaderboard(self, start=None, stop=None):
+    def make_leaderboard(
+        self, start: datetime | None = None, stop: datetime | None = None
+    ) -> OrderedDict[Person, dict[str, int]]:
         """Produce a dict mapping persons to information about
         the number of badges they have been awarded and their
         rank, freshly calculated.  This is relatively expensive.
@@ -143,7 +145,7 @@ class LeaderboardMethod:
         #
         # Tweaked so that users with the same amount of badges share rank.
 
-        user_to_rank = OrderedDict()
+        user_to_rank: OrderedDict[Person, dict[str, int]] = OrderedDict()
 
         prev_rank, prev_badges = None, None
 

@@ -1,4 +1,5 @@
 from sqlalchemy import func
+from sqlalchemy.orm import Query
 
 from ..model import Series
 from ..utils import autocommit, convert_name_to_id
@@ -7,7 +8,7 @@ from ..utils import autocommit, convert_name_to_id
 class SeriesMethod:
     """Series CRUD operations."""
 
-    def series_exists(self, series_id):
+    def series_exists(self, series_id: str) -> bool:
         """
         Check to see if this series already exists in the database
 
@@ -22,7 +23,7 @@ class SeriesMethod:
             != 0
         )
 
-    def get_series(self, series_id):
+    def get_series(self, series_id: str) -> Series | None:
         """
         Return the series with the given ID
 
@@ -36,7 +37,7 @@ class SeriesMethod:
             .first()
         )
 
-    def get_series_from_team(self, team_id):
+    def get_series_from_team(self, team_id: str) -> list[Series]:
         """
         Return the series related to a given team ID
 
@@ -46,7 +47,14 @@ class SeriesMethod:
         return self.session.query(Series).filter(Series.team_id == team_id).all()
 
     @autocommit
-    def create_series(self, name, desc, team_id, tags=None, series_id=None):
+    def create_series(
+        self,
+        name: str,
+        desc: str,
+        team_id: str,
+        tags: str | list[str] | None = None,
+        series_id: str | None = None,
+    ) -> str:
         """
         Adds a new series to the database
 
@@ -79,7 +87,7 @@ class SeriesMethod:
             self.session.flush()
         return series_id
 
-    def get_all_series(self):
+    def get_all_series(self) -> Query[Series]:
         """
         Get all series in the db.
         """

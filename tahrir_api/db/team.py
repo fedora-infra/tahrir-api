@@ -7,7 +7,7 @@ from ..utils import autocommit, convert_name_to_id
 class TeamMethod:
     """Team CRUD operations."""
 
-    def team_exists(self, team_id):
+    def team_exists(self, team_id: str) -> bool:
         """
         Check to see if this team already exists in the database
 
@@ -19,7 +19,7 @@ class TeamMethod:
             self.session.query(Team).filter(func.lower(Team.id) == func.lower(team_id)).count() != 0
         )
 
-    def get_team(self, team_id):
+    def get_team(self, team_id: str) -> Team | None:
         """
         Return the team with the given ID
 
@@ -30,7 +30,7 @@ class TeamMethod:
         return self.session.query(Team).filter(func.lower(Team.id) == func.lower(team_id)).first()
 
     @autocommit
-    def create_team(self, name, team_id=None):
+    def create_team(self, name: str, team_id: str | None = None) -> str:
         """
         Adds a new team to the database
 

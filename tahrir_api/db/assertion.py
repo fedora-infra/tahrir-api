@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import func
+from sqlalchemy.orm import Query
 from tahrir_messages import BadgeAwardV1
 
 from ..model import Assertion
@@ -10,7 +11,9 @@ from ..utils import autocommit
 class AssertionMethod:
     """Assertion (badge award) CRUD operations."""
 
-    def get_all_assertions(self, begin: int | None = None, limit: int | None = None):
+    def get_all_assertions(
+        self, begin: int | None = None, limit: int | None = None
+    ) -> Query[Assertion]:
         """
         Get all assertions in the db, ordered by most recent first.
 
@@ -28,7 +31,7 @@ class AssertionMethod:
 
         return result
 
-    def get_assertions_by_email(self, person_email):
+    def get_assertions_by_email(self, person_email: str) -> list[Assertion] | bool:
         """
         Get all assertions attached to the given email
 
@@ -41,7 +44,9 @@ class AssertionMethod:
             return False
         return self.session.query(Assertion).filter_by(person_id=person.id).all()
 
-    def get_assertions_by_badge(self, badge_id: str, begin: int = 0, limit: int = 100):
+    def get_assertions_by_badge(
+        self, badge_id: str, begin: int = 0, limit: int = 100
+    ) -> list[Assertion] | bool:
         """
         Get all assertions of a particular badge.
 
@@ -67,7 +72,7 @@ class AssertionMethod:
         else:
             return False
 
-    def get_assertions_count_by_badge(self, badge_id: str):
+    def get_assertions_count_by_badge(self, badge_id: str) -> int:
         """
         Get the assertions count for a particular badge using SQL COUNT.
 
@@ -83,7 +88,7 @@ class AssertionMethod:
             )
         return 0
 
-    def get_origin_assertion_by_badge(self, badge_id: str):
+    def get_origin_assertion_by_badge(self, badge_id: str) -> Assertion | bool | None:
         """
         Get the origin assertion for a particular badge.
 
@@ -100,7 +105,7 @@ class AssertionMethod:
             )
         return False
 
-    def get_recent_assertion_by_badge(self, badge_id: str):
+    def get_recent_assertion_by_badge(self, badge_id: str) -> Assertion | bool | None:
         """
         Get the recent assertion for a particular badge.
 
@@ -117,7 +122,7 @@ class AssertionMethod:
             )
         return False
 
-    def assertion_exists(self, badge_id, email):
+    def assertion_exists(self, badge_id: str, email: str) -> bool:
         """
         Check if an assertion exists in the database
 
@@ -139,7 +144,13 @@ class AssertionMethod:
         )
 
     @autocommit
-    def add_assertion(self, badge_id, person_email, issued_on, issued_for=None):
+    def add_assertion(
+        self,
+        badge_id: str,
+        person_email: str,
+        issued_on: datetime | None,
+        issued_for: str | None = None,
+    ) -> tuple[str, str] | bool:
         """
         Add an assertion (award a badge) to the database
 
@@ -193,7 +204,7 @@ class AssertionMethod:
         return person_email, badge_id
 
     @autocommit
-    def remove_assertion(self, badge_id, person_email):
+    def remove_assertion(self, badge_id: str, person_email: str) -> bool:
         """
         Remove an assertion (revoke a badge) from the database
 

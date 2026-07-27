@@ -1,4 +1,7 @@
+from typing import Any
+
 from sqlalchemy import and_, func, or_
+from sqlalchemy.orm import Query
 
 from ..model import Badge, Tag
 from ..utils import autocommit, convert_name_to_id
@@ -7,7 +10,7 @@ from ..utils import autocommit, convert_name_to_id
 class BadgeMethod:
     """Badge CRUD, search, and rarity operations."""
 
-    def get_badges_from_team(self, team_id, include_legacy=False):
+    def get_badges_from_team(self, team_id: str, include_legacy: bool = False) -> list[Badge]:
         """
         Returns all the badges related to a team
 
@@ -27,7 +30,7 @@ class BadgeMethod:
 
         return self.get_badges(badge_ids, include_legacy=include_legacy)
 
-    def badge_exists(self, badge_id):
+    def badge_exists(self, badge_id: str) -> bool:
         """
         Check to see if this badge already exists in the database
 
@@ -40,7 +43,7 @@ class BadgeMethod:
             != 0
         )
 
-    def get_badge(self, badge_id):
+    def get_badge(self, badge_id: str) -> Badge | None:
         """
         Return the badge with the given ID
 
@@ -52,7 +55,7 @@ class BadgeMethod:
             self.session.query(Badge).filter(func.lower(Badge.id) == func.lower(badge_id)).first()
         )
 
-    def get_badges(self, badge_ids, include_legacy=False):
+    def get_badges(self, badge_ids: list[str], include_legacy: bool = False) -> list[Badge]:
         """
         Return the badges with the given IDs
 
@@ -67,7 +70,12 @@ class BadgeMethod:
             query = query.filter(Badge.legacy.is_(False))
         return query.all()
 
-    def get_badges_from_tags(self, tags, match_all=False, include_legacy=False):
+    def get_badges_from_tags(
+        self,
+        tags: list[str],
+        match_all: bool = False,
+        include_legacy: bool = False,
+    ) -> list[Badge]:
         """
         Return badges matching tags.
 
@@ -107,7 +115,7 @@ class BadgeMethod:
 
         return badges
 
-    def get_all_badges(self, include_legacy=False):
+    def get_all_badges(self, include_legacy: bool = False) -> Query[Badge]:
         """
         Get all badges in the db.
 
@@ -121,7 +129,7 @@ class BadgeMethod:
         return query
 
     @autocommit
-    def delete_badge(self, badge_id):
+    def delete_badge(self, badge_id: str) -> str | bool:
         """
         Delete a badge from the database
 
@@ -141,7 +149,16 @@ class BadgeMethod:
         return badge_id
 
     @autocommit
-    def add_badge(self, name, image, desc, criteria, issuer_id, tags=None, badge_id=None):
+    def add_badge(
+        self,
+        name: str,
+        image: str,
+        desc: str,
+        criteria: str,
+        issuer_id: int,
+        tags: list[str] | None = None,
+        badge_id: str | None = None,
+    ) -> str:
         """
         Add a new badge to the database
 
@@ -183,7 +200,7 @@ class BadgeMethod:
         return badge_id
 
     @autocommit
-    def update_badge(self, badge_id: str, **kwargs):
+    def update_badge(self, badge_id: str, **kwargs: Any) -> str | bool:
         """
         Update a badge in the database
 
@@ -223,7 +240,13 @@ class BadgeMethod:
         self.session.flush()
         return badge_id
 
-    def get_badges_by_string(self, search_string, begin=0, limit=100, include_legacy=False):
+    def get_badges_by_string(
+        self,
+        search_string: str,
+        begin: int = 0,
+        limit: int = 100,
+        include_legacy: bool = False,
+    ) -> dict[str, Any]:
         """
         Get badges matching a search string in their name, description or tags with pagination.
 
