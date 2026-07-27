@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 1.5.5
+
+- Introduce type hints to library modules ([3669221](https://github.com/fedora-infra/tahrir-api/commit/3669221))
+- Eliminate `exists-then-get` redundant queries ([59a43f9](https://github.com/fedora-infra/tahrir-api/commit/59a43f9))
+- Introduce indexes on foreign key columns ([99aa986](https://github.com/fedora-infra/tahrir-api/commit/99aa986))
+
+
 ## Version 1.5.4
 
 - Add targeted query methods for assertions ([e341dff](https://github.com/fedora-infra/tahrir-api/commit/e341dff))
