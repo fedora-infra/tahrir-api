@@ -12,13 +12,35 @@ class RarityMethod:
         """
         Compute and store the rarity of all badges using equal-pile ranking.
 
-        Badges are sorted by assertion count (ascending), divided into equal
-        piles of size len(badges) // 6, with remainder distributed from X
-        onwards. The lower_limit and upper_limit of each rarity tier are
-        updated to reflect the ownership rates of badges in that pile.
+        Legacy badges are pulled out first and assigned to the "O" (obsolete)
+        tier.  The remaining active badges are sorted by assertion count
+        (ascending), divided into equal pile_list of size len(badges) // 6, with
+        remainder distributed from X onwards.  The lower_limit and upper_limit
+        of each rarity tier are updated to reflect the ownership rate_list of
+        badges in that pile.
         """
 
-        RARITIES = ["X", "S", "A", "B", "C", "D"]
+        RARITIES = ["O", "X", "S", "A", "B", "C", "D"]
+
+        badges_full = self.session.query(Badge).all()
+        if not badges_full:
+            return
+
+        rarity_dict = {r.name: r for r in self.session.query(Rarity).all()}
+        for name in RARITIES:
+            if name not in rarity_dict:
+                rarity_dict[name] = Rarity(name=name, lower_limit=0, upper_limit=0)
+                self.session.add(rarity_dict[name])
+        self.session.flush()
+
+        legacy_badges = [item for item in badges_full if item.legacy]
+        active_badges = [item for item in badges_full if not item.legacy]
+
+        for item in legacy_badges:
+            item.rarity_id = rarity_dict["O"].id
+
+        if not active_badges:
+            return
 
         # single query for all assertion counts — avoids n+1
         counts = (
@@ -29,72 +51,52 @@ class RarityMethod:
             .group_by(Assertion.badge_id)
             .all()
         )
+        counts_dict = {row.badge_id: row.count for row in counts}
 
-        userpoll = self.session.query(Person).count()
+        user_poll = self.session.query(Person).count()
+        item_dict = {b.id: b for b in active_badges}
 
-        all_badges = self.session.query(Badge).all()
-        if not all_badges:
+        if user_poll == 0 or not counts_dict:
+            for item in active_badges:
+                item.rarity_id = rarity_dict["D"].id
             return
 
-        count_map = {row.badge_id: row.count for row in counts}
-        item_dict = {b.id: b for b in all_badges}
-
-        if userpoll == 0 or not count_map:
-            rarity_row = self.session.query(Rarity).filter(Rarity.name == "D").first()
-            if not rarity_row:
-                rarity_row = Rarity(name="D", lower_limit=0, upper_limit=0)
-                self.session.add(rarity_row)
-                self.session.flush()
-            for badge in all_badges:
-                badge.rarity_id = rarity_row.id
-            return
-
-        # build the same accodict structure as the frontend script
         accodict = {}
-        for badge in all_badges:
-            poll = count_map.get(badge.id, 0)
-            accodict[badge.id] = {
+        for item in active_badges:
+            poll = counts_dict.get(item.id, 0)
+            accodict[item.id] = {
                 "poll": poll,
-                "rate": poll / userpoll * 100,
+                "rate": poll / user_poll * 100,
             }
 
         # sort ascending by assertion count — least owned first → gets X
-        sorted_items = sorted(accodict.items(), key=lambda item: item[1]["poll"])
-        size = len(sorted_items) // len(RARITIES)
-        left = len(sorted_items) % len(RARITIES)
+        tier_list = RARITIES[1:]
+        sort_list = sorted(accodict.items(), key=lambda item: item[1]["poll"])
+        size = len(sort_list) // len(tier_list)
+        left = len(sort_list) % len(tier_list)
         jump = 0
 
-        piles = []
-        for i, rare_name in enumerate(RARITIES):
+        pile_list = []
+        for i, rare_name in enumerate(tier_list):
             stop = jump + size + (1 if i < left else 0)
-            pile = sorted_items[jump:stop]
+            pile = sort_list[jump:stop]
 
             if not pile:
                 jump = stop
                 continue
 
-            # compute tier boundaries from ownership rates in this pile
-            rates = [data["rate"] for _, data in pile]
-            lower = min(rates)
-            upper = max(rates)
+            rate_list = [data["rate"] for _, data in pile]
+            rare_item = rarity_dict[rare_name]
+            rare_item.lower_limit = min(rate_list)
+            rare_item.upper_limit = max(rate_list)
 
-            # update the rarities table row for this tier
-            rarity_row = self.session.query(Rarity).filter(Rarity.name == rare_name).first()
-            if rarity_row:
-                rarity_row.lower_limit = lower
-                rarity_row.upper_limit = upper
-            else:
-                rarity_row = Rarity(name=rare_name, lower_limit=lower, upper_limit=upper)
-                self.session.add(rarity_row)
-
-            piles.append((rarity_row, pile))
+            pile_list.append((rare_item, pile))
             jump = stop
 
         self.session.flush()
 
-        # assign rarity to each badge in its pile
-        for rarity_row, pile in piles:
+        for rare_item, pile in pile_list:
             for badge_id, _data in pile:
-                item_dict[badge_id].rarity_id = rarity_row.id
+                item_dict[badge_id].rarity_id = rare_item.id
 
         self.session.flush()

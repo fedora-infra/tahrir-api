@@ -37,13 +37,16 @@ def test_compute_badge_rarities_standard_case(api, dummy_badges_with_assertions)
     badges = api.get_all_badges().all()
     rarity_by_name = {r.name: r for r in rarities}
 
-    assert len(rarities) == 6
-    assert set(rarity_by_name) == {"X", "S", "A", "B", "C", "D"}
+    assert len(rarities) == 7
+    assert set(rarity_by_name) == {"O", "X", "S", "A", "B", "C", "D"}
     assert all(badge.rarity_id is not None for badge in badges)
 
     for rarity in rarities:
         count = sum(1 for b in badges if b.rarity_id == rarity.id)
-        assert count == 2
+        if rarity.name == "O":
+            assert count == 0
+        else:
+            assert count == 2
         assert rarity.lower_limit >= 0.0
         assert rarity.upper_limit >= rarity.lower_limit
 
@@ -73,7 +76,7 @@ def test_compute_badge_rarities_idempotent(api, dummy_badges_with_assertions):
     api.compute_badge_rarities()
     second_run = {r.name: (r.lower_limit, r.upper_limit) for r in api.session.query(Rarity).all()}
 
-    assert api.session.query(Rarity).count() == 6
+    assert api.session.query(Rarity).count() == 7
     assert first_run == second_run
 
 
@@ -147,3 +150,55 @@ def test_compute_badge_rarities_badge_with_zero_assertions(api, dummy_issuer_id)
     zero_badge = next(b for b in badges if b.name == "ZeroBadge_5")
     x_tier = api.session.query(Rarity).filter(Rarity.name == "X").first()
     assert zero_badge.rarity_id == x_tier.id
+
+
+def test_legacy_badges_assigned_to_obsolete_tier(api, dummy_issuer_id, dummy_persons):
+    """Legacy badges should be assigned to the O tier, not X-D."""
+    badge_id = api.add_badge("LegacyBadge", "img", "desc", "crit", dummy_issuer_id)
+    api.add_assertion(badge_id, "person0@test.com", None, "link_legacy")
+    api.update_badge(badge_id, legacy=True)
+
+    api.compute_badge_rarities()
+
+    from tahrir_api.model import Badge
+
+    badge = api.session.query(Badge).filter(Badge.id == badge_id).one()
+    o_tier = api.session.query(Rarity).filter(Rarity.name == "O").one()
+    assert badge.rarity_id == o_tier.id
+
+
+def test_legacy_badges_excluded_from_active_tiers(
+    api, dummy_issuer_id, dummy_badges_with_assertions
+):
+    """Legacy badges must not occupy slots in the X-D tiers."""
+    legacy_id = api.add_badge("LegacyHeavy", "img", "desc", "crit", dummy_issuer_id)
+    for i in range(12):
+        api.add_assertion(legacy_id, f"person{i}@test.com", None, f"link_leg_{i}")
+    api.update_badge(legacy_id, legacy=True)
+
+    api.compute_badge_rarities()
+
+    from tahrir_api.model import Badge
+
+    o_tier = api.session.query(Rarity).filter(Rarity.name == "O").one()
+    legacy_badge = api.session.query(Badge).filter(Badge.id == legacy_id).one()
+    assert legacy_badge.rarity_id == o_tier.id
+
+    active_badges = api.get_all_badges().all()
+    assert all(b.rarity_id != o_tier.id for b in active_badges)
+    active_rarity_ids = {r.id for r in api.session.query(Rarity).filter(Rarity.name != "O").all()}
+    assert all(b.rarity_id in active_rarity_ids for b in active_badges)
+
+
+def test_only_legacy_badges_all_go_to_obsolete(api, dummy_issuer_id):
+    """When every badge is legacy, all should land in O and nothing else runs."""
+    badge_id = api.add_badge("AllLegacy", "img", "desc", "crit", dummy_issuer_id)
+    api.update_badge(badge_id, legacy=True)
+
+    api.compute_badge_rarities()
+
+    from tahrir_api.model import Badge
+
+    badge = api.session.query(Badge).filter(Badge.id == badge_id).one()
+    o_tier = api.session.query(Rarity).filter(Rarity.name == "O").one()
+    assert badge.rarity_id == o_tier.id
