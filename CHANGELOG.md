@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 1.5.6
+
+- Exclude legacy badges from rarity calculation ([020dcdd](https://github.com/fedora-infra/tahrir-api/commit/020dcdd))
+
+
 ## Version 1.5.5
 
 - Introduce type hints to library modules ([3669221](https://github.com/fedora-infra/tahrir-api/commit/3669221))
